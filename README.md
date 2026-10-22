@@ -2,6 +2,7 @@
 
 Prompt 1 submission: "Steer", a learner's licence for a teen's AI agent.
 
+- `SPEC.md` is the product spec. Section 8 says exactly what the prototype must do.
 - `DukeJain_IITDelhi_prototype/` is the clickable prototype: plain HTML/CSS/JS, no build step. Open `index.html` in a browser. Its own `README.txt` explains the demo.
 - The submission zip (`DukeJain_IITDelhi.zip`) is made from that folder and is not tracked.
 
