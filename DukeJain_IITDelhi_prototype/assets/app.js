@@ -35,6 +35,24 @@ function levelName(level) { return level ? DATA.levels[level].name : "New"; }
 function nextLevel(level) { return DATA.order[DATA.order.indexOf(level) + 1]; }
 /* "My agent" is the teen's own AI agent, so it gets a neutral avatar rather than the product's mark. */
 const agentAvatar = (sm = "") => `<span class="avatar agent${sm}" aria-hidden="true">&#10022;</span>`;
+/* The product's character mark: a rounded "B" with a friendly face, drawn inline so it needs no image file.
+   Each copy gets its own gradient ids, so hidden copies never break visible ones. */
+let logoCount = 0;
+function logoMark(size = 32) {
+  const n = ++logoCount, body = "logoBody" + n, lobes = "logoLobes" + n;
+  return `<svg class="logo" width="${size}" height="${size}" viewBox="0 0 100 100" aria-hidden="true">
+    <defs><linearGradient id="${body}" x1="0" y1="0" x2="0.8" y2="1"><stop offset="0" stop-color="#2D9CF0"/><stop offset="0.55" stop-color="#5B4BF0"/><stop offset="1" stop-color="#7B3FE4"/></linearGradient>
+    <linearGradient id="${lobes}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8B5CF6"/><stop offset="0.5" stop-color="#F25FC6"/><stop offset="1" stop-color="#FF8A4C"/></linearGradient></defs>
+    <rect x="6" y="6" width="60" height="88" rx="26" fill="url(#${body})"/>
+    <g opacity="0.9"><rect x="34" y="6" width="46" height="48" rx="24" fill="url(#${lobes})"/><rect x="34" y="40" width="60" height="54" rx="27" fill="url(#${lobes})"/></g>
+    <rect x="17" y="38" width="64" height="34" rx="17" fill="#fff"/>
+    <path d="M33 53q6 6 12 0M54 53q6 6 12 0" fill="none" stroke="#12142B" stroke-width="4.5" stroke-linecap="round"/></svg>`;
+}
+/* "Bud-e" with the part from the last hyphen in the brand gradient. Works for any name in the constant. */
+function wordmark() {
+  const name = DATA.product.name, i = name.lastIndexOf("-");
+  return i > 0 ? `<span class="wm">${esc(name.slice(0, i))}<span class="wm-accent">${esc(name.slice(i))}</span></span>` : `<span class="wm">${esc(name)}</span>`;
+}
 function topbar(kind, tab) {
   const p = DATA.persona;
   const tabs = kind === "parent"
@@ -43,7 +61,7 @@ function topbar(kind, tab) {
   const who = kind === "parent"
     ? `<span class="avatar parent sm">${esc(p.parent[0])}</span><span class="name">${esc(p.parent)} · parent</span>`
     : `<span class="avatar teen sm">${esc(p.name[0])}</span><span class="name">${esc(p.name)}, ${p.age}</span>`;
-  return `<header class="topbar"><div class="brand">${plate("learner")}<span class="name">${esc(DATA.product.name)}</span></div>
+  return `<header class="topbar"><div class="brand">${logoMark(30)}<span class="name">${wordmark()}</span></div>
     <nav class="tabs">${tabs.map(([id, label]) => `<button ${id ? `data-go="${id}"` : "data-off"}${id && id === tab ? ' class="on"' : ""}>${label}</button>`).join("")}</nav>
     <div class="who">${who}</div></header>`;
 }
@@ -345,7 +363,7 @@ function openAgentChat(el, flowKey, opts) {
 /* ---------- 0. Start ---------- */
 SCREENS.start = el => {
   el.innerHTML = `<div class="landing"><div class="landing-inner">
-    ${plate("learner", true)}<h1>${esc(DATA.product.name)}</h1><p class="tagline">${esc(DATA.product.tagline)}</p>
+    ${logoMark(124)}<h1>${wordmark()}</h1><p class="tagline">${esc(DATA.product.tagline)}</p>
     <p class="pitch">${esc(DATA.product.pitch)}</p>
     <div class="actions"><button class="btn primary" data-go="setup">Parent setup</button>
     <button class="btn ghost" data-go="home">Ananya's day</button></div></div></div>`;
@@ -420,7 +438,7 @@ function handover(el) {
 function welcome(el) {
   const h = DATA.handover;
   el.innerHTML = teenShell(`<div class="centered"><div class="card welcome">
-    ${plate("learner", true)}<h2>Hi Ananya</h2><p class="tight muted">${esc(h.intro)}</p>
+    ${logoMark(56)}<h2>Hi Ananya</h2><p class="tight muted">${esc(h.intro)}</p>
     ${h.points.map(([icon, text]) => `<div class="point"><span class="icon" aria-hidden="true">${icon}</span><span>${esc(text)}</span></div>`).join("")}
     <button class="btn primary block" data-go="home">Let's go</button></div></div>`, { tab: null, panel: false });
 }
@@ -677,9 +695,10 @@ document.addEventListener("keydown", e => {
   if (e.key === "ArrowLeft") step(-1);
 });
 window.addEventListener("DOMContentLoaded", () => {
-  $("#brand-name").textContent = DATA.product.name;
+  $("#brand-name").innerHTML = wordmark();
   $("#brand-tag").textContent = DATA.product.tagline;
-  $("#brand-plate").outerHTML = plate("learner", true);
+  $("#brand-plate").outerHTML = logoMark(40);
+  $("link[rel=icon]").href = "data:image/svg+xml," + encodeURIComponent(logoMark(64).replace("<svg ", '<svg xmlns="http://www.w3.org/2000/svg" '));
   document.title = DATA.product.name + " · prototype";
   $("#prev").addEventListener("click", () => step(-1));
   $("#next").addEventListener("click", () => step(1));
