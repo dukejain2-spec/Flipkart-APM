@@ -54,6 +54,8 @@ A **control system** that sits between a teen and their personal agent. The agen
 
 **The principle that governs everything:** *the effort the teen puts in is inversely proportional to their level.*
 
+**Stakes shift the mode by one step.** The same level shouldn't treat a ₹50 snack like a ₹5,000 phone. Low-stakes requests (e.g. a purchase under ₹100) get one level more freedom; high-stakes ones (e.g. over ₹2,000, or a big life choice) get one level less, never below Learner. Always-on protections (Self, Feelings, messages that carry feelings) never shift.
+
 ### Five areas plus a safety base
 
 Some protections **graduate** as the teen shows readiness. Others are **always on until 18**.
@@ -95,6 +97,8 @@ Some protections **graduate** as the teen shows readiness. Others are **always o
 - **Visible indicator** in every interaction: *"Choices · Learner: you pick, I'll handle the rest."*
 - **Hurry button**: 3 skips a week, for when the teen just needs it done.
 - **"What my parents see"**: the teen sees exactly what parents get.
+- **Handover**: parent setup ends by handing the device to the teen, who is told upfront: *"Your chats are private. Your parents see your progress, not your conversations, unless you're ever in danger."*
+- **"I'm not new to this"**: on a new skill, the teen can take a quick check instead of accepting the default; passing starts the skill one level higher.
 - **Accommodations**: settings for teens with learning disabilities (protect from harm, not from help).
 - **Graduation at 18**: full control, plus a **personal agent charter** the teen writes.
 
@@ -107,11 +111,11 @@ The chosen model (Claude, Gemini, etc.) is the **player**. The product is the **
 ```
 Teen's message
    ↓
-① Detector (small AI model)      → which area / skill / topic? or "chore"?
+① Detector (small AI model)      → which area / skill / topic, and how high are the stakes? or "chore"?
    ↓
 ② Licence store (lookup)          → teen's level in that area
    ↓
-③ Instruction builder (template)  → hidden instructions for that level
+③ Instruction builder (template)  → hidden instructions for that level, shifted one step by the stakes
    ↓
 ④ Chosen model (via API)          → does the actual response
    ↓
@@ -126,7 +130,7 @@ Teen sees the reply
 - **AI for judgment, rules for decisions.** Levels change by fixed, visible rules, so they're fair, explainable, and can't be sweet-talked.
 - **Rules don't scale with the number of skills.** Every skill uses the same four levels, four instruction templates and the same thresholds. Only the skill list grows, and the curriculum already defines it.
 - **Promotion:** 3 tasks done with ≤1 hint → level up. **Demotion:** 2 failed spot checks, or weeks unused → level down.
-- **A new topic** starts based on related strength (e.g., Maths: Licensed → Trigonometry starts at Practising).
+- **A new topic** starts based on related strength (e.g., Maths: Licensed → Trigonometry starts at Practising). The teen can tap *"No, I'm not new to this"* for a quick check; passing starts the topic one level higher.
 - **Unknown request** → maps to the nearest parent skill, or is treated as a chore.
 
 **How it connects to agents**
@@ -215,7 +219,7 @@ Submit **at least one** of: (i) a **video** of us *using* the prototype (not a s
 - **No real AI calls.** All agent replies are scripted. Where the teen types, offer preset reply chips (plus free typing that maps to the scripted next step).
 - **No real brand logos.** Providers appear as plain text names in setup only. The agent is shown as "My agent."
 - Works in current Chrome, Edge, Safari and Firefox. **No console errors.**
-- Laptop-first (evaluators use laptops): a phone frame centred on screen, with a side rail for demo navigation.
+- A responsive web app, laptop-first (evaluators use laptops) and usable down to phone width: the app fills the window (for the teen, chat in the centre with her licence, wallet and hurry skips in a side panel), beside a demo rail for navigation that becomes a drawer on small screens.
 - Every element on the demo path works. Anything off-path either works or shows a toast: *"Not part of this prototype."*
 
 **File structure**
@@ -247,6 +251,8 @@ Pocket-money wallet: ₹2,000/month, ₹1,350 left. Hurry skips: 3 of 3 left.
 
 A **demo rail** lists the moments; each can be opened directly, or clicked through in order.
 
+A **Behind the scenes** toggle in the demo bar shows, under each agent reply, what the referee did (section 3): ① detector → ② licence store → ③ instructions → ⑤ output check, and ⑥ the progress tracker where a task finishes. For example: *Detector: Skills · Maths · Trigonometry (new topic) · Licence store: Maths Licensed, so the new topic starts at Practising · Instructions: hints only · Output check: no answer before she tried ✓.* Off by default; it lets evaluators see the mechanism working.
+
 **Screen 0: Start**
 - Title, one-line pitch, two buttons: *Parent setup* / *Ananya's day*.
 
@@ -257,6 +263,7 @@ A **demo rail** lists the moments; each can be opened directly, or clicked throu
 - Accommodations toggle.
 - **What you will / won't see**: *You'll see her progress and safety alerts. You won't see her chats.*
 - Consent checkbox → *Finish setup*.
+- **Handover**: *"Setup done. Hand the device to Ananya."* → her welcome: what the product does; *"Your chats are private. Your parents see your progress, not your conversations, unless you're ever in danger."*; 3 hurry skips a week; other AI apps restricted → *Let's go* → Screen 2.
 
 **Screen 2: Ananya's home**
 - "My agent" chat entry, licence profile summary (five areas), wallet balance, hurry skips left.
@@ -282,10 +289,11 @@ A **demo rail** lists the moments; each can be opened directly, or clicked throu
 - Indicator: *"Money · Learner: compare and pick."*
 - Three options with prices and **wallet impact**; a label: *"No sponsored options."*
 - She picks → order placed → wallet updates (₹1,350 → ₹650).
+- **Stakes shift**: Ananya: *"also get me a snack for after tuition, under ₹100."* Indicator changes to *"Money · Practising for small buys: I'll recommend, you decide."* Agent recommends one (*"Roasted makhana, ₹60?"*) → *Yes, order it* → wallet ₹650 → ₹590.
 
 **Screen 6: Skills (maths, with try first)**
 - Ananya: *"solve: a tower casts a 20 m shadow at 45°, find its height."*
-- Pop-up: *"New skill unlocked: Trigonometry. Starting at Practising (you're Licensed in Maths)."*
+- Pop-up: *"New skill unlocked: Trigonometry. Starting at Practising (you're Licensed in Maths)."* Two buttons: *Yes, let's go* / *No, I'm not new to this*. The second gives a one-question check (*"What's sin 30°?"*): right → starts at Licensed (the agent solves it, then asks her to check); wrong → Practising, as below.
 - Agent: *"Try first: which ratio links height and shadow?"* → chips (sin / cos / tan) → a hint if wrong → correct answer → progress bar moves.
 - **Hurry button** visible: tapping it shows *"Done for you. 2 skips left this week,"* to demonstrate the escape valve.
 
@@ -314,14 +322,19 @@ A **demo rail** lists the moments; each can be opened directly, or clicked throu
 - `persona`: name, age, class, wallet, skips.
 - `licences`: area → level, progress, topics.
 - `beliefs`: the agent's assumptions about Ananya (for Me, not my model).
-- `flows`: one array per screen of steps `{from: "agent" | "teen", text, chips?, action?}`.
-- `products`: three gift options (generic names, prices).
+- `flows`: one array per screen of steps `{from: "agent" | "teen", text, chips?, action?}`; a step may also carry `trace` (its behind-the-scenes lines).
+- `products`: three gift options (generic names, prices), plus the low-stakes snack.
+- `stakes`: the low / high thresholds that shift the mode.
+- The product name and level names as single constants, so they can be changed in one place.
 
 ### 8.5 Acceptance checklist
 - [ ] Opens offline by double-click; no network requests; no console errors
 - [ ] Every demo-path button works; off-path shows a toast
 - [ ] Indicator visible in every agent interaction
+- [ ] Behind-the-scenes toggle shows the referee's steps for every agent interaction
+- [ ] Parent setup requires consent and ends with the handover to the teen
 - [ ] Chore example completes instantly
+- [ ] The low-stakes buy shifts the mode one step; "I'm not new to this" works (pass and fail)
 - [ ] Wallet, progress bars, hurry skips and the belief card update live
 - [ ] Parent view never shows chat content
 - [ ] No brand logos; providers only as text in setup
@@ -331,11 +344,12 @@ A **demo rail** lists the moments; each can be opened directly, or clicked throu
 ### 8.6 Video walkthrough
 - 2–3 minutes, screen recording with voice-over, following Screens 1 → 9.
 - Open with the thesis (one sentence), end with the north star metric.
-- Record at laptop resolution; hide the demo rail if it distracts.
+- Record at laptop resolution; use presentation mode (H) to hide the demo controls if they distract.
+- Consider turning *Behind the scenes* on for one moment (e.g. Skills) to show the referee at work.
 
 ---
 
 ## 9. Open decisions
-- Product name.
+- Product name (working name in the prototype: Bud-e).
 - Final level names (driving-themed placeholders for now).
 - Whether the MVP prototype shows Graduation, or leaves it as a line in the 2-pager.

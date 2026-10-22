@@ -1,0 +1,9 @@
+{
+  "name": "flipkart-apm-prototype",
+  "private": true,
+  "description": "Serves the prototype on a local server. No dependencies; the prototype also opens by double-clicking index.html.",
+  "scripts": {
+    "dev": "node scripts/serve.js",
+    "start": "node scripts/serve.js"
+  }
+}

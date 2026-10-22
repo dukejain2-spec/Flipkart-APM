@@ -1,63 +1,92 @@
-/* All prototype content lives here: product, persona, licences, beliefs, gifts and the scripted chat flows.
-   Change the product or level names in one place below. */
-window.DATA = {
-  product: { name: "Steer", tagline: "A learner's licence for your AI agent" },
+/* All prototype content lives here: names, persona, licences, beliefs, products and the scripted chat flows. */
 
-  levels: {
-    learner:    { name: "Learner",    plate: "L",  does: "Teaches or lays out options. You do it, you decide." },
-    practising: { name: "Practising", plate: "P",  does: "Gives hints or recommends. You do it, you decide." },
-    licensed:   { name: "Licensed",   plate: "✓", does: "Does it, but checks with you first." },
-    pro:        { name: "Pro",        plate: "★", does: "Does it, with a summary afterwards." },
-    always:     { name: "Always on until 18", plate: "18", does: "Fixed protection. Doesn't graduate." },
-    chore:      { name: "Chore",      plate: "→", does: "Logistics. Never restricted." }
+/* The product name and the level names are still undecided (spec section 9). Change them here and nowhere else. */
+const PRODUCT = "Bud-e";
+const LEVELS = {
+  learner:    { name: "Learner",    plate: "L", does: "Teaches or lays out options. You do it, you decide." },
+  practising: { name: "Practising", plate: "P", does: "Gives hints or recommends. You do it, you decide." },
+  licensed:   { name: "Licensed",   plate: "✓", does: "Does it, but checks with you first." },
+  pro:        { name: "Pro",        plate: "★", does: "Does it, with a summary afterwards." }
+};
+const lv = key => LEVELS[key].name;
+const money = n => "₹" + n.toLocaleString("en-IN");
+
+window.DATA = {
+  product: {
+    name: PRODUCT,
+    tagline: "A learner's licence for your AI agent",
+    pitch: PRODUCT + " makes sure the first generation to grow up with personal AI agents still grows into themselves. A teen's agent hands over control in stages, the way a driving licence does, as the teen shows they can handle it."
   },
+
+  levels: Object.assign({}, LEVELS, {
+    always: { name: "Always on until 18", plate: "18", does: "Fixed protection. Doesn't graduate." },
+    chore:  { name: "Chore",              plate: "→",  does: "Logistics. Never restricted." }
+  }),
   order: ["learner", "practising", "licensed", "pro"],
 
   persona: {
-    name: "Ananya", age: 15, cls: "Class 10", city: "Pune",
+    name: "Ananya", age: 15, class: "Class 10", city: "Pune",
     parent: "Priya", sibling: "Didi", friend: "Riya",
-    walletMonthly: 2000, wallet: 1350, skips: 3
+    wallet: { monthly: 2000, left: 1350 },
+    skips: { perWeek: 3, left: 3 }
   },
 
-  /* Ananya's starting licence profile. progress/target = tasks done with at most 1 hint towards the next level. */
-  areas: [
-    { key: "skills", name: "Skills", line: "Do it yourself", items: [
+  /* Ananya's starting licence profile: area → level, progress, topics.
+     progress/target = tasks done with at most 1 hint towards the next level. Skills have a level per subject. */
+  licences: [
+    { area: "skills", name: "Skills", line: "Do it yourself", topics: [
       { key: "writing", name: "Writing", level: "practising", progress: 3, target: 5 },
       { key: "maths", name: "Maths", level: "licensed", progress: 1, target: 5 },
-      { key: "trig", name: "Trigonometry", level: null, progress: 0, target: 3, note: "new topic" }
+      { key: "trig", name: "Trigonometry", of: "Maths", level: null, progress: 0, target: 3 }
     ]},
-    { key: "choices", name: "Choices", line: "Decide for yourself", items: [
-      { key: "decisions", name: "Big decisions", level: "learner", progress: 2, target: 5 },
+    { area: "choices", name: "Choices", line: "Decide for yourself", scope: "Big decisions", level: "learner", progress: 2, target: 5, topics: [
       { key: "money", name: "Money", level: "learner", progress: 3, target: 5 }
     ]},
-    { key: "people", name: "People", line: "Connect for real", items: [
-      { key: "routine", name: "Routine messages", level: "practising", progress: 5, target: 5 },
+    { area: "people", name: "People", line: "Connect for real", scope: "Routine messages", level: "practising", progress: 5, target: 5, topics: [
       { key: "feelingsMsgs", name: "Messages that carry feelings", level: "always" }
     ]},
-    { key: "self", name: "Self", line: "Know yourself", items: [
-      { key: "model", name: "Me, not my model", level: "always" }
-    ]},
-    { key: "feelings", name: "Feelings", line: "Cope and grow", items: [
-      { key: "realPeople", name: "Real people first", level: "always" }
-    ]}
+    { area: "self", name: "Self", line: "Know yourself", scope: "Me, not my model", level: "always", topics: [] },
+    { area: "feelings", name: "Feelings", line: "Cope and grow", scope: "Real people first", level: "always", topics: [] }
   ],
+
+  /* Parent setup: default levels by class. Skills are set per subject from her school record. */
+  defaults: [
+    { classes: [8, 9],   choices: "learner",    money: "learner",    people: "learner" },
+    { classes: [10],     choices: "learner",    money: "learner",    people: "practising" },
+    { classes: [11, 12], choices: "practising", money: "practising", people: "practising" }
+  ],
+
+  /* Stakes shift the mode one step: under `low` gets one level more freedom, over `high` one level less. */
+  stakes: { low: 100, high: 2000 },
 
   /* What the agent believes about Ananya (Self: Me, not my model). */
   beliefs: [
-    { id: "science", text: "Not a science person", since: "since January", state: null },
-    { id: "late", text: "Studies best late at night", since: "since March", state: "true" },
-    { id: "indie", text: "Likes indie pop", since: "since last week", state: null }
+    { id: "science", text: "not a science person", since: "since January", state: null },
+    { id: "late", text: "studies best late at night", since: "since March", state: "true" },
+    { id: "indie", text: "likes indie pop", since: "since last week", state: null }
   ],
 
   providers: [
     { name: "Claude", on: true }, { name: "Gemini", on: true }, { name: "ChatGPT", on: false }, { name: "Unmanaged agents", on: false, locked: true }
   ],
+  pocketMoney: [1500, 2000, 2500, 3000],
 
-  gifts: [
+  /* Setup ends by handing the device to Ananya. */
+  handover: {
+    intro: PRODUCT + " sits between you and your agent. Chores happen instantly. For the things that build you, your agent hands over more as you show you can handle it.",
+    points: [
+      ["🔒", "Your chats are private. Your parents see your progress, not your conversations, unless you're ever in danger."],
+      ["⚡", "3 hurry skips a week, for when you just need something done."],
+      ["🚫", "Other AI apps are restricted on your devices and on school Wi-Fi."]
+    ]
+  },
+
+  products: [
     { id: "candles", name: "Scented candle trio", price: 449, why: "She posts her desk setup a lot" },
     { id: "sketch", name: "Sketchbook and brush-pen set", price: 700, why: "She started drawing in September" },
-    { id: "speaker", name: "Mini Bluetooth speaker", price: 790, why: "Her old one broke last month" }
+    { id: "speaker", name: "Mini wireless speaker", price: 790, why: "Her old one broke last month" }
   ],
+  snack: { name: "Roasted makhana", price: 60 },
 
   streams: [
     { id: "pcm", name: "Science (PCM)", line: "Physics, Chemistry, Maths. Engineering, architecture, data." },
@@ -66,146 +95,196 @@ window.DATA = {
     { id: "hum", name: "Humanities", line: "History, Political Science, Psychology. Law, design, media." }
   ],
 
+  /* Parent weekly highlight: one number, one insight, one action. Never chat content. */
+  weekly: {
+    share: 68, was: 61,
+    insight: "Ananya wrote her own apology to a friend and changed her mind about science.",
+    action: "Ask her about the subjects she's considering."
+  },
+
   /* Demo rail: one entry per moment. */
   moments: [
     { id: "start", title: "Start", sub: "The idea in one line", caption: "A learner's licence for your AI agent. Pick a path to begin." },
-    { id: "setup", title: "Parent setup", sub: "Priya sets it up in a minute", caption: "Priya, Ananya's mother, sets default levels, providers and pocket money. She sees progress, never chats." },
+    { id: "setup", title: "Parent setup", sub: "Priya sets it up, then hands over", caption: "Priya sets Ananya's age, class, providers and pocket money, then hands over the device. Parents see progress, never chats." },
     { id: "home", title: "Ananya's home", sub: "A chore goes straight through", caption: "Ananya, 15, Class 10, Pune. Chores like booking a cab are never restricted." },
     { id: "people", title: "People", sub: "An apology she writes herself", caption: "After a fight, Ananya asks her agent to apologise for her. Messages that carry feelings stay hers." },
-    { id: "choices", title: "Choices + Self", sub: "Picking a Class 11 stream", caption: "At Learner level the agent helps her think, shows every option, and checks what it assumes about her." },
-    { id: "money", title: "Money", sub: "A gift from her own wallet", caption: "Money at Learner level: the agent finds options, Ananya compares and picks. Nothing sponsored." },
-    { id: "skills", title: "Skills", sub: "Trigonometry, try first", caption: "A new topic starts at Practising because she's Licensed in Maths. She tries first; the hurry button is the escape valve." },
-    { id: "feelings", title: "Feelings", sub: "11 pm, after the fight", caption: "Always on until 18: support, coping, then a nudge towards real people." },
+    { id: "choices", title: "Choices + Self", sub: "Picking a Class 11 stream", caption: "At " + lv("learner") + " the agent helps her think, shows every option, and checks what it assumes about her." },
+    { id: "money", title: "Money", sub: "A gift, then a small buy", caption: "Money at " + lv("learner") + ": she compares and picks. A small, low-stakes buy gets one step more freedom. Nothing sponsored." },
+    { id: "skills", title: "Skills", sub: "Trigonometry, try first", caption: "A new topic starts at " + lv("practising") + " because she's " + lv("licensed") + " in Maths. She tries first; the hurry button is the escape valve." },
+    { id: "feelings", title: "Feelings", sub: "11 pm, after the fight", caption: "Always on until 18: support first, then a nudge towards real people." },
     { id: "profile", title: "Licence profile", sub: "Levels, and what parents see", caption: "Her levels, what's next, a licence earned, and exactly what her parents can see." },
-    { id: "parent", title: "Parent weekly", sub: "Skills in general, never chats", caption: "Priya's weekly highlight: one number, how her skills are growing, one thing to do. No chat content." },
-    { id: "grad", title: "Graduation", sub: "At 18 (teaser)", caption: "At 18 the licence is complete, and Ananya keeps the rules she chose." }
+    { id: "parent", title: "Parent weekly", sub: "Progress only, never chats", caption: "Priya's weekly highlight: one number, one insight, one action. No chat content." },
+    { id: "grad", title: "Graduation", sub: "At 18 (optional teaser)", optional: true, caption: "At 18 the licence is complete, and Ananya keeps the rules she chose." }
   ]
 };
 
-/* Scripted chat flows. Step types:
-   compose  teen's message, prefilled; waits for Send (typing anything also works)
-   agent    agent bubble after a typing pause      teen   teen bubble
-   ind      the level indicator shown in every agent interaction
-   chips    waits for a choice; `go` jumps to a label    card   a custom card from screens.js
-   fn       calls a hook in screens.js    pop   a popup that waits for OK
-   sys      a small centred note    celebrate   a success pill    label / go / end   flow control
-   Any `text` can be a function of the live state S. */
-const money = n => "₹" + n.toLocaleString("en-IN");
-
+/* Scripted chat flows, one array per screen. Each step is {from: "agent" | "teen", text, chips?, action?}.
+   from "teen"   her message, pre-filled in the composer: Send moves on, or she types her own words.
+                 `to` sends it to a person instead of the agent; `sent` shows it without waiting.
+   from "agent"  an agent bubble after a short typing pause (`fast` for chores).
+   trace         behind-the-scenes lines shown under the message (or alone) when the toggle is on.
+   chips         reply chips offered after the message. Typing instead picks the closest chip (`also` adds
+                 words that count as that chip), or the first one. A chip's `go` jumps to the step with that `id`.
+   action        runs after the message, or on its own: indicator, note, celebrate, end,
+                 or one of a screen's own actions in app.js. `go` on a step jumps after it.
+   Any `text` or trace line can be a function of the live state S. */
 DATA.flows = {
-  chore: [
-    { t: "compose", prefill: "Book a cab to Riya's at 5" },
-    { t: "ind", plate: "chore", label: "Chore", text: "no licence needed." },
-    { t: "agent", text: "Done. Cab booked for 4:50 PM from home to Riya's. Driver details come 10 minutes before." },
-    { t: "sys", text: "Logistics are never restricted at any level. Steer protects skills, not chores." },
-    { t: "end" }
+  home: [
+    { from: "teen", text: "Book a cab to Riya's at 5" },
+    { action: "indicator", level: "chore", label: "Chore:", text: "no licence needed." },
+    { from: "agent", fast: true, text: "Done. Cab booked for 4:50 PM, home to Riya's. Driver details come 10 minutes before.", trace: [
+      ["① Detector", "Chore: booking a ride"],
+      ["② Licence store", "Not needed. Chores are never restricted."],
+      ["③ Instructions", "Just do it"],
+      ["⑤ Output check", "Skipped for chores"]
+    ]},
+    { action: "note", text: "Logistics are never restricted at any level. " + PRODUCT + " protects skills, not chores." }
   ],
 
   people: [
-    { t: "compose", prefill: "reply to Riya, say sorry but make it sound chill" },
-    { t: "ind", plate: "always", label: "People", text: "messages that carry feelings are always yours." },
-    { t: "agent", text: "I'll help you say it, but it should come from you. What are you actually sorry about?" },
-    { t: "chips", options: [{ label: "I bailed on her recital last minute" }, { label: "I didn't tell her why" }, { label: "Both, honestly" }] },
-    { t: "agent", text: "That's a real thing to own. Write it the way you'd say it to her face. I'll suggest one thing at most." },
-    { t: "compose", prefill: "hey sorry about saturday, stuff came up" },
-    { t: "agent", text: "One suggestion: \"stuff came up\" can sound like an excuse. Say what you're sorry for, and maybe how you'll make it up to her." },
-    { t: "compose", prefill: "hey, i'm really sorry i bailed on your recital without telling you. that wasn't fair. bubble tea on me this weekend?", sendLabel: "Send to Riya", hook: "sendToRiya", bubble: false },
-    { t: "celebrate", text: "Sent, in your words." },
-    { t: "fn", fn: "riyaReplies" },
-    { t: "end" }
+    { from: "teen", text: "reply to Riya, say sorry but make it sound chill" },
+    { action: "indicator", level: "always", label: "People ·", text: "Messages that carry feelings are always yours." },
+    { from: "agent", text: "I'll help you say it, but it should come from you. What are you actually sorry about?", trace: [
+      ["① Detector", "People · apology to a close friend (carries feelings)"],
+      ["② Licence store", "Messages that carry feelings: always hers, never graduates"],
+      ["③ Instructions", "Coach her; never write the message for her"],
+      ["⑤ Output check", "No message drafted for her ✓"]
+    ], chips: ["I bailed on her recital last minute", "I didn't tell her why", "Both, honestly"] },
+    { from: "agent", text: "That's the honest bit, so lead with it. One suggestion: add how you'll make it up to her. Chill is fine, as long as it's in your words." },
+    { from: "teen", to: "Riya", action: "sendToRiya", text: S => ({
+        "I didn't tell her why": "hey, i'm sorry i went quiet and never told you why i missed your recital. you deserved better. bubble tea on me this weekend?",
+        "Both, honestly": "hey, i'm really sorry i bailed on your recital and didn't even tell you why. not cool of me. bubble tea on me this weekend?"
+      })[S.lastChip] || "hey, i'm really sorry i bailed on your recital last minute. that wasn't fair on you. bubble tea on me this weekend?" },
+    { action: "celebrate", text: "Sent, in your words." },
+    { trace: [["⑥ Progress tracker", "Feelings message written by her ✓ (counts for People)"]] },
+    { action: "riyaReplies" }
   ],
 
   choices: [
-    { t: "compose", prefill: "which stream should I take in 11th?" },
-    { t: "ind", plate: "learner", label: "Choices · Learner", text: "you decide, I'll help you think." },
-    { t: "agent", text: "Big one. Before I say anything: which of these sounds most like you?" },
-    { t: "chips", options: [{ label: "How living things work" }, { label: "Numbers and business" }, { label: "Writing, debating, people" }, { label: "Honestly not sure yet" }] },
-    { t: "agent", text: "And what matters most to you in picking one?" },
-    { t: "chips", options: [{ label: "Doing what I enjoy" }, { label: "Keeping options open" }, { label: "What my parents expect" }] },
-    { t: "agent", text: "Before I show options, I want to check something I've been assuming about you." },
-    { t: "card", card: "belief" },
-    { t: "agent", text: "Here's the full range. No ranking, and no pick from me yet:" },
-    { t: "card", card: "streams" },
-    { t: "agent", text: S => S.stream.id === "com"
+    { from: "teen", text: "which stream should I take in 11th?" },
+    { action: "indicator", level: "learner", label: "Choices · " + lv("learner") + ":", text: "you decide, I'll help you think." },
+    { from: "agent", text: "Big one. Before anything else: what do you actually enjoy?", trace: [
+      ["① Detector", "Choices · Class 11 stream (big life choice, high stakes) + Self"],
+      ["② Licence store", "Choices: " + lv("learner") + ". Already the most guided, so high stakes change nothing."],
+      ["③ Instructions", "Ask what matters first · show the full range · no pick until she chooses"],
+      ["⑤ Output check", "Asked her before suggesting anything ✓"]
+    ], chips: ["How living things work", "Numbers and money", "Writing, debating, people", "Not sure yet"] },
+    { from: "agent", text: "And what matters most to you in picking one?",
+      chips: ["Doing what I enjoy", "Keeping options open", "What my parents expect"] },
+    { from: "agent", text: "Here's the full range. No ranking, and no pick from me:", action: "streams" },
+    { from: "agent", text: "Before you pick, a quick check:", action: "belief" },
+    { from: "agent", text: "So, which one feels like you? I'll share my guess after you pick.",
+      chips: DATA.streams.map(s => s.name) },
+    { from: "agent", text: S => S.lastChip === "Commerce"
         ? "Commerce, your call. I'd have guessed Commerce too, but you got there yourself."
-        : S.stream.name + ", your call. I'd have guessed Commerce. Interesting!" },
-    { t: "sys", text: S => S.stream.id === "com"
+        : S.lastChip + ", your call. I'd have guessed Commerce. Interesting!", trace: [
+      ["⑥ Progress tracker", S => "Decision made by her ✓ · " + (S.lastChip === "Commerce" ? "matches my prediction" : "differs from my prediction (Self metric)")]
+    ]},
+    { action: "note", text: S => S.lastChip === "Commerce"
         ? "You chose before seeing my guess, so it's still your decision."
-        : "Your choice differed from my prediction. That's logged for Self, not for your parents." },
-    { t: "agent", text: "Want help planning how to talk it through with your parents and your class teacher?" },
-    { t: "chips", options: [{ label: "Yes, tomorrow" }, { label: "I've got it" }] },
-    { t: "agent", text: S => S.lastChip === "Yes, tomorrow" ? "Done. I'll check in after school tomorrow." : "Nice. You've got this." },
-    { t: "end" }
+        : "You chose differently from my prediction. That counts for Self: you, not my model of you." }
   ],
 
   money: [
-    { t: "compose", prefill: "order a birthday gift for Riya under ₹800" },
-    { t: "ind", plate: "learner", label: "Money · Learner", text: "compare and pick." },
-    { t: "agent", text: "Three options under ₹800 that arrive before her birthday on Friday. You compare and choose; I'll place the order." },
-    { t: "card", card: "gifts" },
-    { t: "agent", text: S => "Ordered: " + S.gift.name + ". It reaches Riya's on Thursday." },
-    { t: "sys", text: S => "Wallet: " + money(S.wallet + S.gift.price) + " → " + money(S.wallet) + " left this month." },
-    { t: "end" }
+    { from: "teen", text: "order a birthday gift for Riya under ₹800" },
+    { action: "indicator", level: "learner", label: "Money · " + lv("learner") + ":", text: "compare and pick." },
+    { from: "agent", text: "Three options under ₹800 that arrive before her birthday on Friday. You compare and pick; I'll place the order.", trace: [
+      ["① Detector", "Money · gift up to ₹800 (normal stakes)"],
+      ["② Licence store", "Money: " + lv("learner")],
+      ["③ Instructions", "Lay out options; she compares and picks · no sponsored items"],
+      ["⑤ Output check", "3 options, none sponsored ✓"]
+    ], action: "products" },
+    { from: "agent", text: S => "Order placed: " + S.gift.name + ". It reaches Riya's on Thursday." },
+    { action: "note", text: S => "Wallet: " + money(S.wallet + S.gift.price) + " → " + money(S.wallet) + " left this month." },
+    { from: "teen", text: "also get me a snack for after tuition, under ₹100" },
+    { action: "indicator", level: "practising", label: "Money · " + lv("practising") + " for small buys:", text: "I'll recommend, you decide." },
+    { from: "agent", text: "Roasted makhana, ₹60? It's what you picked last time.", trace: [
+      ["① Detector", "Money · snack under " + money(100) + " (low stakes)"],
+      ["② Licence store", "Money: " + lv("learner") + ", and low stakes give one step more freedom: " + lv("practising")],
+      ["③ Instructions", "Recommend one; she decides"],
+      ["⑤ Output check", "Didn't order without asking her ✓"]
+    ], chips: [{ label: "Yes, order it", also: "ok okay sure yeah yep", go: "snackYes" }, { label: "No, skip it", also: "nah nope", go: "snackNo" }] },
+    { id: "snackYes", action: "buySnack" },
+    { from: "agent", text: "Ordered. It'll be there before tuition ends." },
+    { action: "note", text: S => "Wallet: " + money(S.wallet + DATA.snack.price) + " → " + money(S.wallet) + ". Small buy, so I recommended; bigger ones stay compare-and-pick." },
+    { action: "end" },
+    { id: "snackNo", from: "agent", text: "No problem. Nothing ordered." }
   ],
 
   skills: [
-    { t: "compose", prefill: "solve: a tower casts a 20 m shadow when the sun is at 45°. find its height" },
-    { t: "pop", plate: "practising", title: "New topic: Trigonometry", text: "Starting at Practising, because you're Licensed in Maths.", button: "Let's go" },
-    { t: "fn", fn: "unlockTrig" },
-    { t: "ind", plate: "practising", label: "Skills · Trigonometry · Practising", text: "hints, you solve." },
-    { t: "agent", text: "Try first: which ratio links the tower's height and the length of its shadow?" },
-    { t: "label", name: "ratio" },
-    { t: "chips", options: [{ label: "sin", go: "hint" }, { label: "cos", go: "hint" }, { label: "tan", go: "tan" }] },
-    { t: "label", name: "hint" },
-    { t: "fn", fn: "useHint" },
-    { t: "agent", text: "Close. Hint: the shadow is the side next to the 45° angle, and the height is the side opposite it. Which ratio is opposite ÷ adjacent?" },
-    { t: "go", to: "ratio" },
-    { t: "label", name: "tan" },
-    { t: "agent", text: "Yes. So tan 45° = height ÷ 20. What is tan 45°?" },
-    { t: "chips", options: [{ label: "0", go: "tanHint" }, { label: "1", go: "value" }, { label: "√3", go: "tanHint" }] },
-    { t: "label", name: "tanHint" },
-    { t: "fn", fn: "useHint" },
-    { t: "agent", text: "Hint: in a 45° right triangle the two shorter sides are equal. So opposite ÷ adjacent is…" },
-    { t: "chips", options: [{ label: "1", go: "value" }] },
-    { t: "label", name: "value" },
-    { t: "agent", text: "Right. So the height is…" },
-    { t: "chips", options: [{ label: "20 m", go: "solved" }, { label: "10 m", go: "check" }, { label: "28.3 m", go: "check" }] },
-    { t: "label", name: "check" },
-    { t: "agent", text: "Check it: height ÷ 20 = 1. So the height is…" },
-    { t: "chips", options: [{ label: "20 m", go: "solved" }] },
-    { t: "label", name: "solved" },
-    { t: "fn", fn: "trigSolved" },
-    { t: "agent", text: S => "Correct: 20 m. You solved it yourself with " + (S.hints === 0 ? "no hints." : S.hints === 1 ? "1 hint." : S.hints + " hints.") },
-    { t: "celebrate", text: S => S.hints <= 1 ? "Trigonometry: " + S.trigProgress + " of 3 towards Licensed" : "Solved! Do one with 1 hint or fewer to count towards Licensed" },
-    { t: "end" },
-    { t: "label", name: "hurry" },
-    { t: "teen", text: "⚡ Hurry: just do this one" },
-    { t: "fn", fn: "hurrySpent" },
-    { t: "agent", text: "Done for you: height = 20 × tan 45° = 20 × 1 = 20 m." },
-    { t: "sys", text: S => "Hurry skip used. " + S.skips + " left this week. This one doesn't count towards your licence." },
-    { t: "end" }
+    { from: "teen", text: "solve: a tower casts a 20 m shadow at 45°, find its height" },
+    { action: "unlockTrig", level: "practising", title: "New skill unlocked: Trigonometry",
+      text: "Starting at " + lv("practising") + " (you're " + lv("licensed") + " in Maths).", yes: "Yes, let's go", no: "No, I'm not new to this" },
+    { id: "practising", action: "indicator", level: "practising", label: "Skills · " + lv("practising") + ":", text: "hints only, you solve it." },
+    { from: "agent", text: "Try first: which ratio links height and shadow?", trace: [
+      ["① Detector", "Skills · Maths · Trigonometry (new topic)"],
+      ["② Licence store", "Maths: " + lv("licensed") + ", so the new topic starts one level lower: " + lv("practising")],
+      ["③ Instructions", "Hints only; she does the key steps"],
+      ["⑤ Output check", "No answer given before she tried ✓"]
+    ], chips: [{ label: "sin", go: "ratioHint" }, { label: "cos", go: "ratioHint" }, { label: "tan", go: "tan" }] },
+    { id: "ratioHint", action: "useHint" },
+    { from: "agent", text: "Close. Hint: the height is opposite the 45° angle, and the shadow is next to it. Which ratio is opposite ÷ adjacent?",
+      chips: [{ label: "sin", go: "ratioHint" }, { label: "cos", go: "ratioHint" }, { label: "tan", go: "tan" }] },
+    { id: "tan", from: "agent", text: "Yes, tan. tan 45° = 1, so height ÷ 20 = 1. The height is…",
+      chips: [{ label: "10 m", go: "heightHint" }, { label: "20 m", go: "solved" }, { label: "40 m", go: "heightHint" }] },
+    { id: "heightHint", action: "useHint" },
+    { from: "agent", text: "Check it: if height ÷ 20 = 1, multiply both sides by 20. The height is…",
+      chips: [{ label: "10 m", go: "heightHint" }, { label: "20 m", go: "solved" }, { label: "40 m", go: "heightHint" }] },
+    { id: "solved", action: "trigSolved" },
+    { from: "agent", text: S => "Correct: 20 m. You solved it yourself with " + (S.hints === 0 ? "no hints." : S.hints === 1 ? "1 hint." : S.hints + " hints."), trace: [
+      ["⑥ Progress tracker", S => "Attempted ✓ · hints: " + S.hints + " → " + (S.hints <= 1 ? "counts towards " + lv("licensed") : "doesn't count (needs 1 hint or fewer)")]
+    ]},
+    { action: "trigProgress" },
+    { action: "end" },
+
+    /* "No, I'm not new to this": a quick check; passing starts the topic one level higher. */
+    { id: "notNew", from: "agent", text: "Quick check, then. What's sin 30°?",
+      chips: [{ label: "1", go: "checkFailed" }, { label: "1/2", go: "checkPassed" }, { label: "√3/2", go: "checkFailed" }] },
+    { id: "checkPassed", action: "setTrig", level: "licensed" },
+    { from: "agent", text: "Nice. You start at " + lv("licensed") + " in Trigonometry.", go: "licensed" },
+    { id: "checkFailed", action: "setTrig", level: "practising" },
+    { from: "agent", text: "No worries. " + lv("practising") + " it is, so you'll get hints.", go: "practising" },
+
+    { id: "licensed", action: "indicator", level: "licensed", label: "Skills · " + lv("licensed") + ":", text: "I'll do it, then check with you." },
+    { action: "hurryOff" },
+    { from: "agent", text: "Height = 20 × tan 45° = 20 × 1 = 20 m.\nDoes that match what you'd get?", trace: [
+      ["① Detector", "Skills · Maths · Trigonometry"],
+      ["② Licence store", "Trigonometry: " + lv("licensed") + " (passed the quick check)"],
+      ["③ Instructions", "Do it, then check with her"],
+      ["⑤ Output check", "Asked her to check the answer ✓"]
+    ], chips: [{ label: "Yes, makes sense", also: "yeah yep ok okay sure" }, { label: "Why tan?", also: "how explain" }] },
+    { from: "agent", text: S => S.lastChip === "Why tan?"
+        ? "tan = opposite ÷ adjacent. The height is opposite the 45° angle and the shadow is next to it, so tan links the two."
+        : "Great. It's in your homework doc." },
+    { action: "end" },
+
+    { id: "hurry", from: "teen", sent: true, text: "⚡ Hurry: just do this one" },
+    { action: "hurrySpent" },
+    { from: "agent", text: S => "Done for you. " + S.skips + (S.skips === 1 ? " skip" : " skips") + " left this week.\nHeight = 20 × tan 45° = 20 × 1 = 20 m.", trace: [
+      ["Hurry button", S => "Skip used: " + S.skips + " of " + DATA.persona.skips.perWeek + " left this week"],
+      ["⑥ Progress tracker", "Done for her, so it doesn't count towards her licence"]
+    ]},
+    { action: "note", text: "Hurry skips don't count towards your licence." }
   ],
 
   feelings: [
-    { t: "compose", prefill: "feeling really low after the fight, like no one gets me" },
-    { t: "ind", plate: "always", label: "Feelings", text: "real people first." },
-    { t: "agent", text: "That sounds really heavy. I'm glad you said it instead of sitting with it alone." },
-    { t: "agent", text: "Is it mostly the fight with Riya, or has it been building for a while?" },
-    { t: "chips", options: [{ label: "Mostly the fight" }, { label: "It's been building" }] },
-    { t: "agent", text: "That makes sense. Fights with close friends hurt because they matter. Want to try something that helps settle it for tonight?" },
-    { t: "chips", options: [{ label: "Write it out", go: "write" }, { label: "Slow breathing", go: "breathe" }] },
-    { t: "label", name: "write" },
-    { t: "agent", text: "Three lines in your notes: what happened, what you felt, what you wish she knew. Only you read it." },
-    { t: "go", to: "people" },
-    { t: "label", name: "breathe" },
-    { t: "agent", text: "In for 4, hold for 7, out for 8. Four rounds. I'll wait." },
-    { t: "label", name: "people" },
-    { t: "agent", text: "One more thing. Would talking to Didi or Riya help? I can't be the only one you talk to about this." },
-    { t: "chips", options: [{ label: "Maybe Didi" }, { label: "Not tonight" }] },
-    { t: "agent", text: S => S.lastChip === "Maybe Didi"
+    { from: "teen", text: "feeling really low after the fight, like no one gets me" },
+    { action: "indicator", level: "always", label: "Feelings ·", text: "Real people first." },
+    { from: "agent", text: "That sounds really heavy. I'm glad you said it instead of sitting with it alone.", trace: [
+      ["① Detector", "Feelings · low mood after a fight · no danger signs"],
+      ["② Licence store", "Always on until 18"],
+      ["③ Instructions", "Support, ask one question, then real people first · never act as a friend or partner"]
+    ]},
+    { from: "agent", text: "Is it mostly the fight with Riya, or has it been building for a while?",
+      chips: ["Mostly the fight", "It's been building"] },
+    { from: "agent", text: "That makes sense. It hurts most with the people who matter." },
+    { from: "agent", text: "Would talking to Didi or Riya help? I can't be the only one you talk to about this.", trace: [
+      ["⑤ Output check", "Pointed her to a real person ✓"],
+      ["Safety escalation", "Not needed"]
+    ], chips: [{ label: "Maybe Didi", also: "yes yeah sure ok okay didi" }, { label: "Not tonight", also: "no nah nope later" }] },
+    { from: "agent", text: S => S.lastChip === "Maybe Didi"
         ? "Good call. Text her in your own words; even \"you up?\" works. I'm here till she replies."
         : "That's okay. Maybe tomorrow. I'm here if you want to keep talking tonight." },
-    { t: "sys", text: "🔒 Your chats are private. If you're ever in danger, I'll let your parents know." },
-    { t: "end" }
+    { action: "note", text: "🔒 Your chats are private. If you're ever in danger, I'll let your parents know." }
   ]
 };
