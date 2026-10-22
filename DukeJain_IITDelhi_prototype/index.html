@@ -9,7 +9,7 @@
 </head>
 <body>
   <div class="app">
-    <aside class="rail" aria-label="Demo moments">
+    <aside class="rail" id="rail" aria-label="Demo moments">
       <div class="rail-brand">
         <span id="brand-plate"></span>
         <div>
@@ -21,26 +21,28 @@
       <div class="rail-foot">
         <label class="rail-opt"><input type="checkbox" id="show-grad" checked> Include Graduation (optional)</label>
         <button class="btn ghost small" id="reset">Reset demo</button>
-        <button class="btn ghost small" id="hide-rail" title="Shortcut: H">Hide this panel</button>
+        <button class="btn ghost small" id="hide-rail" title="Shortcut: H">Presentation mode</button>
         <p>Prototype: every agent reply is scripted. No real AI, no internet.</p>
       </div>
     </aside>
+    <div class="rail-scrim" id="rail-scrim"></div>
 
     <main class="stage">
-      <p class="stage-caption" id="caption"></p>
-      <div class="phone">
-        <div class="phone-notch"></div>
-        <div class="screen" id="screen"></div>
+      <div class="demo-bar">
+        <button class="btn ghost small" id="open-rail">&#9776; Moments</button>
+        <p class="demo-caption" id="caption"></p>
+        <div class="demo-nav">
+          <button class="btn ghost small" id="prev">&larr;<span class="lbl"> Previous</span></button>
+          <button class="btn primary small" id="next">Next<span class="lbl"> moment</span> &rarr;</button>
+          <label class="bts-toggle" title="Shortcut: B"><input type="checkbox" id="bts"> Behind the scenes</label>
+        </div>
       </div>
-      <div class="stage-nav">
-        <button class="btn ghost small" id="prev">&larr; Previous</button>
-        <button class="btn primary small" id="next">Next moment &rarr;</button>
-        <label class="bts-toggle" title="Shortcut: B"><input type="checkbox" id="bts"> Behind the scenes</label>
-      </div>
+      <div class="screen" id="screen"></div>
     </main>
   </div>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <button class="show-demo" id="show-demo" title="Show the demo controls (shortcut: H)">&#9776; Demo</button>
 
   <script src="assets/data.js"></script>
   <script src="assets/app.js"></script>

@@ -35,18 +35,34 @@ function levelName(level) { return level ? DATA.levels[level].name : "New"; }
 function nextLevel(level) { return DATA.order[DATA.order.indexOf(level) + 1]; }
 /* "My agent" is the teen's own AI agent, so it gets a neutral avatar rather than the product's mark. */
 const agentAvatar = (sm = "") => `<span class="avatar agent${sm}" aria-hidden="true">&#10022;</span>`;
-function sbar(time) {
-  return `<div class="sbar"><span>${time}</span><span class="icons">5G &#9646;&#9646;&#9646;</span></div>`;
+function topbar(kind, tab) {
+  const p = DATA.persona;
+  const tabs = kind === "parent"
+    ? [["setup", "Setup"], ["parent", "Weekly report"], [null, "Settings"]]
+    : [["home", "Chat"], ["profile", "My licence"], [null, "Wallet"], [null, "Settings"]];
+  const who = kind === "parent"
+    ? `<span class="avatar parent sm">${esc(p.parent[0])}</span><span class="name">${esc(p.parent)} · parent</span>`
+    : `<span class="avatar teen sm">${esc(p.name[0])}</span><span class="name">${esc(p.name)}, ${p.age}</span>`;
+  return `<header class="topbar"><div class="brand">${plate("learner")}<span class="name">${esc(DATA.product.name)}</span></div>
+    <nav class="tabs">${tabs.map(([id, label]) => `<button ${id ? `data-go="${id}"` : "data-off"}${id && id === tab ? ' class="on"' : ""}>${label}</button>`).join("")}</nav>
+    <div class="who">${who}</div></header>`;
 }
-function appbar({ title, sub, avatar, back = true, right = "" }) {
-  return `<div class="appbar">
-    ${back ? `<button class="back" data-go="home" aria-label="Back to home">&#8249;</button>` : ""}
-    ${avatar || ""}
-    <div class="ttl"><b>${esc(title)}</b>${sub ? `<small>${esc(sub)}</small>` : ""}</div>${right}</div>`;
+/* The teen's app: content in the middle, her licence, wallet and hurry skips in a side panel. */
+function teenShell(main, { tab = "home", panel = true } = {}) {
+  return topbar("teen", tab) + `<div class="layout${panel ? "" : " no-panel"}"><section class="main">${main}</section>${panel ? sidePanel() : ""}</div>`;
 }
-function chatShell({ time, title = "My agent", sub, hurry = false, right = "" }) {
-  return sbar(time) + appbar({ title, sub, right, avatar: agentAvatar() }) +
-    `<div class="ind-slot"></div><div class="body"></div>` + composer(hurry);
+function parentShell(main, tab) { return topbar("parent", tab) + main; }
+function sidePanel() {
+  return `<aside class="panel" aria-label="My licence, pocket money and hurry skips">
+    <div class="card areas"><div class="row between"><p class="label" style="margin:0">My licence</p><button class="link" data-go="profile">See all &rsaquo;</button></div>
+      <div class="mini-areas" data-live="areas"></div></div>
+    <div class="card"><p class="label" style="margin:0">Pocket money</p>
+      <div class="big-num small" data-live="wallet"></div><div class="bar"><i data-live="walletBar"></i></div><small data-live="monthly"></small></div>
+    <div class="card"><p class="label" style="margin:0">&#9889; Hurry skips this week</p><div class="big-num small" data-live="skipsOf"></div></div></aside>`;
+}
+function chatView({ sub, hurry = false }) {
+  return `<div class="chat"><div class="chat-head">${agentAvatar()}<div class="ttl"><b>My agent</b>${sub ? `<small>${esc(sub)}</small>` : ""}</div></div>
+    <div class="ind-slot"></div><div class="body"></div>${composer(hurry)}</div>`;
 }
 function composer(hurry) {
   return `<div class="composer">
@@ -58,11 +74,16 @@ function bar(progress, target) {
   return `<div class="bar"><i style="width:${pct(progress, target)}%"></i></div>`;
 }
 
-/* Elements marked data-live always show the current wallet or hurry skips. */
+/* Elements marked data-live always show the current wallet, hurry skips and licence levels. */
 function refreshLive() {
   $$("[data-live=wallet]").forEach(el => { el.textContent = money(S.wallet); });
   $$("[data-live=skips]").forEach(el => { el.textContent = S.skips + " left"; });
   $$("[data-live=skipsOf]").forEach(el => { el.textContent = S.skips + " of " + DATA.persona.skips.perWeek + " left"; });
+  $$("[data-live=monthly]").forEach(el => { el.textContent = "of " + money(S.monthly) + " this month"; });
+  $$("[data-live=walletBar]").forEach(el => { el.style.width = pct(S.wallet, S.monthly) + "%"; });
+  $$("[data-live=areas]").forEach(el => {
+    el.innerHTML = S.licences.map(l => `<div class="mini-area">${plate(areaLevel(l))}<span>${esc(l.name)}</span></div>`).join("");
+  });
 }
 
 let toastTimer;
@@ -110,6 +131,7 @@ function go(id) {
   S.token++;
   S.screen = id;
   S.seen[id] = true;
+  document.body.classList.remove("rail-open");
   $("#caption").textContent = m.caption;
   const screen = $("#screen");
   screen.className = "screen";
@@ -130,10 +152,10 @@ function setBehindScenes(on) {
 }
 
 /* ---------- Chat engine ---------- */
-function makeChat(root, opts = {}) {
+function makeChat(root) {
   const body = $(".body", root), ta = $("textarea", root), send = $(".send", root), hurry = $(".hurry", root);
   const token = S.token;
-  let waiter = null, mode = null, prefill = "", options = [], chipsEl = null, jump = null, onType = null, autoSend = !!opts.autoSend;
+  let waiter = null, mode = null, prefill = "", options = [], chipsEl = null, jump = null, onType = null;
   let queued = null; /* sent while the agent was still typing: it answers the next step */
 
   const alive = () => token === S.token;
@@ -184,7 +206,6 @@ function makeChat(root, opts = {}) {
       add("trace", lines.map(([k, v]) => `<div><b>${esc(k)}</b><span>${esc(val(v))}</span></div>`).join(""));
     },
     compose(text, to) {
-      if (autoSend) { autoSend = false; return Promise.resolve({ text }); }
       mode = "compose"; prefill = text;
       ta.value = text;
       fit();
@@ -208,14 +229,14 @@ function makeChat(root, opts = {}) {
       ta.placeholder = "Tap an option, or type its name";
       return wait();
     },
-    /* A pop-up over the chat. Resolves true for the main button, false for the second one. */
+    /* A pop-up over the screen. Resolves true for the main button, false for the second one. */
     pop(s) {
       const wrap = document.createElement("div");
       wrap.className = "pop-wrap";
       wrap.innerHTML = `<div class="pop">${plate(s.level, true)}<h3>${esc(s.title)}</h3><p>${esc(s.text)}</p>
         <button class="btn primary block" data-yes>${esc(s.yes || "OK")}</button>
         ${s.no ? `<button class="btn ghost block" data-no>${esc(s.no)}</button>` : ""}</div>`;
-      root.appendChild(wrap);
+      $("#screen").appendChild(wrap);
       return new Promise(r => wrap.addEventListener("click", e => {
         const b = e.target.closest("button");
         if (!b) return;
@@ -312,20 +333,22 @@ ACTIONS.end = (s, ctx) => ctx.done();
 ACTIONS.hurryOff = (s, ctx) => ctx.hurryOff();
 
 function openAgentChat(el, flowKey, opts) {
-  el.innerHTML = chatShell(opts);
+  el.innerHTML = teenShell(chatView(opts), { tab: "home" });
   if (opts.night) el.classList.add("night");
+  if (opts.greet) $(".body", el).innerHTML = opts.greet;
   refreshLive();
-  runFlow(makeChat(el, opts), DATA.flows[flowKey]);
+  const chat = $(".chat", el);
+  runFlow(makeChat(chat), DATA.flows[flowKey]);
+  return chat;
 }
-const walletChip = `<span class="wallet-chip">&#128091; <span data-live="wallet"></span></span>`;
 
 /* ---------- 0. Start ---------- */
 SCREENS.start = el => {
-  el.innerHTML = sbar("9:41") + `<div class="body pad-lg start">
-    <div class="hero">${plate("learner", true)}<h1>${esc(DATA.product.name)}</h1><p>${esc(DATA.product.tagline)}</p></div>
+  el.innerHTML = `<div class="landing"><div class="landing-inner">
+    ${plate("learner", true)}<h1>${esc(DATA.product.name)}</h1><p class="tagline">${esc(DATA.product.tagline)}</p>
     <p class="pitch">${esc(DATA.product.pitch)}</p>
-    <div class="stack"><button class="btn primary block" data-go="setup">Parent setup</button>
-    <button class="btn ghost block" data-go="home">Ananya's day</button></div></div>`;
+    <div class="actions"><button class="btn primary" data-go="setup">Parent setup</button>
+    <button class="btn ghost" data-go="home">Ananya's day</button></div></div></div>`;
 };
 
 /* ---------- 1. Parent setup, then the handover to Ananya ---------- */
@@ -344,25 +367,30 @@ function defaultRows() {
 }
 SCREENS.setup = el => {
   const prov = S.providers.map((p, i) => `<label class="check"><input type="checkbox" data-p="${i}" ${p.on ? "checked" : ""} ${p.locked ? "disabled" : ""}>
-    <span>${esc(p.name)}${p.locked ? `<small class="muted"> · blocked on her phone and school Wi-Fi</small>` : ""}</span></label>`).join("");
+    <span>${esc(p.name)}${p.locked ? `<small class="muted"> · blocked on her devices and school Wi-Fi</small>` : ""}</span></label>`).join("");
   const options = (list, current, label) => list.map(v => `<option value="${v}" ${v === current ? "selected" : ""}>${label(v)}</option>`).join("");
-  el.innerHTML = sbar("8:15 PM") + appbar({ title: "Set up " + DATA.product.name, sub: "For Ananya", back: false }) + `<div class="body pad-lg">
-    <div class="card"><p class="label">Your child</p>
-      <div class="row between"><span>Age</span><select id="age" aria-label="Age">${options([13, 14, 15, 16, 17, 18], S.setupAge, v => v)}</select></div>
-      <div class="row between gap-top"><span>Class</span><select id="cls" aria-label="Class">${options([8, 9, 10, 11, 12], S.setupClass, v => "Class " + v)}</select></div></div>
-    <div class="card"><p class="label">Default levels</p>
-      <div class="stack small-rows" id="defaults">${defaultRows()}</div>
-      <p class="muted fine">Levels then change only through her own progress.</p></div>
-    <div class="card"><p class="label">AI providers she may use</p>${prov}</div>
-    <div class="card"><p class="label">Pocket-money wallet</p>
-      <div class="row between"><span>Per month</span><select id="monthly" aria-label="Pocket money per month">${options(DATA.pocketMoney, S.monthly, money)}</select></div></div>
-    <div class="card"><div class="row between"><p class="label" style="margin:0">Accommodations</p><button class="switch${S.accommodations ? " on" : ""}" id="acc" aria-label="Accommodations" aria-pressed="${S.accommodations}"></button></div>
-      <p class="muted fine">For learning differences: more hints, read-aloud, extra time. Protect her from harm, not from help.</p></div>
-    <div class="card see"><p class="label">What you will and won't see</p>
-      <div class="row"><span class="yes">&#10003;</span>You'll see her progress and safety alerts.</div>
-      <div class="row"><span class="no">&#10007;</span>You won't see her chats.</div></div>
-    <label class="check"><input type="checkbox" id="consent" ${S.consent ? "checked" : ""}><span>I'm Ananya's parent and give verifiable consent under the DPDP Act, 2023.</span></label>
-    <button class="btn primary block" id="finish" ${S.consent ? "" : "disabled"}>Finish setup</button></div>`;
+  el.innerHTML = parentShell(`<div class="page"><div class="page-inner">
+    <div><h1 class="page-title">Set up ${esc(DATA.product.name)} for Ananya</h1><p class="page-sub">Takes a minute. You can change any of this later.</p></div>
+    <div class="grid2">
+      <div class="card"><p class="label">Your child</p>
+        <div class="row between"><span>Age</span><select id="age" aria-label="Age">${options([13, 14, 15, 16, 17, 18], S.setupAge, v => v)}</select></div>
+        <div class="row between gap-top"><span>Class</span><select id="cls" aria-label="Class">${options([8, 9, 10, 11, 12], S.setupClass, v => "Class " + v)}</select></div></div>
+      <div class="card"><p class="label">Default levels</p>
+        <div class="stack small-rows" id="defaults">${defaultRows()}</div>
+        <p class="muted fine">Levels then change only through her own progress.</p></div>
+      <div class="card"><p class="label">AI providers she may use</p>${prov}</div>
+      <div class="card"><p class="label">Pocket-money wallet</p>
+        <div class="row between"><span>Per month</span><select id="monthly" aria-label="Pocket money per month">${options(DATA.pocketMoney, S.monthly, money)}</select></div>
+        <p class="muted fine">She spends it through her agent, with comparisons and limits that match her level.</p></div>
+      <div class="card"><div class="row between"><p class="label" style="margin:0">Accommodations</p><button class="switch${S.accommodations ? " on" : ""}" id="acc" aria-label="Accommodations" aria-pressed="${S.accommodations}"></button></div>
+        <p class="muted fine">For learning differences: more hints, read-aloud, extra time. Protect her from harm, not from help.</p></div>
+      <div class="card see"><p class="label">What you will and won't see</p>
+        <div class="row"><span class="yes">&#10003;</span>You'll see her progress and safety alerts.</div>
+        <div class="row"><span class="no">&#10007;</span>You won't see her chats.</div></div>
+    </div>
+    <div class="card finish-row"><label class="check"><input type="checkbox" id="consent" ${S.consent ? "checked" : ""}><span>I'm Ananya's parent and give verifiable consent under the DPDP Act, 2023.</span></label>
+      <button class="btn primary" id="finish" ${S.consent ? "" : "disabled"}>Finish setup</button></div>
+  </div></div>`, "setup");
   const showDefaults = () => { $("#defaults", el).innerHTML = defaultRows(); };
   $("#age", el).addEventListener("change", e => {
     S.setupAge = +e.target.value;
@@ -383,54 +411,49 @@ SCREENS.setup = el => {
   $("#finish", el).addEventListener("click", () => { S.setupDone = true; handover(el); });
 };
 function handover(el) {
-  el.innerHTML = sbar("8:17 PM") + `<div class="body pad-lg handover">
-    <div class="hand">&#128241;</div><h2>Setup done. Hand the phone to Ananya.</h2>
+  el.innerHTML = parentShell(`<div class="centered"><div class="card handover">
+    <div class="hand">&#128241;</div><h2>Setup done. Hand the device to Ananya.</h2>
     <p class="muted">She'll see what ${esc(DATA.product.name)} does, and what you can and can't see.</p>
-    <button class="btn primary block" id="im-teen">I'm Ananya</button></div>`;
+    <button class="btn primary block" id="im-teen">I'm Ananya</button></div></div>`, "setup");
   $("#im-teen", el).addEventListener("click", () => welcome(el));
 }
 function welcome(el) {
   const h = DATA.handover;
-  el.innerHTML = sbar("8:18 PM") + `<div class="body pad-lg welcome">
-    <div>${plate("learner", true)}<h2>Hi Ananya</h2></div>
-    <p class="pitch">${esc(h.intro)}</p>
-    ${h.points.map(([icon, text]) => `<div class="card row top"><span class="icon" aria-hidden="true">${icon}</span><span>${esc(text)}</span></div>`).join("")}
-    <button class="btn primary block" data-go="home">Let's go</button></div>`;
+  el.innerHTML = teenShell(`<div class="centered"><div class="card welcome">
+    ${plate("learner", true)}<h2>Hi Ananya</h2><p class="tight muted">${esc(h.intro)}</p>
+    ${h.points.map(([icon, text]) => `<div class="point"><span class="icon" aria-hidden="true">${icon}</span><span>${esc(text)}</span></div>`).join("")}
+    <button class="btn primary block" data-go="home">Let's go</button></div></div>`, { tab: null, panel: false });
 }
 
-/* ---------- 2. Ananya's home (chore) ---------- */
+/* ---------- 2. Ananya's home: her agent, with a chore ---------- */
 function areaLevel(l) { return l.level || l.topics[0].level; }
 SCREENS.home = el => {
-  const areas = S.licences.map(l => `<div class="mini-area">${plate(areaLevel(l))}<span>${esc(l.name)}</span></div>`).join("");
-  el.innerHTML = sbar("4:32 PM") + `<div class="body pad-lg home">
-    <div><p class="muted fine" style="margin:0">Thursday</p><h2 class="hi">Hi Ananya</h2></div>
-    <button class="ask" id="ask">${agentAvatar()}<span><b>My agent</b><small>Ask anything&hellip;</small></span></button>
-    <div class="chips left"><button class="chip" id="cab">Book a cab to Riya's at 5</button></div>
-    <div class="card"><div class="row between"><p class="label" style="margin:0">My licence</p><button class="link" data-go="profile">See all &rsaquo;</button></div>
-      <div class="mini-areas">${areas}</div></div>
-    <div class="card"><div class="row between"><p class="label" style="margin:0">Pocket money</p><span class="muted fine">of ${money(S.monthly)} this month</span></div>
-      <div class="big-num small" data-live="wallet"></div>${bar(S.wallet, S.monthly)}</div>
-    <div class="card row between"><span>&#9889; Hurry skips this week</span><b data-live="skipsOf"></b></div></div>
-    <nav class="tabbar"><button class="on" data-go="home">Home</button><button data-go="profile">Licence</button><button data-off>Wallet</button><button data-off>Settings</button></nav>`;
-  const chat = { time: "4:33 PM", sub: "Here to help" };
-  $("#ask", el).addEventListener("click", () => openAgentChat(el, "home", chat));
+  const ask = DATA.flows.home[0].text;
+  const greet = `<div class="greet"><h2>Hi Ananya</h2><p>What do you need today?</p>
+    <div class="chips"><button class="chip" id="cab">${esc(ask)}</button></div></div>`;
+  const chat = openAgentChat(el, "home", { sub: "Thursday · 4:32 PM", greet });
   /* The suggestion chip is Ananya saying it, so it sends straight away. */
-  $("#cab", el).addEventListener("click", () => openAgentChat(el, "home", Object.assign({ autoSend: true }, chat)));
+  $("#cab", el).addEventListener("click", e => {
+    e.currentTarget.parentNode.remove();
+    $("textarea", chat).value = ask;
+    $(".send", chat).click();
+  });
 };
 
 /* ---------- 3. People: apology to Riya ---------- */
 SCREENS.people = el => {
-  el.innerHTML = sbar("6:10 PM") + appbar({ title: "Riya", sub: "last seen 5:58 PM", avatar: `<span class="avatar friend">R</span>` }) + `
-    <div class="thread">
-      <div class="sys">Saturday</div>
-      <div class="msg friend">where are you?? it's starting<span class="meta">6:02 PM</span></div>
-      <div class="msg friend">you didn't even come.<span class="meta">7:41 PM</span></div>
-      <div class="sys">Sunday</div>
-      <div class="msg teen">ugh sorry stuff came up<span class="meta">11:20 AM</span></div>
-      <div class="msg friend">it's fine. whatever.<span class="meta">11:46 AM</span></div>
-    </div>
+  el.innerHTML = teenShell(`<div class="split">
+    <div class="thread-pane"><div class="chat-head"><span class="avatar friend">R</span><div class="ttl"><b>Riya</b><small>last seen 5:58 PM</small></div></div>
+      <div class="thread">
+        <div class="sys">Saturday</div>
+        <div class="msg friend">where are you?? it's starting<span class="meta">6:02 PM</span></div>
+        <div class="msg friend">you didn't even come.<span class="meta">7:41 PM</span></div>
+        <div class="sys">Sunday</div>
+        <div class="msg teen">ugh sorry stuff came up<span class="meta">11:20 AM</span></div>
+        <div class="msg friend">it's fine. whatever.<span class="meta">11:46 AM</span></div>
+      </div></div>
     <div class="sheet"><div class="sheet-head">${agentAvatar(" sm")}My agent<span class="muted fine">· helping with this chat</span></div>
-      <div class="ind-slot"></div><div class="body"></div>${composer(false)}</div>`;
+      <div class="ind-slot"></div><div class="body"></div>${composer(false)}</div></div>`, { tab: "home", panel: false });
   const thread = $(".thread", el);
   thread.scrollTop = thread.scrollHeight;
   runFlow(makeChat($(".sheet", el)), DATA.flows.people);
@@ -453,11 +476,11 @@ ACTIONS.riyaReplies = () => {
 /* ---------- 4. Choices + Self: Class 11 stream ---------- */
 SCREENS.choices = el => {
   S.beliefs.find(b => b.id === "science").state = null;
-  openAgentChat(el, "choices", { time: "9:05 PM", sub: "Choices" });
+  openAgentChat(el, "choices", { sub: "Choices · 9:05 PM" });
 };
 ACTIONS.streams = async (s, ctx) => {
-  ctx.add("card options", `<p class="label">Class 11 streams</p>` + DATA.streams.map(x =>
-    `<div class="option static"><b>${esc(x.name)}</b><small>${esc(x.line)}</small></div>`).join(""));
+  ctx.add("card", `<p class="label">Class 11 streams</p><div class="options grid">` + DATA.streams.map(x =>
+    `<div class="option static"><b>${esc(x.name)}</b><small>${esc(x.line)}</small></div>`).join("") + `</div>`);
   await sleep(400);
 };
 ACTIONS.belief = async (s, ctx) => {
@@ -493,12 +516,12 @@ SCREENS.money = el => {
   /* Replaying the moment replaces its orders, so the wallet starts where it did. */
   if (S.gift) { S.wallet += S.gift.price; S.gift = null; }
   if (S.snack) { S.wallet += DATA.snack.price; S.snack = false; }
-  openAgentChat(el, "money", { time: "5:20 PM", sub: "Money", right: walletChip });
+  openAgentChat(el, "money", { sub: "Money · 5:20 PM" });
 };
 ACTIONS.products = async (s, ctx) => {
-  const card = ctx.add("card options", `<div class="row between"><p class="label" style="margin:0">Under ${money(800)}</p><span class="pill">No sponsored options.</span></div>` +
-    DATA.products.map(g => `<button class="option gift" data-id="${g.id}"><span><b>${esc(g.name)}</b><small>${esc(g.why)}</small></span>
-      <span class="price"><b>${money(g.price)}</b><small>leaves ${money(S.wallet - g.price)}</small></span></button>`).join(""));
+  const card = ctx.add("card", `<div class="row between"><p class="label" style="margin:0">Under ${money(800)}</p><span class="pill">No sponsored options.</span></div>
+    <div class="options gap-top">` + DATA.products.map(g => `<button class="option gift" data-id="${g.id}"><span><b>${esc(g.name)}</b><small>${esc(g.why)}</small></span>
+      <span class="price"><b>${money(g.price)}</b><small>leaves ${money(S.wallet - g.price)}</small></span></button>`).join("") + `</div>`);
   const pick = (g, typed) => {
     if (S.gift) return;
     S.gift = g;
@@ -521,7 +544,7 @@ ACTIONS.buySnack = () => { S.snack = true; S.wallet -= DATA.snack.price; };
 /* ---------- 6. Skills: trigonometry, try first ---------- */
 SCREENS.skills = el => {
   S.hints = 0;
-  openAgentChat(el, "skills", { time: "7:12 PM", sub: "Skills · Maths homework", hurry: true });
+  openAgentChat(el, "skills", { sub: "Skills · Maths homework · 7:12 PM", hurry: true });
 };
 /* The pop-up only appears the first time; after that the flow follows the level she already has. */
 ACTIONS.unlockTrig = async (s, ctx) => {
@@ -546,6 +569,7 @@ ACTIONS.trigProgress = async (s, ctx) => {
     ${bar(S.trigFrom, t.target)}<small>${counted ? `${t.progress} of ${t.target} towards ${next}` : `Doesn't count yet: ${next} needs tasks done with 1 hint or fewer`}</small>`);
   await sleep(80);
   $(".bar > i", card).style.width = pct(t.progress, t.target) + "%";
+  refreshLive();
   await sleep(700);
 };
 ACTIONS.hurrySpent = () => {
@@ -555,7 +579,7 @@ ACTIONS.hurrySpent = () => {
 };
 
 /* ---------- 7. Feelings: 11 pm ---------- */
-SCREENS.feelings = el => openAgentChat(el, "feelings", { time: "11:04 PM", sub: "Feelings", night: true });
+SCREENS.feelings = el => openAgentChat(el, "feelings", { sub: "Feelings · 11:04 PM", night: true });
 
 /* ---------- 8. Licence profile ---------- */
 function itemRow(it, name = it.name) {
@@ -572,13 +596,15 @@ function beliefList() {
     `<div class="belief-row${b.state === "outdated" || b.state === "dont" ? " gone" : ""}"><span>&lsquo;${esc(b.text)}&rsquo;</span>
       <small>${b.state ? tag[b.state] : "Expires in 3 weeks unless you confirm"}</small></div>`).join("") + `</div>`;
 }
+/* Exactly what parents get: one number, one insight, one action. Shared by Screens 8 and 9. */
 function parentView() {
   const w = DATA.weekly;
-  return `<div class="card"><p class="label">Self-authored share</p><div class="row"><span class="big-num">${w.share}%</span><span class="up">&uarr; from ${w.was}%</span></div>
+  return `<div class="grid2">
+    <div class="card wide"><p class="label">Self-authored share</p><div class="row"><span class="big-num">${w.share}%</span><span class="up">&uarr; from ${w.was}%</span></div>
       <p class="muted fine">Of the moments that matter (decisions, emotional messages, skill tasks), the share she did herself, against what's expected at her levels.</p></div>
     <div class="card"><p class="label">This week</p><p class="tight">${esc(w.insight)}</p></div>
     <div class="card"><p class="label">One thing to do</p><p class="tight">${esc(w.action)}</p></div>
-    <div class="card see"><div class="row"><span class="yes">&#10003;</span>Safety alerts: none</div><div class="row"><span class="no">&#128274;</span>Chats: never shown</div></div>`;
+    <div class="card see wide"><div class="row"><span class="yes">&#10003;</span>Safety alerts: none</div><div class="row"><span class="no">&#128274;</span>Chats: never shown</div></div></div>`;
 }
 function showPop(root, s, onOk) {
   const wrap = document.createElement("div");
@@ -589,15 +615,16 @@ function showPop(root, s, onOk) {
 }
 SCREENS.profile = el => {
   const writing = topic("skills", "writing");
-  const claim = S.peopleEarned ? "" : `<div class="card claim"><div class="row between"><span><b>Ready to level up</b><small>People · Routine messages</small></span>
+  const claim = S.peopleEarned ? "" : `<div class="card claim"><div class="row between wrap"><span><b>Ready to level up</b><small>People · Routine messages</small></span>
     <button class="btn primary small" id="claim">Claim licence</button></div></div>`;
-  const teen = `<p class="next">Next: ${writing.target - writing.progress} more tasks to <b>${levelName(nextLevel(writing.level))}</b> in Writing</p>${claim}` +
-    S.licences.map(l => `<div class="card area"><div class="row between"><b>${esc(l.name)}</b><span class="muted fine">${esc(l.line)}</span></div>
-      ${l.level ? itemRow(l, l.scope) : ""}${l.topics.map(t => itemRow(t)).join("")}${l.area === "self" ? beliefList() : ""}</div>`).join("");
-  el.innerHTML = sbar("8:00 PM") + appbar({ title: "My licence", sub: "Ananya · 15" }) + `<div class="body pad-lg">
-    <div class="card row between"><span><b>What my parents see</b><small class="muted block">Exactly their view, nothing more</small></span>
-      <button class="switch${S.parentView ? " on" : ""}" id="pv" aria-label="What my parents see" aria-pressed="${S.parentView}"></button></div>
-    ${S.parentView ? `<p class="next">This is everything Mum sees:</p>` + parentView() : teen}</div>`;
+  const teen = `<p class="next">Next: ${writing.target - writing.progress} more tasks to <b>${levelName(nextLevel(writing.level))}</b> in Writing</p>${claim}
+    <div class="areas-grid">` + S.licences.map(l => `<div class="card area"><div class="row between"><b>${esc(l.name)}</b><span class="muted fine">${esc(l.line)}</span></div>
+      ${l.level ? itemRow(l, l.scope) : ""}${l.topics.map(t => itemRow(t)).join("")}${l.area === "self" ? beliefList() : ""}</div>`).join("") + `</div>`;
+  el.innerHTML = teenShell(`<div class="page"><div class="page-inner">
+    <div class="profile-head"><div><h1 class="page-title">My licence</h1><p class="page-sub">Ananya · 15 · Class 10</p></div>
+      <div class="card pv-toggle"><span><b>What my parents see</b><small class="muted block">Exactly their view, nothing more</small></span>
+        <button class="switch${S.parentView ? " on" : ""}" id="pv" aria-label="What my parents see" aria-pressed="${S.parentView}"></button></div></div>
+    ${S.parentView ? `<p class="next">This is everything Mum sees:</p>` + parentView() : teen}</div></div>`, { tab: "profile", panel: false });
   $("#pv", el).addEventListener("click", () => { S.parentView = !S.parentView; SCREENS.profile(el); });
   const btn = $("#claim", el);
   if (btn) btn.addEventListener("click", () => showPop(el, {
@@ -615,30 +642,36 @@ SCREENS.profile = el => {
 
 /* ---------- 9. Parent weekly highlight ---------- */
 SCREENS.parent = el => {
-  el.innerHTML = sbar("Sun 7:30 PM") + appbar({ title: "Ananya's week", sub: "Weekly highlight for Priya", back: false }) +
-    `<div class="body pad-lg">${parentView()}<p class="muted fine center">You see progress and safety alerts only. Ananya sees this exact screen too.</p></div>`;
+  el.innerHTML = parentShell(`<div class="page"><div class="page-inner">
+    <div><h1 class="page-title">Ananya's week</h1><p class="page-sub">Weekly highlight for Priya · Sunday</p></div>
+    ${parentView()}<p class="muted fine center">You see progress and safety alerts only. Ananya sees this exact screen too.</p></div></div>`, "parent");
 };
 
 /* ---------- 10. Graduation (optional teaser) ---------- */
 SCREENS.grad = el => {
-  el.innerHTML = sbar("10:00 AM") + `<div class="body pad-lg grad">
-    ${plate("pro", true)}<h2>You're fully licensed</h2><p class="muted">Ananya · 18</p>
-    <div class="card"><p class="label">My agent charter</p><p class="muted fine">The rules I chose to keep:</p>
-      <ol><li>I write my own apologies and birthday wishes.</li><li>On big choices, ask what I think before telling me what you think.</li><li>Show me one thing outside my usual taste every week.</li></ol></div>
-    <button class="btn primary block" id="keep">Keep my charter</button>
-    <button class="btn ghost block" data-go="start">Back to start</button></div>`;
+  el.innerHTML = teenShell(`<div class="centered"><div class="card grad">
+    <div class="center">${plate("pro", true)}<h2>You're fully licensed</h2><p class="muted">Ananya · 18</p></div>
+    <p class="label gap-top">My agent charter</p><p class="muted fine">The rules I chose to keep:</p>
+    <ol><li>I write my own apologies and birthday wishes.</li><li>On big choices, ask what I think before telling me what you think.</li><li>Show me one thing outside my usual taste every week.</li></ol>
+    <div class="stack gap-top"><button class="btn primary block" id="keep">Keep my charter</button>
+    <button class="btn ghost block" data-go="start">Back to start</button></div></div></div>`, { tab: null, panel: false });
   $("#keep", el).addEventListener("click", () => toast("Charter saved. Parent access ends today."));
 };
 
 /* ---------- Boot ---------- */
+function setPresentation(on) {
+  document.body.classList.toggle("rail-hidden", on);
+  document.body.classList.remove("rail-open");
+}
 document.addEventListener("click", e => {
   const g = e.target.closest("[data-go]");
   if (g) { go(g.dataset.go); return; }
   if (e.target.closest("[data-off]")) offPath();
 });
 document.addEventListener("keydown", e => {
+  if (e.key === "Escape") document.body.classList.remove("rail-open");
   if (e.target.matches("textarea, select, input:not([type=checkbox])")) return;
-  if (e.key === "h" || e.key === "H") document.body.classList.toggle("rail-hidden");
+  if (e.key === "h" || e.key === "H") setPresentation(!document.body.classList.contains("rail-hidden"));
   if (e.key === "b" || e.key === "B") setBehindScenes(!document.body.classList.contains("bts"));
   if (e.key === "ArrowRight") step(1);
   if (e.key === "ArrowLeft") step(-1);
@@ -651,7 +684,10 @@ window.addEventListener("DOMContentLoaded", () => {
   $("#prev").addEventListener("click", () => step(-1));
   $("#next").addEventListener("click", () => step(1));
   $("#reset").addEventListener("click", () => { S = freshState(); go("start"); toast("Demo reset."); });
-  $("#hide-rail").addEventListener("click", () => { document.body.classList.add("rail-hidden"); toast("Press H to bring the panel back."); });
+  $("#hide-rail").addEventListener("click", () => { setPresentation(true); toast("Press H to bring the demo controls back."); });
+  $("#open-rail").addEventListener("click", () => document.body.classList.add("rail-open"));
+  $("#rail-scrim").addEventListener("click", () => document.body.classList.remove("rail-open"));
+  $("#show-demo").addEventListener("click", () => setPresentation(false));
   $("#bts").addEventListener("change", e => setBehindScenes(e.target.checked));
   $("#show-grad").addEventListener("change", e => {
     prefs.grad = e.target.checked;

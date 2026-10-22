@@ -71,13 +71,13 @@ window.DATA = {
   ],
   pocketMoney: [1500, 2000, 2500, 3000],
 
-  /* Setup ends by handing the phone to Ananya. */
+  /* Setup ends by handing the device to Ananya. */
   handover: {
     intro: PRODUCT + " sits between you and your agent. Chores happen instantly. For the things that build you, your agent hands over more as you show you can handle it.",
     points: [
       ["🔒", "Your chats are private. Your parents see your progress, not your conversations, unless you're ever in danger."],
       ["⚡", "3 hurry skips a week, for when you just need something done."],
-      ["🚫", "Other AI apps are restricted on this phone and on school Wi-Fi."]
+      ["🚫", "Other AI apps are restricted on your devices and on school Wi-Fi."]
     ]
   },
 
@@ -105,7 +105,7 @@ window.DATA = {
   /* Demo rail: one entry per moment. */
   moments: [
     { id: "start", title: "Start", sub: "The idea in one line", caption: "A learner's licence for your AI agent. Pick a path to begin." },
-    { id: "setup", title: "Parent setup", sub: "Priya sets it up, then hands over", caption: "Priya sets Ananya's age, class, providers and pocket money, then hands her the phone. Parents see progress, never chats." },
+    { id: "setup", title: "Parent setup", sub: "Priya sets it up, then hands over", caption: "Priya sets Ananya's age, class, providers and pocket money, then hands over the device. Parents see progress, never chats." },
     { id: "home", title: "Ananya's home", sub: "A chore goes straight through", caption: "Ananya, 15, Class 10, Pune. Chores like booking a cab are never restricted." },
     { id: "people", title: "People", sub: "An apology she writes herself", caption: "After a fight, Ananya asks her agent to apologise for her. Messages that carry feelings stay hers." },
     { id: "choices", title: "Choices + Self", sub: "Picking a Class 11 stream", caption: "At " + lv("learner") + " the agent helps her think, shows every option, and checks what it assumes about her." },

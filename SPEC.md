@@ -97,7 +97,7 @@ Some protections **graduate** as the teen shows readiness. Others are **always o
 - **Visible indicator** in every interaction: *"Choices · Learner: you pick, I'll handle the rest."*
 - **Hurry button**: 3 skips a week, for when the teen just needs it done.
 - **"What my parents see"**: the teen sees exactly what parents get.
-- **Handover**: parent setup ends by handing the phone to the teen, who is told upfront: *"Your chats are private. Your parents see your progress, not your conversations, unless you're ever in danger."*
+- **Handover**: parent setup ends by handing the device to the teen, who is told upfront: *"Your chats are private. Your parents see your progress, not your conversations, unless you're ever in danger."*
 - **"I'm not new to this"**: on a new skill, the teen can take a quick check instead of accepting the default; passing starts the skill one level higher.
 - **Accommodations**: settings for teens with learning disabilities (protect from harm, not from help).
 - **Graduation at 18**: full control, plus a **personal agent charter** the teen writes.
@@ -219,7 +219,7 @@ Submit **at least one** of: (i) a **video** of us *using* the prototype (not a s
 - **No real AI calls.** All agent replies are scripted. Where the teen types, offer preset reply chips (plus free typing that maps to the scripted next step).
 - **No real brand logos.** Providers appear as plain text names in setup only. The agent is shown as "My agent."
 - Works in current Chrome, Edge, Safari and Firefox. **No console errors.**
-- Laptop-first (evaluators use laptops): a phone frame centred on screen, with a side rail for demo navigation.
+- A responsive web app, laptop-first (evaluators use laptops) and usable down to phone width: the app fills the window (for the teen, chat in the centre with her licence, wallet and hurry skips in a side panel), beside a demo rail for navigation that becomes a drawer on small screens.
 - Every element on the demo path works. Anything off-path either works or shows a toast: *"Not part of this prototype."*
 
 **File structure**
@@ -251,7 +251,7 @@ Pocket-money wallet: ₹2,000/month, ₹1,350 left. Hurry skips: 3 of 3 left.
 
 A **demo rail** lists the moments; each can be opened directly, or clicked through in order.
 
-A **Behind the scenes** toggle beside the phone shows, under each agent reply, what the referee did (section 3): ① detector → ② licence store → ③ instructions → ⑤ output check, and ⑥ the progress tracker where a task finishes. For example: *Detector: Skills · Maths · Trigonometry (new topic) · Licence store: Maths Licensed, so the new topic starts at Practising · Instructions: hints only · Output check: no answer before she tried ✓.* Off by default; it lets evaluators see the mechanism working.
+A **Behind the scenes** toggle in the demo bar shows, under each agent reply, what the referee did (section 3): ① detector → ② licence store → ③ instructions → ⑤ output check, and ⑥ the progress tracker where a task finishes. For example: *Detector: Skills · Maths · Trigonometry (new topic) · Licence store: Maths Licensed, so the new topic starts at Practising · Instructions: hints only · Output check: no answer before she tried ✓.* Off by default; it lets evaluators see the mechanism working.
 
 **Screen 0: Start**
 - Title, one-line pitch, two buttons: *Parent setup* / *Ananya's day*.
@@ -263,7 +263,7 @@ A **Behind the scenes** toggle beside the phone shows, under each agent reply, w
 - Accommodations toggle.
 - **What you will / won't see**: *You'll see her progress and safety alerts. You won't see her chats.*
 - Consent checkbox → *Finish setup*.
-- **Handover**: *"Setup done. Hand the phone to Ananya."* → her welcome: what the product does; *"Your chats are private. Your parents see your progress, not your conversations, unless you're ever in danger."*; 3 hurry skips a week; other AI apps restricted → *Let's go* → Screen 2.
+- **Handover**: *"Setup done. Hand the device to Ananya."* → her welcome: what the product does; *"Your chats are private. Your parents see your progress, not your conversations, unless you're ever in danger."*; 3 hurry skips a week; other AI apps restricted → *Let's go* → Screen 2.
 
 **Screen 2: Ananya's home**
 - "My agent" chat entry, licence profile summary (five areas), wallet balance, hurry skips left.
@@ -344,7 +344,7 @@ A **Behind the scenes** toggle beside the phone shows, under each agent reply, w
 ### 8.6 Video walkthrough
 - 2–3 minutes, screen recording with voice-over, following Screens 1 → 9.
 - Open with the thesis (one sentence), end with the north star metric.
-- Record at laptop resolution; hide the demo rail if it distracts.
+- Record at laptop resolution; use presentation mode (H) to hide the demo controls if they distract.
 - Consider turning *Behind the scenes* on for one moment (e.g. Skills) to show the referee at work.
 
 ---
