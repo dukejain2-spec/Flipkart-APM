@@ -3,21 +3,23 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Steer · prototype</title>
+  <title>Prototype</title>
+  <link rel="icon" href="data:,">
   <link rel="stylesheet" href="assets/app.css">
 </head>
 <body>
   <div class="app">
     <aside class="rail" aria-label="Demo moments">
       <div class="rail-brand">
-        <span class="plate learner big">L</span>
+        <span id="brand-plate"></span>
         <div>
-          <strong id="brand-name">Steer</strong>
-          <span id="brand-tag">A learner's licence for your AI agent</span>
+          <strong id="brand-name"></strong>
+          <span id="brand-tag"></span>
         </div>
       </div>
       <nav id="rail-list" class="rail-list"></nav>
       <div class="rail-foot">
+        <label class="rail-opt"><input type="checkbox" id="show-grad" checked> Include Graduation (optional)</label>
         <button class="btn ghost small" id="reset">Reset demo</button>
         <button class="btn ghost small" id="hide-rail" title="Shortcut: H">Hide this panel</button>
         <p>Prototype: every agent reply is scripted. No real AI, no internet.</p>
@@ -33,6 +35,7 @@
       <div class="stage-nav">
         <button class="btn ghost small" id="prev">&larr; Previous</button>
         <button class="btn primary small" id="next">Next moment &rarr;</button>
+        <label class="bts-toggle" title="Shortcut: B"><input type="checkbox" id="bts"> Behind the scenes</label>
       </div>
     </main>
   </div>
@@ -41,6 +44,5 @@
 
   <script src="assets/data.js"></script>
   <script src="assets/app.js"></script>
-  <script src="assets/screens.js"></script>
 </body>
 </html>
