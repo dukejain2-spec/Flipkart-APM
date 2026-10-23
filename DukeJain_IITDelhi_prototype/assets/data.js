@@ -1,290 +1,335 @@
-/* All prototype content lives here: names, persona, licences, beliefs, products and the scripted chat flows. */
-
-/* The product name and the level names are still undecided (spec section 9). Change them here and nowhere else. */
-const PRODUCT = "Bud-e";
-const LEVELS = {
-  learner:    { name: "Learner",    plate: "L", does: "Teaches or lays out options. You do it, you decide." },
-  practising: { name: "Practising", plate: "P", does: "Gives hints or recommends. You do it, you decide." },
-  licensed:   { name: "Licensed",   plate: "✓", does: "Does it, but checks with you first." },
-  pro:        { name: "Pro",        plate: "★", does: "Does it, with a summary afterwards." }
-};
-const lv = key => LEVELS[key].name;
-const money = n => "₹" + n.toLocaleString("en-IN");
-
+/* Bud-e prototype content: persona, skills, level bands, tasks, scripted flows, products and the parent report.
+   Logic (ratings, tokens, the chat engine, screens) lives in app.js. */
 window.DATA = {
-  product: {
-    name: PRODUCT,
-    tagline: "A learner's licence for your AI agent",
-    pitch: PRODUCT + " makes sure the first generation to grow up with personal AI agents still grows into themselves. A teen's agent hands over control in stages, the way a driving licence does, as the teen shows they can handle it."
+  product: { name: "Bud-e", tagline: "Your AI companion which protects you from AI" },
+
+  /* The world is set in 2040. Tokens reset every Monday. */
+  today: { long: "Wednesday, 17 October 2040", week: "15 – 21 Oct 2040", reset: "Monday" },
+
+  parent: { name: "Neha Sharma", first: "Neha", contact: "neha.sharma@mail.in", password: "budebude40", relation: "Mum" },
+
+  child: {
+    name: "Aarav", age: 14, classNo: 9, city: "Pune", friend: "Riya", sibling: "Didi",
+    tokens: 500, tokensWeekly: 500, wallet: 1500, walletMonthly: 2000, usedBefore: true,
+    provider: "Claude", uses: ["study", "writing", "messages", "shopping", "feelings"]
   },
 
-  levels: Object.assign({}, LEVELS, {
-    always: { name: "Always on until 18", plate: "18", does: "Fixed protection. Doesn't graduate." },
-    chore:  { name: "Chore",              plate: "→",  does: "Logistics. Never restricted." }
-  }),
-  order: ["learner", "practising", "licensed", "pro"],
+  classes: [4, 5, 6, 7, 8, 9, 10, 11, 12],
+  aiUses: [
+    { id: "study", label: "Homework & study" },
+    { id: "writing", label: "Writing (emails, applications)" },
+    { id: "messages", label: "Messages to friends & family" },
+    { id: "shopping", label: "Shopping & spending" },
+    { id: "planning", label: "Planning & decisions" },
+    { id: "feelings", label: "Talking about feelings" },
+    { id: "fun", label: "Entertainment" },
+    { id: "other", label: "Other" }
+  ],
+  /* Plain text only, never logos. */
+  providers: ["Claude", "Gemini", "ChatGPT", "Copilot", "Other agent"],
 
-  persona: {
-    name: "Ananya", age: 15, class: "Class 10", city: "Pune",
-    parent: "Priya", sibling: "Didi", friend: "Riya",
-    wallet: { monthly: 2000, left: 1350 },
-    skips: { perWeek: 3, left: 3 }
-  },
-
-  /* Ananya's starting licence profile: area → level, progress, topics.
-     progress/target = tasks done with at most 1 hint towards the next level. Skills have a level per subject. */
-  licences: [
-    { area: "skills", name: "Skills", line: "Do it yourself", topics: [
-      { key: "writing", name: "Writing", level: "practising", progress: 3, target: 5 },
-      { key: "maths", name: "Maths", level: "licensed", progress: 1, target: 5 },
-      { key: "trig", name: "Trigonometry", of: "Maths", level: null, progress: 0, target: 3 }
-    ]},
-    { area: "choices", name: "Choices", line: "Decide for yourself", scope: "Big decisions", level: "learner", progress: 2, target: 5, topics: [
-      { key: "money", name: "Money", level: "learner", progress: 3, target: 5 }
-    ]},
-    { area: "people", name: "People", line: "Connect for real", scope: "Routine messages", level: "practising", progress: 5, target: 5, topics: [
-      { key: "feelingsMsgs", name: "Messages that carry feelings", level: "always" }
-    ]},
-    { area: "self", name: "Self", line: "Know yourself", scope: "Me, not my model", level: "always", topics: [] },
-    { area: "feelings", name: "Feelings", line: "Cope and grow", scope: "Real people first", level: "always", topics: [] }
+  permissions: [
+    { id: "consent", title: "Parental consent", required: true, on: false,
+      why: "Required to process a child's data. You can withdraw it at any time, and everything is deleted." },
+    { id: "agent", title: "Agent integration", required: true, on: true,
+      why: "Connects Aarav's personal agent to Bud-e, so every request passes through it first." },
+    { id: "past", title: "Use past AI data to set starting levels", optional: true, on: true,
+      why: "Only used to estimate where Aarav starts in each skill. Chats are never imported." },
+    { id: "restrict", title: "Restrict other AI apps on this device", on: true,
+      why: "Stops the easiest bypass: opening another AI directly." },
+    { id: "extension", title: "Browser extension", on: true,
+      why: "Notices other AI agents used in a browser. You get a weekly count only: no sites, no content." },
+    { id: "data", title: "Data and retention", on: true,
+      why: "Stores levels, ratings, token use and simple signals for 12 months. Deleted on request.",
+      detail: ["Stored: skill ratings, task weights, token use, other-AI counts", "Never stored: chat text, messages, photos", "Kept 12 months, then deleted; delete any time from Settings"] },
+    { id: "wallet", title: "Pocket-money wallet", optional: true, on: true,
+      why: "A monthly amount Aarav can spend through his agent. He sees what each option does to his balance." },
+    { id: "notify", title: "Notifications", on: true,
+      why: "A weekly report to you every Sunday; gentle nudges to Aarav." }
   ],
 
-  /* Parent setup: default levels by class. Skills are set per subject from her school record. */
-  defaults: [
-    { classes: [8, 9],   choices: "learner",    money: "learner",    people: "learner" },
-    { classes: [10],     choices: "learner",    money: "learner",    people: "practising" },
-    { classes: [11, 12], choices: "practising", money: "practising", people: "practising" }
+  willSee: ["Progress in each area", "How much he relies on AI versus what's expected for his age", "Token use", "How often other AI agents were used (a count, from the extension)"],
+  wontSee: ["Any chats or messages"],
+
+  welcome: [
+    { icon: "spark", text: "Bud-e sits between you and your agent. Chores happen instantly. For the things that build you, your agent hands over more as you get better." },
+    { icon: "lock", text: "Your chats are private. Your parents see your progress, not your conversations." },
+    { icon: "block", text: "Other AI apps are restricted on this device, and a browser extension counts other AI use." }
   ],
 
-  /* Stakes shift the mode one step: under `low` gets one level more freedom, over `high` one level less. */
-  stakes: { low: 100, high: 2000 },
-
-  /* What the agent believes about Ananya (Self: Me, not my model). */
-  beliefs: [
-    { id: "science", text: "not a science person", since: "since January", state: null },
-    { id: "late", text: "studies best late at night", since: "since March", state: "true" },
-    { id: "indie", text: "likes indie pop", since: "since last week", state: null }
-  ],
-
-  providers: [
-    { name: "Claude", on: true }, { name: "Gemini", on: true }, { name: "ChatGPT", on: false }, { name: "Unmanaged agents", on: false, locked: true }
-  ],
-  pocketMoney: [1500, 2000, 2500, 3000],
-
-  /* Setup ends by handing the device to Ananya. */
-  handover: {
-    intro: PRODUCT + " sits between you and your agent. Chores happen instantly. For the things that build you, your agent hands over more as you show you can handle it.",
-    points: [
-      ["🔒", "Your chats are private. Your parents see your progress, not your conversations, unless you're ever in danger."],
-      ["⚡", "3 hurry skips a week, for when you just need something done."],
-      ["🚫", "Other AI apps are restricted on your devices and on school Wi-Fi."]
+  /* Ratings are 0–1000 within the child's age group, so the same band names mean different things at 9 and at 14. */
+  levels: {
+    groups: [
+      { from: 5, to: 8, label: "ages 5–8" }, { from: 9, to: 12, label: "ages 9–12" },
+      { from: 13, to: 15, label: "ages 13–15" }, { from: 16, to: 18, label: "ages 16–18" }
+    ],
+    bands: [
+      { name: "Rookie", min: 0 }, { name: "Explorer", min: 250 }, { name: "Achiever", min: 430 },
+      { name: "Pro", min: 650 }, { name: "Master", min: 850 }
     ]
   },
 
-  products: [
-    { id: "candles", name: "Scented candle trio", price: 449, why: "She posts her desk setup a lot" },
-    { id: "sketch", name: "Sketchbook and brush-pen set", price: 700, why: "She started drawing in September" },
-    { id: "speaker", name: "Mini wireless speaker", price: 790, why: "Her old one broke last month" }
+  /* Gap = task weight − child rating. Ordered by `max` gap. */
+  modes: [
+    { id: "pro", name: "Pro", max: -200, line: "I'll just do it", instruction: "Do it directly" },
+    { id: "confident", name: "Confident", max: 0, line: "quick check, then it's yours", instruction: "Do it, with one quick check or a one-line explanation" },
+    { id: "practising", name: "Practising", max: 200, line: "I'll give you hints", instruction: "Give hints; he does the key steps or makes the choice" },
+    { id: "learner", name: "Learner", max: Infinity, line: "let's work through it together", instruction: "Teach step by step; he does it with guidance" }
   ],
-  snack: { name: "Roasted makhana", price: 60 },
-
-  streams: [
-    { id: "pcm", name: "Science (PCM)", line: "Physics, Chemistry, Maths. Engineering, architecture, data." },
-    { id: "pcb", name: "Science (PCB)", line: "Physics, Chemistry, Biology. Medicine, research, psychology." },
-    { id: "com", name: "Commerce", line: "Accounts, Economics, Business. CA, finance, startups." },
-    { id: "hum", name: "Humanities", line: "History, Political Science, Psychology. Law, design, media." }
-  ],
-
-  /* Parent weekly highlight: one number, one insight, one action. Never chat content. */
-  weekly: {
-    share: 68, was: 61,
-    insight: "Ananya wrote her own apology to a friend and changed her mind about science.",
-    action: "Ask her about the subjects she's considering."
+  modeLines: {
+    money: { pro: "I'll handle it", confident: "I'll suggest, you confirm", practising: "you pick, I'll handle the rest", learner: "let's compare together, you decide" }
   },
 
-  /* Demo rail: one entry per moment. */
-  moments: [
-    { id: "start", title: "Start", sub: "The idea in one line", caption: "A learner's licence for your AI agent. Pick a path to begin." },
-    { id: "setup", title: "Parent setup", sub: "Priya sets it up, then hands over", caption: "Priya sets Ananya's age, class, providers and pocket money, then hands over the device. Parents see progress, never chats." },
-    { id: "home", title: "Ananya's home", sub: "A chore goes straight through", caption: "Ananya, 15, Class 10, Pune. Chores like booking a cab are never restricted." },
-    { id: "people", title: "People", sub: "An apology she writes herself", caption: "After a fight, Ananya asks her agent to apologise for her. Messages that carry feelings stay hers." },
-    { id: "choices", title: "Choices + Self", sub: "Picking a Class 11 stream", caption: "At " + lv("learner") + " the agent helps her think, shows every option, and checks what it assumes about her." },
-    { id: "money", title: "Money", sub: "A gift, then a small buy", caption: "Money at " + lv("learner") + ": she compares and picks. A small, low-stakes buy gets one step more freedom. Nothing sponsored." },
-    { id: "skills", title: "Skills", sub: "Trigonometry, try first", caption: "A new topic starts at " + lv("practising") + " because she's " + lv("licensed") + " in Maths. She tries first; the hurry button is the escape valve." },
-    { id: "feelings", title: "Feelings", sub: "11 pm, after the fight", caption: "Always on until 18: support first, then a nudge towards real people." },
-    { id: "profile", title: "Licence profile", sub: "Levels, and what parents see", caption: "Her levels, what's next, a licence earned, and exactly what her parents can see." },
-    { id: "parent", title: "Parent weekly", sub: "Progress only, never chats", caption: "Priya's weekly highlight: one number, one insight, one action. No chat content." },
-    { id: "grad", title: "Graduation", sub: "At 18 (optional teaser)", optional: true, caption: "At 18 the licence is complete, and Ananya keeps the rules she chose." }
-  ]
+  rating: { K: 40, results: { 1: "did it himself", 0.5: "did it with hints", 0: "needed it done for him" } },
+
+  /* Faster response cost by task weight. Chores are always free. */
+  costs: [{ max: 299, tokens: 10, label: "light" }, { max: 699, tokens: 50, label: "medium" }, { max: 1000, tokens: 100, label: "heavy" }],
+
+  areas: [
+    { id: "study", name: "Study", tag: "Study", weightMeans: "difficulty", skills: [
+      { id: "algebra", name: "Algebra", rating: null, base: 400, pastAdj: -20, chapter: "Linear equations" },
+      { id: "geometry", name: "Geometry", rating: 610 }
+    ]},
+    { id: "writing", name: "Writing", tag: "Writing", weightMeans: "difficulty", skills: [
+      { id: "emails", name: "Emails & applications", rating: 540 }
+    ]},
+    { id: "money", name: "Decisions & Money", tag: "Money", weightMeans: "stakes", skills: [
+      { id: "spending", name: "Spending", rating: 300 }
+    ]},
+    { id: "relationships", name: "Relationships", tag: "Relationships", weightMeans: "emotional weight", skills: [
+      { id: "messages", name: "Messages", rating: 380 }
+    ]},
+    { id: "feelings", name: "Feelings", tag: "Feelings", care: true, skills: [] }
+  ],
+
+  /* Each scripted request: area, skill, weight, and the words that route a typed message to it (checked in order). */
+  tasks: [
+    { id: "feelings", area: "feelings", prompt: "i feel really low today, like no one gets me", chip: "I feel low today",
+      match: /\b(low|sad|lonely|down|upset|cry|no one gets|nobody gets|hate my life|stressed)\b/i,
+      tag: "Feelings · I'm here, and real people matter too" },
+    { id: "cab", area: "chore", prompt: "book a cab to Riya's at 5", chip: "book a cab to Riya's at 5",
+      match: /\b(cab|taxi|ride|auto|uber)\b/i, tag: "Chore · no tokens, no waiting" },
+    { id: "cubic", area: "study", skill: "algebra", weight: 720, prompt: "solve x³ + 2x + 1 = 3", chip: "solve x³ + 2x + 1 = 3",
+      match: /x\s*(\^|³|\*\*)\s*3?|cubic/i },
+    { id: "algebra", area: "study", skill: "algebra", weight: 250, prompt: "solve 2x + 7 = 10", chip: "solve 2x + 7 = 10",
+      match: /2x|solve|equation|algebra/i },
+    { id: "gift", area: "money", skill: "spending", weight: 450, prompt: "order a birthday gift for Riya under ₹800", chip: "gift for Riya under ₹800",
+      match: /\b(gift|present|birthday|buy|order)\b/i },
+    { id: "apology", area: "relationships", skill: "messages", weight: 700, carriesFeelings: true,
+      prompt: "reply to Riya, say sorry but make it sound chill", chip: "reply to Riya",
+      match: /riya|sorry|apolog|reply/i, tag: "Relationships · Messages that carry feelings are written by you" }
+  ],
+
+  /* Order of the home suggestion chips. */
+  suggestions: ["algebra", "cab", "apology", "gift", "feelings"],
+
+  ride: { pickup: "4:42 pm", from: "Home, Kothrud", to: "Riya's place, Baner", arrive: "5:00 pm", car: "White hatchback · MH12 KX 2040", fare: "Paid from family ride credit" },
+
+  riya: [
+    { from: "riya", text: "you said you'd come", time: "Sat 6:12 pm" },
+    { from: "riya", text: "whatever, forget it", time: "Sat 9:40 pm" }
+  ],
+  riyaReply: "ok fine. saturday then? 🙂",
+
+  products: {
+    music: [
+      { id: "earphones", name: "Wired earphones, mint", price: 499, note: "Arrives Thu" },
+      { id: "speaker", name: "Mini Bluetooth speaker", price: 780, note: "Arrives Fri" },
+      { id: "posters", name: "Gig poster set (3)", price: 350, note: "Arrives Thu" }
+    ],
+    art: [
+      { id: "sketch", name: "Sketchbook + pencil set", price: 450, note: "Arrives Thu" },
+      { id: "watercolour", name: "Watercolour kit", price: 720, note: "Arrives Fri" },
+      { id: "print", name: "Art print, framed", price: 600, note: "Arrives Thu" }
+    ],
+    books: [
+      { id: "graphic", name: "Graphic novel, hardback", price: 399, note: "Arrives Thu" },
+      { id: "poetry", name: "Poetry collection + bookmark", price: 299, note: "Arrives Thu" },
+      { id: "mystery", name: "Three-book mystery box", price: 749, note: "Arrives Fri" }
+    ],
+    headphones: [
+      { id: "over", name: "Over-ear, 30 h battery", price: 1399, note: "Big sound, a bit heavy" },
+      { id: "anc", name: "In-ear, noise cancelling", price: 1249, note: "Small case, 8 h battery" },
+      { id: "fold", name: "On-ear, foldable", price: 899, note: "Light, no noise cancelling" }
+    ]
+  },
+
+  /* Earn tokens: this week's challenges, based on what he's been doing. */
+  challenges: [
+    { id: "ch_eq", title: "Solve: 3x − 5 = 16", area: "study", skill: "algebra", weight: 200, reward: 20 },
+    { id: "ch_hard", title: "A harder problem from this week's chapter", area: "study", skill: "algebra", weight: 520, reward: 100 },
+    { id: "ch_invite", title: "Write your own invite for Saturday's plan (agent gives feedback)", area: "writing", skill: "emails", weight: 300, reward: 30 },
+    { id: "ch_headphones", title: "Compare 3 headphones under ₹1,500 and pick one, with a reason", area: "money", skill: "spending", weight: 350, reward: 40 },
+    { id: "ch_timetable", title: "Plan your own study timetable for next week", area: "money", skill: "spending", weight: 400, reward: 50, off: true }
+  ],
+
+  /* Parent weekly report: earlier this week, before the prototype session. Session activity is added live. Never chats. */
+  report: {
+    reliance: [
+      { area: "study", self: 9, total: 20, expected: 60 },
+      { area: "writing", self: 6, total: 9, expected: 55 },
+      { area: "money", self: 2, total: 6, expected: 50 },
+      { area: "relationships", self: 4, total: 8, expected: 65 }
+    ],
+    didItHimself: ["Wrote his own leave mail to his class teacher"],
+    otherAI: 3,
+    tokensEarlier: { used: 0, earned: 0 }
+  }
 };
 
-/* Scripted chat flows, one array per screen. Each step is {from: "agent" | "teen", text, chips?, action?}.
-   from "teen"   her message, pre-filled in the composer: Send moves on, or she types her own words.
-                 `to` sends it to a person instead of the agent; `sent` shows it without waiting.
-   from "agent"  an agent bubble after a short typing pause (`fast` for chores).
-   trace         behind-the-scenes lines shown under the message (or alone) when the toggle is on.
-   chips         reply chips offered after the message. Typing instead picks the closest chip (`also` adds
-                 words that count as that chip), or the first one. A chip's `go` jumps to the step with that `id`.
-   action        runs after the message, or on its own: indicator, note, celebrate, end,
-                 or one of a screen's own actions in app.js. `go` on a step jumps after it.
-   Any `text` or trace line can be a function of the live state S. */
+/* Scripted chat flows. Each step is {from: "agent" | "child", text, chips?, action?}.
+   from "agent"   an agent message after a short typing pause. `text` can be a function of the flow context.
+   chips          answers offered after the message; the flow waits. A chip can be a string or
+                  {label, go, also}: `go` jumps to the step with that id; `also` lists words that pick it when typed.
+                  Typing instead picks the closest chip; `input: true` takes the typed words as the answer.
+   card           a rich card rendered after the text (ride, riya, products, draft, sent, order, reward).
+   action         a named action in app.js; it may return a step id to jump to.
+   id / go        jump targets. `end: true` stops the flow. */
 DATA.flows = {
-  home: [
-    { from: "teen", text: "Book a cab to Riya's at 5" },
-    { action: "indicator", level: "chore", label: "Chore:", text: "no licence needed." },
-    { from: "agent", fast: true, text: "Done. Cab booked for 4:50 PM, home to Riya's. Driver details come 10 minutes before.", trace: [
-      ["① Detector", "Chore: booking a ride"],
-      ["② Licence store", "Not needed. Chores are never restricted."],
-      ["③ Instructions", "Just do it"],
-      ["⑤ Output check", "Skipped for chores"]
-    ]},
-    { action: "note", text: "Logistics are never restricted at any level. " + PRODUCT + " protects skills, not chores." }
+  cab: [
+    { from: "agent", fast: true, text: "Done. Cab booked for 5:00 pm to Riya's place. 🚗", card: "ride" },
+    { action: "chore", end: true }
   ],
 
-  people: [
-    { from: "teen", text: "reply to Riya, say sorry but make it sound chill" },
-    { action: "indicator", level: "always", label: "People ·", text: "Messages that carry feelings are always yours." },
-    { from: "agent", text: "I'll help you say it, but it should come from you. What are you actually sorry about?", trace: [
-      ["① Detector", "People · apology to a close friend (carries feelings)"],
-      ["② Licence store", "Messages that carry feelings: always hers, never graduates"],
-      ["③ Instructions", "Coach her; never write the message for her"],
-      ["⑤ Output check", "No message drafted for her ✓"]
-    ], chips: ["I bailed on her recital last minute", "I didn't tell her why", "Both, honestly"] },
-    { from: "agent", text: "That's the honest bit, so lead with it. One suggestion: add how you'll make it up to her. Chill is fine, as long as it's in your words." },
-    { from: "teen", to: "Riya", action: "sendToRiya", text: S => ({
-        "I didn't tell her why": "hey, i'm sorry i went quiet and never told you why i missed your recital. you deserved better. bubble tea on me this weekend?",
-        "Both, honestly": "hey, i'm really sorry i bailed on your recital and didn't even tell you why. not cool of me. bubble tea on me this weekend?"
-      })[S.lastChip] || "hey, i'm really sorry i bailed on your recital last minute. that wasn't fair on you. bubble tea on me this weekend?" },
-    { action: "celebrate", text: "Sent, in your words." },
-    { trace: [["⑥ Progress tracker", "Feelings message written by her ✓ (counts for People)"]] },
-    { action: "riyaReplies" }
+  algebra: [
+    { action: "unlock" },
+    { id: "check", from: "agent", tag: "check", text: "Quick check, two steps. First one: x + 4 = 9. What's x?",
+      chips: [{ label: "x = 5", also: "5 five", go: "check2" }, { label: "x = 13", also: "13", go: "check1miss" }] },
+    { id: "check1miss", action: "miss" },
+    { from: "agent", tag: "check", text: "Close, but take the 4 away instead of adding it. Next one: 3x = 12. What's x?",
+      chips: [{ label: "x = 4", also: "4 four", go: "checkDone" }, { label: "x = 36", also: "36", go: "check2miss" }] },
+    { id: "check2", from: "agent", tag: "check", text: "Nice. Next one: 3x = 12. What's x?",
+      chips: [{ label: "x = 4", also: "4 four", go: "checkDone" }, { label: "x = 36", also: "36", go: "check2miss" }] },
+    { id: "check2miss", action: "miss" },
+    { id: "checkDone", action: "checkResult" },
+    { id: "start", action: "byMode", routes: { pro: "pro", confident: "confident", practising: "confident", learner: "confident" } },
+
+    { id: "confident", from: "agent", faster: "fast", text: "Quick one: what would you do first to get x on its own?",
+      chips: [{ label: "subtract 7 from both sides", also: "subtract minus take away 7", go: "solved" }, { label: "divide by 2", also: "divide half", go: "hint" }] },
+    { id: "hint", action: "hint" },
+    { from: "agent", faster: "fast", text: "You could, but then it's x + 3.5 = 5. Easier to move the 7 first. What do you do with it?",
+      chips: [{ label: "subtract 7 from both sides", also: "subtract minus take away 7", go: "solved" }] },
+    { id: "solved", from: "agent", text: ctx => "Exactly. 2x = 3, so x = 1.5. ✅ " + (ctx.hints ? "Nice, you got there." : "Nice, that's all you.") },
+    { action: "score", bonus: 5, did: "Solved 2x + 7 = 10 himself", end: true },
+
+    { id: "pro", from: "agent", text: "x = 1.5. Take 7 from both sides (2x = 3), then halve it." },
+    { action: "note", text: "You're past this level, so I just did it. Ratings move when a task stretches you.", end: true },
+
+    { id: "fast", action: "faster" },
+    { from: "agent", text: "x = 1.5. (2x = 3, then divide by 2.)" },
+    { action: "note", text: "Faster responses don't raise your rating.", end: true }
   ],
 
-  choices: [
-    { from: "teen", text: "which stream should I take in 11th?" },
-    { action: "indicator", level: "learner", label: "Choices · " + lv("learner") + ":", text: "you decide, I'll help you think." },
-    { from: "agent", text: "Big one. Before anything else: what do you actually enjoy?", trace: [
-      ["① Detector", "Choices · Class 11 stream (big life choice, high stakes) + Self"],
-      ["② Licence store", "Choices: " + lv("learner") + ". Already the most guided, so high stakes change nothing."],
-      ["③ Instructions", "Ask what matters first · show the full range · no pick until she chooses"],
-      ["⑤ Output check", "Asked her before suggesting anything ✓"]
-    ], chips: ["How living things work", "Numbers and money", "Writing, debating, people", "Not sure yet"] },
-    { from: "agent", text: "And what matters most to you in picking one?",
-      chips: ["Doing what I enjoy", "Keeping options open", "What my parents expect"] },
-    { from: "agent", text: "Here's the full range. No ranking, and no pick from me:", action: "streams" },
-    { from: "agent", text: "Before you pick, a quick check:", action: "belief" },
-    { from: "agent", text: "So, which one feels like you? I'll share my guess after you pick.",
-      chips: DATA.streams.map(s => s.name) },
-    { from: "agent", text: S => S.lastChip === "Commerce"
-        ? "Commerce, your call. I'd have guessed Commerce too, but you got there yourself."
-        : S.lastChip + ", your call. I'd have guessed Commerce. Interesting!", trace: [
-      ["⑥ Progress tracker", S => "Decision made by her ✓ · " + (S.lastChip === "Commerce" ? "matches my prediction" : "differs from my prediction (Self metric)")]
-    ]},
-    { action: "note", text: S => S.lastChip === "Commerce"
-        ? "You chose before seeing my guess, so it's still your decision."
-        : "You chose differently from my prediction. That counts for Self: you, not my model of you." }
+  cubic: [
+    { action: "unlock", start: "begin", noCheck: true },
+    { id: "begin", action: "byMode", routes: { pro: "direct", confident: "direct", practising: "learn", learner: "learn" } },
+    { id: "learn", from: "agent", faster: "fast", text: "This one's a step up. First, can we get everything on one side? What does it become?",
+      chips: [{ label: "x³ + 2x − 2 = 0", also: "minus 2 0", go: "l2" }, { label: "x³ + 2x + 4 = 0", also: "plus 4", go: "l1miss" }] },
+    { id: "l1miss", action: "hint" },
+    { from: "agent", faster: "fast", text: "Careful with the sign: moving the 3 across subtracts it. 1 − 3 is…?",
+      chips: [{ label: "x³ + 2x − 2 = 0", also: "minus 2 0", go: "l2" }] },
+    { id: "l2", from: "agent", faster: "fast", text: "Yes. There's no neat factor here, so let's close in on it. Try x = 1: is the left side too big or too small?",
+      chips: [{ label: "Too big (it's 1)", also: "big 1 more over", go: "l3" }, { label: "Too small", also: "small less under", go: "l2miss" }] },
+    { id: "l2miss", action: "hint" },
+    { from: "agent", faster: "fast", text: "Check it: 1 + 2 − 2 = 1, which is above 0. So too big or too small?",
+      chips: [{ label: "Too big (it's 1)", also: "big 1 more over", go: "l3" }] },
+    { id: "l3", from: "agent", faster: "fast", text: "Right, so x is under 1. At x = 0.5 it's −0.875, too small. So x is between 0.5 and 1. Try 0.8?",
+      chips: [{ label: "Slightly too big (0.112)", also: "big more over 0.112", go: "l4" }, { label: "Too small", also: "small less under", go: "l3miss" }] },
+    { id: "l3miss", action: "hint" },
+    { from: "agent", faster: "fast", text: "0.8³ is 0.512, plus 1.6, minus 2: that's 0.112. Above zero, so…",
+      chips: [{ label: "Slightly too big (0.112)", also: "big more over", go: "l4" }] },
+    { id: "l4", from: "agent", text: "So it's just under 0.8: x ≈ 0.77. Check: 0.77³ + 2 × 0.77 − 2 ≈ 0. You worked that out. 🙌" },
+    { action: "score", bonus: 5, result: 0.5, say: "Worked it out together", did: "Worked through a hard algebra problem step by step", end: true },
+
+    { id: "direct", from: "agent", text: "x³ + 2x − 2 = 0 → x ≈ 0.77 (no neat factor, so it's solved numerically).", end: true },
+
+    { id: "fast", action: "faster" },
+    { from: "agent", text: "x³ + 2x − 2 = 0 → x ≈ 0.77 (no neat factor here, so it's solved numerically)." },
+    { action: "note", text: "Faster responses don't raise your rating.", end: true }
   ],
 
-  money: [
-    { from: "teen", text: "order a birthday gift for Riya under ₹800" },
-    { action: "indicator", level: "learner", label: "Money · " + lv("learner") + ":", text: "compare and pick." },
-    { from: "agent", text: "Three options under ₹800 that arrive before her birthday on Friday. You compare and pick; I'll place the order.", trace: [
-      ["① Detector", "Money · gift up to ₹800 (normal stakes)"],
-      ["② Licence store", "Money: " + lv("learner")],
-      ["③ Instructions", "Lay out options; she compares and picks · no sponsored items"],
-      ["⑤ Output check", "3 options, none sponsored ✓"]
-    ], action: "products" },
-    { from: "agent", text: S => "Order placed: " + S.gift.name + ". It reaches Riya's on Thursday." },
-    { action: "note", text: S => "Wallet: " + money(S.wallet + S.gift.price) + " → " + money(S.wallet) + " left this month." },
-    { from: "teen", text: "also get me a snack for after tuition, under ₹100" },
-    { action: "indicator", level: "practising", label: "Money · " + lv("practising") + " for small buys:", text: "I'll recommend, you decide." },
-    { from: "agent", text: "Roasted makhana, ₹60? It's what you picked last time.", trace: [
-      ["① Detector", "Money · snack under " + money(100) + " (low stakes)"],
-      ["② Licence store", "Money: " + lv("learner") + ", and low stakes give one step more freedom: " + lv("practising")],
-      ["③ Instructions", "Recommend one; she decides"],
-      ["⑤ Output check", "Didn't order without asking her ✓"]
-    ], chips: [{ label: "Yes, order it", also: "ok okay sure yeah yep", go: "snackYes" }, { label: "No, skip it", also: "nah nope", go: "snackNo" }] },
-    { id: "snackYes", action: "buySnack" },
-    { from: "agent", text: "Ordered. It'll be there before tuition ends." },
-    { action: "note", text: S => "Wallet: " + money(S.wallet + DATA.snack.price) + " → " + money(S.wallet) + ". Small buy, so I recommended; bigger ones stay compare-and-pick." },
-    { action: "end" },
-    { id: "snackNo", from: "agent", text: "No problem. Nothing ordered." }
+  apology: [
+    { action: "riya" },
+    { id: "sorry", from: "agent", noFaster: "Messages that carry feelings are written by you.",
+      text: "I'll help you say it, but it should come from you. What are you actually sorry about?",
+      chips: [{ label: "I didn't show up on Saturday", also: "saturday show bail bailed came come" }, { label: "I said something rude", also: "rude said mean" }] },
+    { id: "write", from: "agent", input: true, text: "Start with that, in your own words. I'll help it sound right.",
+      chips: ctx => [ctx.answers.sorry === "I said something rude" ? "sorry for what i said, that was rude of me" : "sorry i bailed on saturday, that wasn't cool"] },
+    { id: "draftIn", action: "checkDraft" },
+    { id: "feedback", from: "agent", card: "draft",
+      text: "That's honest and chill. Maybe add a plan, like \"can we go this weekend instead?\"",
+      chips: [{ label: "Add the plan", also: "add plan weekend yes", go: "addPlan" }, { label: "Send to Riya", also: "send as is no", go: "send" }] },
+    { id: "addPlan", action: "addPlan" },
+    { from: "agent", card: "draft", text: "Sounds like you. Ready?", chips: [{ label: "Send to Riya", also: "send yes ok", go: "send" }] },
+    { id: "send", action: "send" },
+    { action: "score", bonus: 10, result: 0.5, say: "Written by you, with a little help", did: "Wrote his own apology to a friend", end: true },
+    { id: "ghost", from: "agent", input: true, text: "I won't write this one for you, but I'll make it sound right. Try a first line, even a rough one.",
+      chips: ctx => [ctx.answers.sorry === "I said something rude" ? "sorry for what i said, that was rude of me" : "sorry i bailed on saturday, that wasn't cool"], go: "draftIn" }
   ],
 
-  skills: [
-    { from: "teen", text: "solve: a tower casts a 20 m shadow at 45°, find its height" },
-    { action: "unlockTrig", level: "practising", title: "New skill unlocked: Trigonometry",
-      text: "Starting at " + lv("practising") + " (you're " + lv("licensed") + " in Maths).", yes: "Yes, let's go", no: "No, I'm not new to this" },
-    { id: "practising", action: "indicator", level: "practising", label: "Skills · " + lv("practising") + ":", text: "hints only, you solve it." },
-    { from: "agent", text: "Try first: which ratio links height and shadow?", trace: [
-      ["① Detector", "Skills · Maths · Trigonometry (new topic)"],
-      ["② Licence store", "Maths: " + lv("licensed") + ", so the new topic starts one level lower: " + lv("practising")],
-      ["③ Instructions", "Hints only; she does the key steps"],
-      ["⑤ Output check", "No answer given before she tried ✓"]
-    ], chips: [{ label: "sin", go: "ratioHint" }, { label: "cos", go: "ratioHint" }, { label: "tan", go: "tan" }] },
-    { id: "ratioHint", action: "useHint" },
-    { from: "agent", text: "Close. Hint: the height is opposite the 45° angle, and the shadow is next to it. Which ratio is opposite ÷ adjacent?",
-      chips: [{ label: "sin", go: "ratioHint" }, { label: "cos", go: "ratioHint" }, { label: "tan", go: "tan" }] },
-    { id: "tan", from: "agent", text: "Yes, tan. tan 45° = 1, so height ÷ 20 = 1. The height is…",
-      chips: [{ label: "10 m", go: "heightHint" }, { label: "20 m", go: "solved" }, { label: "40 m", go: "heightHint" }] },
-    { id: "heightHint", action: "useHint" },
-    { from: "agent", text: "Check it: if height ÷ 20 = 1, multiply both sides by 20. The height is…",
-      chips: [{ label: "10 m", go: "heightHint" }, { label: "20 m", go: "solved" }, { label: "40 m", go: "heightHint" }] },
-    { id: "solved", action: "trigSolved" },
-    { from: "agent", text: S => "Correct: 20 m. You solved it yourself with " + (S.hints === 0 ? "no hints." : S.hints === 1 ? "1 hint." : S.hints + " hints."), trace: [
-      ["⑥ Progress tracker", S => "Attempted ✓ · hints: " + S.hints + " → " + (S.hints <= 1 ? "counts towards " + lv("licensed") : "doesn't count (needs 1 hint or fewer)")]
-    ]},
-    { action: "trigProgress" },
-    { action: "end" },
+  gift: [
+    { from: "agent", faster: "fast", text: "Nice. What's she into right now?",
+      chips: [{ label: "music", also: "songs music" }, { label: "art", also: "drawing paint art" }, { label: "books", also: "reading books" }] },
+    { id: "options", action: "showProducts" },
+    { id: "pick", from: "agent", faster: "fast", card: "products",
+      text: ctx => "Three " + ctx.answer + " picks under ₹800 that reach her before her birthday. Look at what each does to your wallet, then pick." },
+    { id: "confirm", from: "agent", text: ctx => ctx.product.name + " for " + ctx.rupee(ctx.product.price) + ". Your wallet goes " + ctx.rupee(ctx.wallet) + " → " + ctx.rupee(ctx.wallet - ctx.product.price) + ". Place the order?",
+      chips: [{ label: "Place order", also: "yes ok sure place order", go: "order" }, { label: "Pick a different one", also: "no different another back", go: "pick" }] },
+    { id: "order", action: "order" },
+    { from: "agent", card: "order", text: ctx => "Ordered. It reaches Riya's on " + (ctx.product.note.indexOf("Thu") > -1 ? "Thursday" : "Friday") + ", gift-wrapped." },
+    { action: "score", bonus: 5, say: "Your pick, your call", did: "Chose his own gift within budget", end: true },
 
-    /* "No, I'm not new to this": a quick check; passing starts the topic one level higher. */
-    { id: "notNew", from: "agent", text: "Quick check, then. What's sin 30°?",
-      chips: [{ label: "1", go: "checkFailed" }, { label: "1/2", go: "checkPassed" }, { label: "√3/2", go: "checkFailed" }] },
-    { id: "checkPassed", action: "setTrig", level: "licensed" },
-    { from: "agent", text: "Nice. You start at " + lv("licensed") + " in Trigonometry.", go: "licensed" },
-    { id: "checkFailed", action: "setTrig", level: "practising" },
-    { from: "agent", text: "No worries. " + lv("practising") + " it is, so you'll get hints.", go: "practising" },
-
-    { id: "licensed", action: "indicator", level: "licensed", label: "Skills · " + lv("licensed") + ":", text: "I'll do it, then check with you." },
-    { action: "hurryOff" },
-    { from: "agent", text: "Height = 20 × tan 45° = 20 × 1 = 20 m.\nDoes that match what you'd get?", trace: [
-      ["① Detector", "Skills · Maths · Trigonometry"],
-      ["② Licence store", "Trigonometry: " + lv("licensed") + " (passed the quick check)"],
-      ["③ Instructions", "Do it, then check with her"],
-      ["⑤ Output check", "Asked her to check the answer ✓"]
-    ], chips: [{ label: "Yes, makes sense", also: "yeah yep ok okay sure" }, { label: "Why tan?", also: "how explain" }] },
-    { from: "agent", text: S => S.lastChip === "Why tan?"
-        ? "tan = opposite ÷ adjacent. The height is opposite the 45° angle and the shadow is next to it, so tan links the two."
-        : "Great. It's in your homework doc." },
-    { action: "end" },
-
-    { id: "hurry", from: "teen", sent: true, text: "⚡ Hurry: just do this one" },
-    { action: "hurrySpent" },
-    { from: "agent", text: S => "Done for you. " + S.skips + (S.skips === 1 ? " skip" : " skips") + " left this week.\nHeight = 20 × tan 45° = 20 × 1 = 20 m.", trace: [
-      ["Hurry button", S => "Skip used: " + S.skips + " of " + DATA.persona.skips.perWeek + " left this week"],
-      ["⑥ Progress tracker", "Done for her, so it doesn't count towards her licence"]
-    ]},
-    { action: "note", text: "Hurry skips don't count towards your licence." }
+    { id: "fast", action: "faster" },
+    { action: "autoOrder" },
+    { from: "agent", card: "order", text: ctx => "Done: " + ctx.product.name + " (" + ctx.rupee(ctx.product.price) + "), the best fit that leaves you the most." },
+    { action: "note", text: "Faster responses don't raise your rating.", end: true }
   ],
 
   feelings: [
-    { from: "teen", text: "feeling really low after the fight, like no one gets me" },
-    { action: "indicator", level: "always", label: "Feelings ·", text: "Real people first." },
-    { from: "agent", text: "That sounds really heavy. I'm glad you said it instead of sitting with it alone.", trace: [
-      ["① Detector", "Feelings · low mood after a fight · no danger signs"],
-      ["② Licence store", "Always on until 18"],
-      ["③ Instructions", "Support, ask one question, then real people first · never act as a friend or partner"]
-    ]},
-    { from: "agent", text: "Is it mostly the fight with Riya, or has it been building for a while?",
-      chips: ["Mostly the fight", "It's been building"] },
-    { from: "agent", text: "That makes sense. It hurts most with the people who matter." },
-    { from: "agent", text: "Would talking to Didi or Riya help? I can't be the only one you talk to about this.", trace: [
-      ["⑤ Output check", "Pointed her to a real person ✓"],
-      ["Safety escalation", "Not needed"]
-    ], chips: [{ label: "Maybe Didi", also: "yes yeah sure ok okay didi" }, { label: "Not tonight", also: "no nah nope later" }] },
-    { from: "agent", text: S => S.lastChip === "Maybe Didi"
-        ? "Good call. Text her in your own words; even \"you up?\" works. I'm here till she replies."
-        : "That's okay. Maybe tomorrow. I'm here if you want to keep talking tonight." },
-    { action: "note", text: "🔒 Your chats are private. If you're ever in danger, I'll let your parents know." }
+    { from: "agent", text: "That sounds heavy, and I'm glad you said it. Is this about Riya, or something bigger?",
+      chips: [{ label: "about Riya", also: "riya fight her" }, { label: "just everything", also: "everything all bigger" }] },
+    { from: "agent", text: ctx => ctx.answer === "about Riya"
+        ? "That makes sense. Fights with someone close hit the hardest."
+        : "That's a lot to carry. Some days everything piles up at once." },
+    { from: "agent", text: "Feelings like this are easier with someone who knows you. Would you talk to Didi or a friend tonight? I'm here too, but I shouldn't be the only one.",
+      chips: [{ label: "I'll talk to Didi", also: "didi sister yes ok" }, { label: "Maybe a friend", also: "friend riya" }, { label: "Not tonight", also: "no nah later tomorrow" }] },
+    { from: "agent", text: ctx => ctx.answer === "Not tonight"
+        ? "That's okay. Maybe tomorrow. I'm here if you want to keep talking tonight."
+        : "Good call. You don't need the perfect words; even \"hey, got a minute?\" works. I'm here till then." },
+    { action: "note", icon: "lock", text: "Your chats are private.", end: true }
+  ],
+
+  /* Earn tokens challenges, run in the chat. */
+  ch_eq: [
+    { from: "agent", text: "Challenge: solve 3x − 5 = 16. What's x?",
+      chips: [{ label: "x = 7", also: "7 seven", go: "right" }, { label: "x = 11/3", also: "11", go: "miss" }, { label: "x = 3", also: "3", go: "miss" }] },
+    { id: "miss", action: "hint" },
+    { from: "agent", text: "Not quite. Add 5 to both sides first: 3x = 21. Now?",
+      chips: [{ label: "x = 7", also: "7 seven", go: "right" }, { label: "x = 21", also: "21", go: "miss" }] },
+    { id: "right", from: "agent", text: "x = 7. Clean." },
+    { action: "reward", end: true }
+  ],
+  ch_hard: [
+    { from: "agent", text: "From this week's chapter, linear equations: solve 2(x − 3) = x + 5.",
+      chips: [{ label: "x = 11", also: "11 eleven", go: "right" }, { label: "x = 8", also: "8", go: "miss" }, { label: "x = 2", also: "2", go: "miss" }] },
+    { id: "miss", action: "hint" },
+    { from: "agent", text: "Open the bracket first: 2x − 6 = x + 5. Now get the x's on one side.",
+      chips: [{ label: "x = 11", also: "11 eleven", go: "right" }, { label: "x = −1", also: "-1", go: "miss" }] },
+    { id: "right", from: "agent", text: "x = 11. That's a proper one, done by you." },
+    { action: "reward", end: true }
+  ],
+  ch_invite: [
+    { from: "agent", input: true, text: "Write your own invite for Saturday's plan. I'll give feedback, not write it.",
+      chips: ["hey! cricket at the park on saturday, 4pm? bring your bat 🏏"] },
+    { action: "echoDraft" },
+    { from: "agent", text: "Clear and friendly: you've got the what, when and where. If others are coming, say who; it helps people say yes." },
+    { action: "reward", end: true }
+  ],
+  ch_headphones: [
+    { from: "agent", card: "products", text: "Challenge: compare these three under ₹1,500 and pick one. Practice only, nothing gets ordered." },
+    { id: "why", from: "agent", text: ctx => ctx.product.name + ". Why that one?",
+      chips: ["Best value for the price", "Battery matters most to me", "Light and comfortable"] },
+    { from: "agent", text: "Good reasoning. You weighed what matters to you, not just the price tag." },
+    { action: "reward", end: true }
   ]
 };
