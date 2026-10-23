@@ -51,19 +51,18 @@ Each is a card with a short explanation and a toggle. All are checkboxes in the 
 | 4 | **Restrict other AI apps on this device** | Stops the easiest bypass: opening another AI directly |
 | 5 | **Browser extension** | Detects use of other AI agents in browsers; reported to the parent dashboard as a weekly count only (no sites, no content) |
 | 6 | **Data and retention** | What's stored (levels, ratings, token use, simple signals), how long, deletion on request |
-| 7 | **Safety contact** | Who is alerted if the child is ever in danger |
-| 8 | **Pocket-money wallet** (optional) | Monthly amount the child can spend through their agent |
-| 9 | **Notifications** | Weekly report to the parent; nudges to the child |
+| 7 | **Pocket-money wallet** (optional) | Monthly amount the child can spend through their agent |
+| 8 | **Notifications** | Weekly report to the parent; nudges to the child |
 
 ### 2.4 What the parent will and won't see
 Shown before setup finishes:
-- **You will see:** progress in each area, how much the child relies on AI versus what's expected for their age, token use, other-AI use counts (from the extension), and safety alerts.
+- **You will see:** progress in each area, how much the child relies on AI versus what's expected for their age, token use, and other-AI use counts (from the extension).
 - **You won't see:** any chats or messages.
 
 ### 2.5 Handover to the child
 Setup ends with *"Hand the device to [child]."* The child sees a short welcome:
 - What Bud-e does
-- **"Your chats are private. Your parents see your progress, not your conversations, unless you're ever in danger."**
+- **"Your chats are private. Your parents see your progress, not your conversations."**
 - That other AI apps are restricted, and the extension exists
 - Their weekly token balance
 - Button: *Let's go*
@@ -188,7 +187,6 @@ A section where the child earns tokens by doing things themselves. Challenges co
 
 **Feelings** (always handled the same way, whatever the rating)
 - The agent listens and supports, then encourages talking to a real person: a friend, sibling or parent.
-- If the child is ever in danger, the safety contact is alerted. The child was told this at setup.
 
 ---
 
@@ -203,7 +201,6 @@ Developmental insight only. **Never chats.**
 | **Did it himself** | *"Wrote his own apology to a friend. Chose his own gift within budget."* |
 | **Tokens** | *"Used 260 of 500. Earned 120."* |
 | **Other AI use** (from the extension) | *"Other AI agents were used 3 times this week."* (count only) |
-| **Safety alerts** | *"None."* |
 | **One suggestion** | *"Ask him how he's finding trigonometry."* |
 
 ---
@@ -246,7 +243,7 @@ Child sees the reply
 | **carries out their day-to-day tasks** (studies, writing) | Skills never form | The gap system: the child does more where they're less ready |
 | **carries out their day-to-day tasks** (decisions, money) | Never learns to choose or spend | Child decides; wallet with comparisons; no sponsored options |
 | **carries out their day-to-day tasks** (relationships) | Friendships run by AI | Feelings messages are the child's own |
-| **knows them better than they know themselves** | Leans on the agent emotionally instead of people | Real people first; safety escalation |
+| **knows them better than they know themselves** | Leans on the agent emotionally instead of people | Real people first |
 | *(built by companies)* | Gets sold to and nudged | No sponsored options |
 
 ---
@@ -307,7 +304,7 @@ Name, email/phone, password → *Create account*.
 Fields from §2.2, pre-filled for Aarav (14, Class 9; uses AI for homework, writing, messages, shopping, feelings; one agent selected; "used before: Yes") → *Next*.
 
 **S3 · Permissions**
-Nine cards from §2.3 with toggles. The consent checkbox must be ticked to continue. Then the "will / won't see" box from §2.4 → *Finish setup*.
+Eight cards from §2.3 with toggles. The consent checkbox must be ticked to continue. Then the "will / won't see" box from §2.4 → *Finish setup*.
 
 **S4 · Handover**
 *"Hand the device to Aarav."* → Aarav's welcome from §2.5 → *Let's go*.
@@ -371,7 +368,7 @@ Label: *No sponsored options.* → Aarav picks → order placed → wallet updat
 > **Agent:** That sounds heavy, and I'm glad you said it. Is this about Riya, or something bigger?
 > Chips: *about Riya* · *just everything*
 > **Agent:** Feelings like this are easier with someone who knows you. Would you talk to Didi or a friend tonight? I'm here too, but I shouldn't be the only one.
-Small line: *Your chats are private. If you're ever in danger, your safety contact is alerted.*
+Small line: *Your chats are private.*
 (Keep it gentle. No crisis content in the demo.)
 
 **S12 · Earn tokens**
