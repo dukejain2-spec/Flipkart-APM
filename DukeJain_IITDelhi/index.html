@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bud-e</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="assets/app.css">
+</head>
+<body>
+  <div class="demo">
+    <aside class="rail" id="rail" aria-label="Demo screens">
+      <div class="rail-brand"><span id="rail-logo"></span><div><strong id="rail-name">Bud-e</strong><small>Prototype · demo screens</small></div></div>
+      <nav class="rail-list" id="rail-list"></nav>
+      <div class="rail-foot">
+        <button class="btn ghost small" id="reset">Reset demo</button>
+        <button class="btn ghost small" id="present" title="Shortcut: H">Presentation mode</button>
+        <p>Agent replies are scripted or rule-based. No real AI, no internet.</p>
+      </div>
+    </aside>
+    <div class="scrim" id="scrim"></div>
+
+    <div class="stage">
+      <div class="demo-bar">
+        <button class="btn ghost small" id="open-rail" aria-label="Open the demo screens">Screens</button>
+        <p class="caption" id="caption"></p>
+        <div class="demo-nav">
+          <label class="switch-label" title="Shortcut: B"><input type="checkbox" id="bts"> <span>Behind the scenes</span></label>
+          <button class="btn ghost small" id="prev">&larr;<span class="lbl"> Previous</span></button>
+          <button class="btn primary small" id="next">Next<span class="lbl"> screen</span> &rarr;</button>
+        </div>
+      </div>
+      <div class="screen" id="screen"></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <button class="show-demo" id="show-demo" title="Show the demo controls (shortcut: H)" hidden>Demo controls</button>
+
+  <script src="assets/data.js"></script>
+  <script src="assets/app.js"></script>
+</body>
+</html>
