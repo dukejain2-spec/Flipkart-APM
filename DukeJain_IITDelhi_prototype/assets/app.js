@@ -185,9 +185,9 @@
   /* ---------- Router ---------- */
   const ROUTES = {
     start: viewStart, signup: viewSignup, child: viewChildProfile, permissions: viewPermissions, handover: viewHandover,
-    welcome: viewWelcome, chat: viewChat, earn: viewEarn, progress: viewProgress, parent: viewParent
+    welcome: viewWelcome, chat: viewChat, earn: viewEarn, wallet: viewWallet, progress: viewProgress, parent: viewParent
   };
-  const CHILD = ["chat", "earn", "progress"];
+  const CHILD = ["chat", "earn", "wallet", "progress"];
   const route = () => (location.hash.replace(/^#\/?/, "").split("?")[0] || "start");
   function go(r) { if (route() === r) render(); else location.hash = "#/" + r; }
 
@@ -223,7 +223,7 @@
 
   /* ---------- Shells ---------- */
   /* Both apps share one frame: a soft colour-washed canvas, a nav rail on the left, a top bar of status pills. */
-  const tab = (href, label, ic, on) => `<a href="#/${href}" class="tab ${on ? "is-on" : ""}" ${on ? 'aria-current="page"' : ""}>${icon(ic, 20)}<span>${label}</span></a>`;
+  const tab = (href, label, ic, on, val = "") => `<a href="#/${href}" class="tab ${on ? "is-on" : ""}" ${on ? 'aria-current="page"' : ""}>${icon(ic, 20)}<span>${label}</span>${val}</a>`;
   const weekday = () => D.today.long.split(",")[0];
   function frame(cls, nav, top, body) {
     return `<div class="shell ${cls}"><div class="frame">
@@ -236,11 +236,12 @@
   }
   function childShell(r) {
     return frame("shell--child",
-      `${tab("chat", "Home", "home", r === "chat")}${tab("progress", "My progress", "chart", r === "progress")}${tab("earn", "Earn tokens", "coin", r === "earn")}
+      `${tab("chat", "Home", "home", r === "chat")}${tab("progress", "My progress", "chart", r === "progress")}
+       ${tab("earn", "Tokens", "coin", r === "earn", `<em class="tab-val token-count">${S.tokens}</em>`)}
+       ${tab("wallet", "Wallet", "wallet", r === "wallet", `<em class="tab-val wallet-count">${rupee(S.wallet)}</em>`)}
        <span class="nav-fill"></span><button class="tab tab--settings" data-off>${icon("cog", 20)}<span>Settings</span></button>${profileButton(name()[0], "child")}`,
       `<label class="switch-label" title="Shortcut: B"><span>Behind the scenes</span><input type="checkbox" id="bts" ${S.bts ? "checked" : ""}><i class="switch"></i></label>
-       <button class="pill-stat token-pill" data-drawer aria-label="Tokens and areas"><i class="coin-dot"></i><b class="token-count">${S.tokens}</b><span>tokens</span></button>
-       <span class="pill-stat wallet-pill">Wallet <b class="wallet-count">${rupee(S.wallet)}</b></span>`,
+       <button class="pill-stat areas-pill" data-drawer aria-label="My areas">${icon("chart", 16)}<span>My areas</span></button>`,
       `<div class="cols"><main id="main" class="main"></main><aside class="side" id="side" aria-label="Your areas and tokens"></aside></div>
        <div class="drawer-scrim" data-drawer></div>`);
   }
@@ -262,10 +263,9 @@
       </div></div>`;
   }
 
-  /* Side panel: areas and levels, token balance, Earn tokens, wallet. Re-rendered on every change. */
+  /* Side panel: areas and levels. Balances live in the nav (Tokens, Wallet). Re-rendered on every change. */
   function sideHTML() {
     const age = S.setup.child.age;
-    const pct = Math.max(0, Math.min(100, Math.round((S.tokens / D.child.tokensWeekly) * 100)));
     const areas = D.areas.map(a => {
       const rows = a.care
         ? `<div class="sk sk--care">${icon("heart", 15)}<span>Always handled with care</span></div>`
@@ -278,13 +278,7 @@
         }).join("");
       return `<div class="area"><div class="area-h">${icon(areaIcon(a.id), 15)}<b>${esc(a.name)}</b></div>${rows}</div>`;
     }).join("");
-    return `<section class="panel tokens">
-        <div class="tokens-h"><span>Tokens this week</span><span class="muted">Resets ${D.today.reset}</span></div>
-        <div class="tokens-n"><b class="token-count">${S.tokens}</b><span>/ ${D.child.tokensWeekly}</span></div>
-        <div class="bar"><i style="width:${pct}%"></i></div>
-        <a href="#/earn" class="btn primary block">${icon("coin", 17)} Earn tokens</a>
-      </section>
-      <section class="panel areas">
+    return `<section class="panel areas">
         <div class="panel-h"><b>My areas</b><a href="#/progress">See all</a></div>
         ${areas}
         <p class="side-foot">Levels are for ${levelFor(0, age).group}. Chores aren't an area: they're always instant and free.</p>
@@ -297,15 +291,15 @@
     $$(".token-count").forEach(el => { el.textContent = S.tokens; });
     $$(".wallet-count").forEach(el => { el.textContent = rupee(S.wallet); });
     if (route() === "chat") renderComposer();
-    if (route() === "earn" || route() === "progress") { const m = $("#main"); if (m && !m.contains(document.activeElement)) ROUTES[route()](m); }
+    if (["earn", "wallet", "progress"].includes(route())) { const m = $("#main"); if (m && !m.contains(document.activeElement)) ROUTES[route()](m); }
   }
 
   /* ---------- S0 Start ---------- */
   const RAIL = [
     ["S1", "Parent sign-up", "signup"], ["S2", "Child profile", "child"], ["S3", "Permissions", "permissions"], ["S4", "Handover", "handover"],
-    ["S5", "Home", "chat"], ["S6", "Chore", "task:cab"], ["S7", "New skill + algebra", "task:algebra"], ["S8", "Hard problem + Faster", "task:cubic"],
-    ["S9", "Relationships", "task:apology"], ["S10", "Gift + wallet", "task:gift"], ["S11", "Feelings", "task:feelings"],
-    ["S12", "Earn tokens", "earn"], ["S13", "My progress", "progress"], ["S14", "Parent report", "parent"]
+    ["S5", "Home", "chat"], ["S6", "Chore", "task:cab"], ["S7", "New skill + algebra", "task:algebra"],
+    ["S8", "Relationships", "task:apology"], ["S9", "Gift + wallet", "task:gift"], ["S10", "Feelings", "task:feelings"],
+    ["S11", "Tokens + earn", "earn"], ["S12", "Wallet", "wallet"], ["S13", "My progress", "progress"], ["S14", "Parent report", "parent"]
   ];
   function viewStart() {
     return `<div class="start">
@@ -330,7 +324,6 @@
     if (to.startsWith("task:")) {
       const id = to.slice(5);
       quickSetup(); S.welcomed = true;
-      if (id === "cubic" && S.skills.algebra.rating == null) { S.skills.algebra.rating = 393; save(); }
       pendingPrefill = taskDef(id).prompt;
       go("chat");
       return;
@@ -602,8 +595,14 @@
     const run = chat.run;
     const task = taskDef(id);
     const ctx = {
-      run, id, task, hints: 0, misses: 0, answers: {}, answer: null, rupee, challenge: !!opts.challenge,
-      get wallet() { return S.wallet; }
+      run, id, task, hints: 0, misses: 0, shown: false, answers: {}, answer: null, rupee, challenge: !!opts.challenge,
+      get wallet() { return S.wallet; },
+      /* Apology draft chips: a good first line, a "sorry, but" line and asking the agent to write it. */
+      draftChips() {
+        const rude = this.answers.sorry === "I said something rude" || this.answers.blameHer2 === "I said something rude";
+        return [rude ? "sorry for what i said, that was rude of me" : "sorry i bailed on saturday, that wasn't cool",
+          "sorry but you're overreacting tbh", "can you just write it for me?"];
+      }
     };
     if (id === "ch_headphones") ctx.products = D.products.headphones;
     if (task.skill && S.skills[task.skill].rating == null && opts.challenge) { S.skills[task.skill].rating = startRating(task.skill); changed(); }
@@ -613,7 +612,7 @@
     renderChips(); renderComposer();
     try {
       await runSteps(D.flows[id], ctx);
-      S.done[id] = true;
+      if (!ctx.undone) S.done[id] = true;
     } catch (e) { if (e !== CANCEL) throw e; }
     if (run === chat.run) { chat.ctx = null; chat.flow = null; chat.faster = null; chat.noFaster = null; save(); renderChips(); renderComposer(); }
   }
@@ -634,6 +633,7 @@
         const r = await ACTIONS[st.action](st, ctx);
         alive(ctx);
         if (typeof r === "string") next = at(r);
+        else if (st.go && !st.from) next = at(st.go);
       }
       if (st.from === "agent") {
         chat.faster = st.faster || null; chat.noFaster = st.noFaster || null;
@@ -773,23 +773,22 @@
     },
     byMode(st, ctx) { numbers(ctx); return st.routes[ctx.mode.id]; },
     hint(st, ctx) { ctx.hints++; },
+    shown(st, ctx) { ctx.hints++; ctx.shown = true; },
 
     score(st, ctx) {
       const id = ctx.task.skill, old = S.skills[id].rating;
-      const result = st.result != null ? st.result : ctx.hints ? 0.5 : 1;
+      const result = st.result != null ? st.result : ctx.shown ? 0 : ctx.hints ? 0.5 : 1;
       const exp = expectedFor(ctx.weight - old);
       const now = updateRating(old, result, exp);
       const before = levelFor(old, S.setup.child.age), after = levelFor(now, S.setup.child.age);
       S.skills[id].rating = now;
       S.ratingLog.push({ skill: id, from: old, to: now, result });
       rely(ctx.area.id, result);
-      if (st.did) S.didIt.push(st.did);
-      if (st.bonus) { S.tokens += st.bonus; S.earned += st.bonus; logTokens(st.bonus, "Bonus: " + st.did.replace(/ himself$/, "").toLowerCase()); }
+      if (st.did && result > 0) S.didIt.push(st.did);
       changed();
-      if (st.bonus) floatTokens(st.bonus);
       const up = after.i > before.i;
-      push({ t: "score", up, text: up ? `Level up: ${ctx.skill.name} is now ${after.name}` : st.say || (result === 1 ? "That's all you" : "Done with a little help"),
-        sub: (st.bonus ? `+${st.bonus} bonus tokens · ` : "") + (up ? "" : `${ctx.skill.name}: ${after.name}`),
+      push({ t: "score", up, text: up ? `Level up: ${ctx.skill.name} is now ${after.name}` : st.say || (result === 1 ? "That's all you" : result ? "Done with a little help" : "Worked through it together"),
+        sub: up ? "" : `${ctx.skill.name}: ${after.name}`,
         bts: { line: `result ${result} (${D.rating.results[result]}) · expected ${exp.toFixed(2)} · ${old} + ${D.rating.K} × (${result} − ${exp.toFixed(2)}) = ${now}` } });
       if (up) toast(`${ctx.skill.name}: ${before.name} → ${after.name}`, "ok");
     },
@@ -801,15 +800,16 @@
       rely(ctx.area.id, 0);
       changed();
       push({ t: "child", text: "⚡ Faster response: just do this one" });
-      push({ t: "score", spend: true, text: `−${c} tokens`, sub: `${S.tokens} left this week · this one won't raise your rating`,
+      push({ t: "score", spend: true, text: `−${c} tokens`, sub: "This one won't raise your rating",
         bts: { line: `weight ${ctx.weight} → ${D.costs.find(x => ctx.weight <= x.max).label} task → ${c} tokens · result scorer skipped` } });
     },
 
-    note(st, ctx) { push({ t: "note", text: st.text, icon: st.icon || "info" }); },
+    note(st, ctx) { if (st.undone) ctx.undone = true; push({ t: "note", text: st.text, icon: st.icon || "info" }); },
 
     riya(st, ctx) { push({ t: "riya" }); },
     checkDraft(st, ctx) {
       if (/\b(you write|write it|for me|just send|do it|you do|make one|draft it)\b/i.test(ctx.answer)) return "ghost";
+      if (/\bbut\b|overreact|your fault|chill out|calm down/i.test(ctx.answer)) { ctx.hints++; return "blame"; }
       ctx.draft = ctx.answer;
     },
     addPlan(st, ctx) { ctx.draft = ctx.draft.replace(/[.!\s]+$/, "") + ". can we go this weekend instead?"; ctx.answers.plan = true; },
@@ -820,7 +820,8 @@
       setTimeout(() => { if (S === s0) push({ t: "riya-reply", text: D.riyaReply }); }, 4200);
     },
 
-    showProducts(st, ctx) { ctx.products = D.products[ctx.answer] || D.products.art; },
+    showProducts(st, ctx) { ctx.topic = D.products[ctx.answer] ? ctx.answer : "art"; ctx.products = D.products[ctx.topic]; },
+    checkPick(st, ctx) { return ctx.product.late ? "late" : "confirm"; },
     order(st, ctx) {
       S.wallet -= ctx.product.price;
       ctx.orderId = "BDE-40-" + rand(10000, 99999);
@@ -829,7 +830,7 @@
     },
     autoOrder(st, ctx) {
       if (!ctx.products) ctx.products = D.products.art;
-      ctx.product = ctx.products.slice().sort((a, b) => a.price - b.price)[0];
+      ctx.product = ctx.products.filter(p => !p.late).sort((a, b) => a.price - b.price)[0];
       ACTIONS.order(st, ctx);
     },
 
@@ -919,7 +920,6 @@
     const ids = [];
     D.suggestions.forEach(id => {
       if (!S.done[id]) ids.push(id);
-      if (id === "algebra" && S.done.algebra && !S.done.cubic) ids.push("cubic");
     });
     return ids.map(taskDef);
   }
@@ -952,6 +952,12 @@
       f.innerHTML = `${icon("lock", 16)}<span>Faster response</span>`;
       f.title = chat.noFaster;
     } else { f.hidden = true; }
+    const side = $("#chatSide");
+    if (side) {
+      const money = ctx && !ctx.challenge && ctx.area && ctx.area.id === "money";
+      side.className = money ? "chat-wallet" : "chat-date";
+      side.innerHTML = money ? `${icon("wallet", 15)}Wallet <b>${rupee(S.wallet)}</b>` : D.today.long;
+    }
     const ta = $("#input");
     if (ta) ta.placeholder = w && w.input ? "Write it in your own words…" : w ? "Pick an option, or type your answer…" : "Ask Bud-e anything…";
   }
@@ -968,7 +974,7 @@
     const home = !S.thread.length;
     main.innerHTML = `<section class="chat ${home ? "chat--home" : ""}">
       <div class="chat-h"><div class="agent-id"><span class="agent-av">${mark(30, true)}</span><div><b>My agent</b><span>${esc(S.setup.child.provider)} · through Bud-e</span></div></div>
-        <span class="chat-date">${D.today.long}</span></div>
+        <span class="chat-date" id="chatSide">${D.today.long}</span></div>
       <div class="scroll" id="scroll"><div class="thread" id="thread"></div></div>
       <div class="dock">
         <div class="chips" id="chips" hidden></div>
@@ -1018,12 +1024,19 @@
     if (ok && chat.waiting === w) answer({ faster: target });
   }
 
-  /* ---------- S12 Earn tokens ---------- */
+  /* ---------- Tokens (S11): balance, ways to earn, this week's activity ---------- */
+  function balanceCard(cls, label, big, of, pct, foot) {
+    return `<section class="bal ${cls}"><span class="bal-l">${label}</span>
+      <div class="bal-n">${big}<span>${of}</span></div><div class="bar"><i style="width:${Math.max(0, Math.min(100, pct))}%"></i></div>
+      <p class="bal-f">${foot}</p></section>`;
+  }
   function viewEarn(main) {
-    const bonuses = S.tokenLog.filter(x => x.delta > 0 && /^Bonus/.test(x.label));
     main.innerHTML = `<div class="page">
-      <header class="page-h"><div><h1>Earn tokens</h1><p class="sub">Do it yourself, earn tokens back. This week's challenges come from what you've been doing.</p></div>
-        <div class="balance">${icon("coin", 22)}<b class="token-count">${S.tokens}</b><span>tokens</span></div></header>
+      <header class="page-h"><div><h1>Tokens</h1><p class="sub">Use them for a Faster response when you're in a hurry. Earn more by doing things yourself.</p></div></header>
+      ${balanceCard("bal--tokens", "Tokens this week", `<b class="token-count">${S.tokens}</b>`, `/ ${D.child.tokensWeekly}`,
+        (S.tokens / D.child.tokensWeekly) * 100, `Resets every ${D.today.reset} · used ${S.spent} · earned ${S.earned}`)}
+      <h2 class="sec-h">Earn tokens</h2>
+      <p class="sec-sub">This week's challenges, picked from what you've been doing. Finish one to earn its tokens.</p>
       <div class="challenges">${D.challenges.map(c => {
         const done = S.done[c.id];
         return `<article class="ch ${done ? "is-done" : ""}">
@@ -1033,11 +1046,21 @@
           ${done ? `<span class="ch-done">${icon("check", 16)} Done</span>` : `<button class="btn ${c.off ? "ghost" : "primary"} small" ${c.off ? "data-off" : `data-challenge="${c.id}"`}>Start</button>`}</div>
         </article>`;
       }).join("")}</div>
-      <section class="panel bonus">
-        <div class="panel-h"><b>Bonus tokens</b></div>
-        <p>You also earn a few tokens automatically when you do something yourself in normal chats: writing your own reply to a friend, or making a choice without asking me to decide.</p>
-        ${bonuses.length ? `<ul class="log">${bonuses.map(logRow).join("")}</ul>` : `<p class="muted">No bonuses yet this week.</p>`}
-      </section>
+      <section class="panel"><div class="panel-h"><b>This week</b></div>
+        ${S.tokenLog.length ? `<ul class="log">${S.tokenLog.map(logRow).join("")}</ul>` : `<p class="muted">No token activity yet this week.</p>`}</section>
+    </div>`;
+  }
+
+  /* ---------- Wallet (S12): pocket money and orders ---------- */
+  function viewWallet(main) {
+    const on = S.setup.perms.wallet, monthly = S.setup.walletMonthly;
+    main.innerHTML = `<div class="page">
+      <header class="page-h"><div><h1>Wallet</h1><p class="sub">Pocket money from ${esc(S.setup.parent.name.split(" ")[0])}. When you shop through your agent, you see what each option does to it before you choose.</p></div></header>
+      ${on ? balanceCard("bal--wallet", "Left this month", `<b class="wallet-count">${rupee(S.wallet)}</b>`, `of ${rupee(monthly)}`,
+          monthly ? (S.wallet / monthly) * 100 : 0, `Spent ${rupee(monthly - S.wallet)} this month · no sponsored options, ever`)
+        : `<section class="panel"><p>The wallet is turned off. Ask ${esc(S.setup.parent.name.split(" ")[0])} to switch it on in Bud-e's settings.</p></section>`}
+      <section class="panel"><div class="panel-h"><b>Orders</b></div>
+        ${S.orders.length ? `<ul class="log">${S.orders.map(o => `<li><span>${esc(o.name)}</span><em>${esc(o.id)}</em><b class="neg">−${rupee(o.price)}</b></li>`).join("")}</ul>` : `<p class="muted">No orders yet this month.</p>`}</section>
     </div>`;
   }
   const logRow = x => `<li><span>${esc(x.label)}</span><em>${esc(x.at)}</em><b class="${x.delta > 0 ? "pos" : x.delta < 0 ? "neg" : ""}">${x.delta ? signed(x.delta) : "0"}</b></li>`;
@@ -1063,12 +1086,6 @@
         <button class="btn ghost" id="parentsee">${icon("eye", 17)} What my parents see</button></header>
       <div class="levels-key">${D.levels.bands.map((b, i) => `<span class="lvl lvl--${i}">${b.name}</span>`).join(`<span class="arrow">${icon("chevron", 14)}</span>`)}</div>
       <div class="pgrid">${areas}</div>
-      <div class="pgrid pgrid--2">
-        <section class="panel"><div class="panel-h"><b>Tokens</b><span class="muted">${S.tokens} of ${D.child.tokensWeekly} · resets ${D.today.reset}</span></div>
-          ${S.tokenLog.length ? `<ul class="log">${S.tokenLog.map(logRow).join("")}</ul>` : `<p class="muted">No token activity yet this week.</p>`}</section>
-        <section class="panel"><div class="panel-h"><b>Pocket money</b><span class="muted">${rupee(S.wallet)} left of ${rupee(S.setup.walletMonthly)}</span></div>
-          ${S.orders.length ? `<ul class="log">${S.orders.map(o => `<li><span>${esc(o.name)}</span><em>${esc(o.id)}</em><b class="neg">−${rupee(o.price)}</b></li>`).join("")}</ul>` : `<p class="muted">No orders yet this month.</p>`}</section>
-      </div>
     </div>`;
     $("#parentsee").addEventListener("click", () => {
       modal({ cls: "preview", html: `<p class="eyebrow">${icon("eye", 14)} Read-only preview</p><h2>What ${esc(S.setup.parent.name.split(" ")[0])} sees</h2>${reportHTML()}`,
@@ -1094,7 +1111,7 @@
     }));
     const did = D.report.didItHimself.concat(S.didIt);
     const other = S.setup.perms.extension ? D.report.otherAI : null;
-    const suggestion = S.fasterOn.includes("cubic") ? `Ask him how he's finding algebra. He took the faster route on a hard problem this week.`
+    const suggestion = S.fasterOn.includes("algebra") ? `Ask him how he's finding algebra. He took the faster route on it this week.`
       : S.skills.algebra.rating != null ? "Ask him how he's finding algebra. It's new this week."
       : "Ask him which subject feels hardest right now.";
     return `<div class="report">

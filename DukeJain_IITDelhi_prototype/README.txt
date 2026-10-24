@@ -17,16 +17,27 @@ Ratings update after each task (Elo, K = 40). The child sees level names, never 
 THE DEMO PATH (2-3 minutes)
 Start: "I'm a parent". The "Jump to a screen" list on the start screen goes to any screen.
  S1-S4  Sign up, child profile, permissions (consent is required), hand over to Aarav.
- S5     Home: tap the suggestion chips, or type. Options appear as chips.
+ S5     Home: five prompts, as chips or typed. Each one runs end to end.
  S6     book a cab to Riya's at 5         chore: instant, no tokens
- S7     solve 2x + 7 = 10                 New skill unlocked pop-up (try "No, I'm not new to this" too)
- S8     solve x^3 + 2x + 1 = 3            Learner mode; tap "Faster response" (100 tokens)
- S9     reply to Riya                     he writes the apology; "Sent, in your words"
- S10    gift for Riya under Rs 800        three options with wallet impact, no sponsored options
- S11    I feel low today                  support, then real people first
- S12    Earn tokens                       e.g. compare 3 headphones -> +40 tokens
- S13    My progress                       levels, next steps, token history, "What my parents see"
+ S7     solve 2x + 7 = 10                 New skill pop-up, then two steps
+ S8     reply to Riya                     he writes the apology; "Sent, in your words"
+ S9     gift for Riya under Rs 800        options with wallet impact; the wallet shows only here
+ S10    I feel low today                  support, then real people first
+ S11    Tokens (nav)                      balance, challenges to earn (e.g. headphones -> +40), history
+ S12    Wallet (nav)                      pocket money left, orders
+ S13    My progress                       levels, next steps, "What my parents see"
  S14    Profile menu -> Switch to parent  weekly report, never chats
+
+RIGHT AND WRONG ANSWERS
+ Algebra   Wrong first move (divide by 2 / add 7) -> hint, try again; wrong twice -> the step
+           is shown. Same for 2x = 3 (x = 6 / x = 1). Rating result: 1 on your own,
+           0.5 with hints, 0 if a step was shown.
+ Apology   "Nothing, she's overreacting" -> pushed back (or leave it, nothing sent);
+           a "sorry, but" draft -> rewrite; "write it for me" -> refused, he writes it.
+ Gift      "No idea, you pick" -> nudged to choose; an option arriving after her birthday
+           -> warned, pick another or order anyway.
+ Correct answers never pay tokens. Tokens come from the weekly 500 and from challenges.
+ Faster response (next to Send) works in algebra (10) and gift (50).
 
 BEHIND THE SCENES
 The "Behind the scenes" switch (or press B) shows under each reply:
