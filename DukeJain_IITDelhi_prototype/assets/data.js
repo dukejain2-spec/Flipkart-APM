@@ -39,7 +39,7 @@ window.DATA = {
     { id: "restrict", title: "Restrict other AI apps on this device", on: true,
       why: "Stops the easiest bypass: opening another AI directly." },
     { id: "extension", title: "Browser extension", on: true,
-      why: "Notices other AI agents used in a browser. You get a weekly count only: no sites, no content." },
+      why: "Notices other AI agents used in a browser. You see which ones and how often, and can block them. No sites, no content." },
     { id: "data", title: "Data and retention", on: true,
       why: "Stores levels, ratings, token use and simple signals for 12 months. Deleted on request.",
       detail: ["Stored: skill ratings, task weights, token use, other-AI counts", "Never stored: chat text, messages, photos", "Kept 12 months, then deleted; delete any time from Settings"] },
@@ -49,7 +49,7 @@ window.DATA = {
       why: "A weekly report to you every Sunday; gentle nudges to Aarav." }
   ],
 
-  willSee: ["Progress in each area", "How much he relies on AI versus what's expected for his age", "Token use", "How often other AI agents were used (a count, from the extension)"],
+  willSee: ["Progress in each area", "How much he relies on AI versus what's expected for his age", "Token use", "Which other AI agents were used and how often (from the extension), with the option to block them"],
   wontSee: ["Any chats or messages"],
 
   /* Ratings are 0–1000 within the child's age group, so the same band names mean different things at 9 and at 14. */
@@ -163,8 +163,23 @@ window.DATA = {
       { area: "money", self: 2, total: 6, expected: 50 },
       { area: "relationships", self: 4, total: 8, expected: 65 }
     ],
-    didItHimself: ["Wrote his own leave mail to his class teacher"],
-    otherAI: 3,
+    /* The five weeks before this one. This week's point is his live rating. Algebra has no history: it unlocks this week. */
+    weeks: ["10 Sep", "17 Sep", "24 Sep", "1 Oct", "8 Oct"],
+    history: {
+      geometry: [528, 549, 566, 583, 597],
+      emails: [455, 472, 490, 508, 526],
+      spending: [262, 270, 284, 279, 292],
+      messages: [352, 360, 366, 371, 377]
+    },
+    /* Share of tasks he did himself in each of those weeks. This week's is worked out from `reliance`. */
+    selfShare: [34, 38, 41, 43, 46],
+    /* Other AI agents the browser extension noticed this week: names and counts only, never sites or content. */
+    agents: [
+      { id: "chatgpt", name: "ChatGPT", kind: "Chat assistant in the browser", uses: 2, last: "Tue, 9:14 pm" },
+      { id: "gemini", name: "Gemini", kind: "Chat assistant in the browser", uses: 1, last: "Mon, 6:40 pm" },
+      { id: "solver", name: "Photo homework solver", kind: "Website that solves questions from a photo", uses: 1, last: "Sun, 8:05 pm" },
+      { id: "writer", name: "Essay writer add-on", kind: "Browser add-on that writes text for you", uses: 0, last: null, since: "2 Oct", blocked: true }
+    ],
     tokensEarlier: { used: 0, earned: 0 }
   }
 };

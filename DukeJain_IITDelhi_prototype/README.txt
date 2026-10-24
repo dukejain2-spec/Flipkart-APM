@@ -37,7 +37,9 @@ Start: "Set up Aarav's device". The "Jump to a screen" list on the start screen 
  S12    Wallet (nav)                      pocket money left, orders
  S13    My skills                         levels, next steps, "What my parents see"
  S14    Bud-e Parent: code login          the code from S3 (the login screen shows it in this prototype)
- S15    Weekly report                     progress, never chats
+ S15    Weekly report                     faster-response tokens, did it himself (x of y), AI reliance
+                                          vs expected, six-week growth charts, other AI agents (block
+                                          or unblock each), one suggestion. Never chats.
  S16    Permissions                       turn permissions on or off for Aarav's device
 
 RIGHT AND WRONG ANSWERS
@@ -54,7 +56,7 @@ RIGHT AND WRONG ANSWERS
 
 NOTES
 - Every agent reply is scripted. No AI calls, no network requests.
-- Everything is saved in this browser. Reset from the profile menu or the start screen.
+- Everything is saved in this browser. Reset from the start screen or the child's profile menu.
 - Anything off the demo path shows "Not part of this prototype."
 - The Bud-e mark is alive: its eyes follow the mouse, and it giggles when clicked.
 - Persona: Aarav, 14, Class 9, Pune. Friend: Riya.

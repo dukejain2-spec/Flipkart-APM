@@ -103,6 +103,7 @@
       skills, ratingLog: [],
       done: {}, didIt: [], fasterOn: [],
       reliance: {},
+      blocked: Object.fromEntries(D.report.agents.filter(a => a.blocked).map(a => [a.id, true])),
       thread: []
     };
   }
@@ -111,6 +112,7 @@
     return fresh();
   }
   let S = load();
+  if (!S.blocked) S.blocked = fresh().blocked;
   function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* storage blocked */ } }
   function changed() { save(); refreshLive(); }
 
@@ -268,9 +270,9 @@
       <div class="menu" hidden>
         <div class="menu-h">${role === "child" ? esc(name()) + ", " + S.setup.child.age : esc(S.setup.parent.name) + " · " + D.parent.relation}</div>
         ${role === "child" ? `<button data-switch="parent">${icon("swap", 16)} Open Bud-e Parent</button>`
-                           : `<button data-switch="chat">${icon("swap", 16)} Switch to ${esc(name())}'s device</button><button data-logout>${icon("back", 16)} Log out</button>`}
-        <button data-go="start">${icon("home", 16)} Start screen</button>
-        <button data-reset>${icon("refresh", 16)} Reset prototype</button>
+                           : `<button data-logout>${icon("back", 16)} Log out</button>`}
+        ${role === "child" ? `<button data-go="start">${icon("home", 16)} Start screen</button>
+        <button data-reset>${icon("refresh", 16)} Reset prototype</button>` : ""}
       </div></div>`;
   }
 
@@ -1136,32 +1138,80 @@
   }
 
   /* ---------- S14 Parent weekly report ---------- */
-  function reportHTML() {
+  /* Growth charts. Each skill gets its own small line chart on its own scale; a dashed line marks the next level. */
+  function lineChart(vals, labels, next) {
+    const W = 280, H = 128, L = 32, R = 6, T = 16, B = 22, n = vals.length;
+    let lo = Math.min(...vals), hi = Math.max(...vals);
+    if (next && next.min - hi <= 90) hi = Math.max(hi, next.min);
+    lo = Math.floor((lo - 15) / 50) * 50; hi = Math.ceil((hi + 15) / 50) * 50;
+    const x = i => n === 1 ? (L + W - R) / 2 : L + i * (W - L - R) / (n - 1);
+    const y = v => T + ((hi - v) / (hi - lo)) * (H - T - B);
+    const ticks = [lo, (lo + hi) / 2, hi];
+    const lvl = next && next.min > lo && next.min <= hi
+      ? `<line class="gc-lvl" x1="${L}" x2="${W - R}" y1="${y(next.min)}" y2="${y(next.min)}"/><text class="gc-lvl-t" x="${W - R}" y="${y(next.min) - 5}" text-anchor="end">${next.name} ${next.min}</text>` : "";
+    const pts = vals.map((v, i) => `${x(i)},${y(v)}`).join(" ");
+    return `<svg class="gchart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${vals.map((v, i) => labels[i] + ": " + v).join(", ")}">
+      ${ticks.map(t => `<line class="gc-grid" x1="${L}" x2="${W - R}" y1="${y(t)}" y2="${y(t)}"/><text class="gc-ax" x="${L - 8}" y="${y(t) + 4}" text-anchor="end">${t}</text>`).join("")}
+      ${lvl}
+      ${n > 1 ? `<polyline class="gc-line" points="${pts}"/>` : ""}
+      ${vals.map((v, i) => `<g class="gc-pt${i === n - 1 ? " is-now" : ""}"><circle class="gc-hit" cx="${x(i)}" cy="${y(v)}" r="12"/><circle cx="${x(i)}" cy="${y(v)}" r="4.5"/><title>${labels[i]}: ${v}</title></g>`).join("")}
+      <text class="gc-val" x="${x(n - 1) + (n === 1 ? 10 : 0)}" y="${y(vals[n - 1]) + (n === 1 ? 4 : -10)}" text-anchor="${n === 1 ? "start" : "end"}">${vals[n - 1]}</text>
+      <text class="gc-ax" x="${x(0)}" y="${H - 6}" text-anchor="${n === 1 ? "middle" : "start"}">${labels[0]}</text>
+      ${n > 1 ? `<text class="gc-ax" x="${x(n - 1)}" y="${H - 6}" text-anchor="end">${labels[n - 1]}</text>` : ""}
+    </svg>`;
+  }
+  function barChart(vals, labels) {
+    const W = 900, H = 200, L = 40, R = 8, T = 24, B = 28, n = vals.length;
+    const slot = (W - L - R) / n, bw = Math.min(64, slot * 0.6), base = H - B;
+    const y = v => T + ((100 - v) / 100) * (base - T);
+    const bar = (x, top) => `M${x},${base}V${top + 4}Q${x},${top} ${x + 4},${top}H${x + bw - 4}Q${x + bw},${top} ${x + bw},${top + 4}V${base}Z`;
+    return `<svg class="gchart gchart--bars" viewBox="0 0 ${W} ${H}" role="img" aria-label="${vals.map((v, i) => labels[i] + ": " + v + "%").join(", ")}">
+      ${[0, 50, 100].map(t => `<line class="gc-grid" x1="${L}" x2="${W - R}" y1="${y(t)}" y2="${y(t)}"/><text class="gc-ax" x="${L - 8}" y="${y(t) + 4}" text-anchor="end">${t}%</text>`).join("")}
+      ${vals.map((v, i) => { const x = L + i * slot + (slot - bw) / 2; return `<g class="gc-bar${i === n - 1 ? " is-now" : ""}">
+        <rect class="gc-hit" x="${L + i * slot}" y="${T}" width="${slot}" height="${base - T}"/><path d="${bar(x, y(v))}"/><title>${labels[i]}: ${v}% himself</title>
+        ${i === 0 || i === n - 1 ? `<text class="gc-val" x="${x + bw / 2}" y="${y(v) - 7}" text-anchor="middle">${v}%</text>` : ""}
+        <text class="gc-ax" x="${x + bw / 2}" y="${H - 6}" text-anchor="middle">${labels[i]}</text></g>`; }).join("")}
+    </svg>`;
+  }
+
+  function reportHTML(extra = "") {
     const n = esc(name()), age = S.setup.child.age;
+    let selfSum = 0, totalSum = 0;
     const rel = D.report.reliance.map(r => {
       const s = S.reliance[r.area] || { self: 0, total: 0 };
+      selfSum += r.self + s.self; totalSum += r.total + s.total;
       const pct = Math.round(((r.self + s.self) / (r.total + s.total)) * 100);
       return { name: area(r.area).name, short: area(r.area).tag, pct, expected: r.expected };
     });
-    const growth = [];
-    D.areas.forEach(a => a.skills.forEach(sk => {
-      const was = sk.rating, now = S.skills[sk.id].rating;
-      if (now == null) return;
-      if (was == null) growth.push(`<b>${esc(sk.name)}:</b> new skill this week, started at ${levelFor(now, age).name}`);
-      else if (levelFor(now, age).i !== levelFor(was, age).i) growth.push(`<b>${esc(sk.name)}:</b> ${levelFor(was, age).name} → ${levelFor(now, age).name} this week`);
-      else if (now > was) growth.push(`<b>${esc(sk.name)}:</b> growing within ${levelFor(now, age).name}`);
-    }));
-    const did = D.report.didItHimself.concat(S.didIt);
-    const other = S.setup.perms.extension ? D.report.otherAI : null;
+    const weekShare = Math.round((selfSum / totalSum) * 100);
+    const labels = D.report.weeks.concat("This week");
+    const skills = [];
+    D.areas.forEach(a => a.skills.forEach(sk => skills.push(sk)));
+    const closest = skills.filter(sk => S.skills[sk.id].rating != null && levelFor(S.skills[sk.id].rating, age).next)
+      .sort((p, q) => movesToNext(S.skills[p.id].rating) - movesToNext(S.skills[q.id].rating))[0];
+    skills.sort((p, q) => (S.skills[p.id].rating == null) - (S.skills[q.id].rating == null));
+    const cards = skills.map(sk => {
+      const now = S.skills[sk.id].rating, past = D.report.history[sk.id];
+      if (now == null) return `<div class="gcard gcard--empty"><div class="g-h"><b>${esc(sk.name)}</b><span class="lvl lvl--new">Not unlocked</span></div>
+        <p class="g-d">Unlocks the first time ${n} asks about ${esc(sk.name.toLowerCase())}.</p></div>`;
+      const l = levelFor(now, age), wasRating = sk.rating;
+      const note = wasRating == null ? `New this week, started at ${l.name}`
+        : levelFor(wasRating, age).i !== l.i ? `${levelFor(wasRating, age).name} → ${l.name} this week`
+        : past ? `<b class="${now - past[0] >= 0 ? "pos" : "neg"}">${signed(now - past[0])}</b> since ${D.report.weeks[0]}` : "";
+      const vals = past ? past.concat(now) : [now];
+      return `<div class="gcard"><div class="g-h"><b>${esc(sk.name)}</b><span class="lvl lvl--${l.i}">${l.name}</span></div>
+        <p class="g-d">${note}${l.next ? ` · ${movesToNext(now)} more on his own to reach ${l.next.name}` : ""}</p>
+        ${lineChart(vals, past ? labels : ["This week"], l.next)}</div>`;
+    }).join("");
     const suggestion = S.fasterOn.includes("algebra") ? `Ask him how he's finding algebra. He took the faster route on it this week.`
       : S.skills.algebra.rating != null ? "Ask him how he's finding algebra. It's new this week."
       : "Ask him which subject feels hardest right now.";
     return `<div class="report">
       <div class="never">${icon("lock", 16)}<span><b>Chats are never shown.</b> This report is built from levels, ratings and counts only.</span></div>
       <div class="kpis">
-        <div class="kpi"><span>Tokens</span><b>Used ${S.spent} of ${D.child.tokensWeekly}</b><em>Earned ${S.earned}</em></div>
-        <div class="kpi"><span>Did it himself</span><b>${did.length} ${did.length === 1 ? "thing" : "things"}</b><em>this week</em></div>
-        <div class="kpi"><span>Other AI use</span><b>${other == null ? "Not tracked" : other + " times"}</b><em>${other == null ? "Browser extension is off" : "Count only, from the extension"}</em></div>
+        <div class="kpi"><span>Faster response tokens used</span><b>${S.spent} of ${D.child.tokensWeekly}</b><em>Earned ${S.earned} from challenges</em></div>
+        <div class="kpi"><span>Did it himself</span><b>${Math.round(selfSum)} of ${totalSum} tasks</b><em>${weekShare}% this week</em></div>
+        <div class="kpi"><span>Closest to the next level</span>${closest ? `<b>${esc(closest.name)} → ${levelFor(S.skills[closest.id].rating, age).next.name}</b><em>${movesToNext(S.skills[closest.id].rating)} more on his own</em>` : `<b>Top level</b><em>in every skill</em>`}</div>
       </div>
       <section class="rsec"><h3>AI reliance by area vs expected</h3>
         <p class="muted">How much ${n} did himself, against what's expected at his level.</p>
@@ -1172,20 +1222,48 @@
         <div class="rel-key"><span><i class="k-bar"></i>Did it himself</span><span><i class="k-tick"></i>Expected for his level</span></div>
         <ul class="rel-text">${rel.map(r => `<li><b>${esc(r.short)}:</b> ${n} did ${r.pct}% himself. Expected for his level: ${r.expected}%.</li>`).join("")}</ul>
       </section>
-      <div class="rgrid">
-        <section class="rsec"><h3>Growth</h3>${growth.length ? `<ul class="rlist">${growth.map(g => `<li>${icon("chart", 15)}<span>${g}</span></li>`).join("")}</ul>` : `<p class="muted">Steady across all areas so far this week.</p>`}</section>
-        <section class="rsec"><h3>Did it himself</h3><ul class="rlist">${did.map(d => `<li>${icon("check", 15)}<span>${esc(d)}.</span></li>`).join("")}</ul></section>
-      </div>
+      <section class="rsec growth"><h3>Growth</h3>
+        <p class="muted">The last six weeks. Ratings run 0–1000 within ${levelFor(0, age).group}; each chart uses its own scale, and the dashed line is the next level.</p>
+        <div class="gwide"><div class="g-h"><b>Did it himself</b><span class="g-sub">Share of all tasks, each week</span></div>${barChart(D.report.selfShare.concat(weekShare), labels)}</div>
+        <div class="ggrid">${cards}</div>
+      </section>
+      ${extra}
       <section class="rsec suggest"><h3>${icon("spark", 17)} One suggestion</h3><p>${esc(suggestion)}</p></section>
     </div>`;
+  }
+
+  /* Other AI agents: a section of its own on the parent dashboard, with a block switch for each. */
+  function agentsHTML() {
+    const n = esc(name());
+    if (!S.setup.perms.extension) return `<section class="rsec agents"><h3>${icon("puzzle", 17)} Other AI agents</h3>
+      <p class="muted">The browser extension is off, so other AI agents on ${n}'s device aren't noticed. <button class="link" data-go="pperms">Turn it on in Permissions</button></p></section>`;
+    const list = D.report.agents, uses = list.reduce((t, a) => t + a.uses, 0), blocked = list.filter(a => S.blocked[a.id]).length;
+    return `<section class="rsec agents"><div class="ag-top"><div><h3>${icon("puzzle", 17)} Other AI agents</h3>
+        <p class="muted">Noticed by the browser extension on ${n}'s device this week. Names and counts only, never the sites he visited or what he typed.</p></div>
+        <div class="ag-sum"><b>${uses}</b><span>uses this week</span><span>${blocked} blocked</span></div></div>
+      <ul class="ag-list">${list.map(a => { const b = !!S.blocked[a.id]; return `<li class="${b ? "is-blocked" : ""}">
+        <span class="ag-ic">${icon(b ? "block" : "plug", 17)}</span>
+        <div class="ag-n"><b>${esc(a.name)}</b><em>${esc(a.kind)}</em></div>
+        <div class="ag-u"><b>${a.uses} ${a.uses === 1 ? "time" : "times"}</b><em>${b ? (a.since ? "Blocked since " + esc(a.since) : "Blocked today") : a.last ? "Last used " + esc(a.last) : "Not used this week"}</em></div>
+        <button class="btn small${b ? "" : " danger"}" data-block="${a.id}">${b ? "Unblock" : "Block"}</button></li>`; }).join("")}</ul>
+      <p class="fine">A blocked agent won't open on ${n}'s device or in his browser. He sees a short note that you've blocked it.</p></section>`;
   }
   function viewParent(main) {
     main.innerHTML = `<div class="page page--report">
       <header class="page-h"><div><p class="eyebrow">Weekly report · ${D.today.week}</p><h1>${esc(name())}'s week</h1>
         <p class="sub">${esc(name())}, ${S.setup.child.age} · Class ${S.setup.child.classNo} · ${esc(S.setup.child.provider)} through Bud-e</p></div>
         <button class="btn ghost" data-off>Download PDF</button></header>
-      ${reportHTML()}
+      ${reportHTML(agentsHTML())}
     </div>`;
+    main.onclick = e => {
+      const b = e.target.closest("[data-block]");
+      if (!b) return;
+      const a = D.report.agents.find(x => x.id === b.dataset.block);
+      S.blocked[a.id] = !S.blocked[a.id]; save();
+      const y = main.scrollTop;
+      viewParent(main); main.scrollTop = y;
+      toast(a.name + (S.blocked[a.id] ? " blocked on " : " unblocked on ") + name() + "'s device.", "ok");
+    };
   }
 
   /* ---------- Bud-e Parent: code login ---------- */

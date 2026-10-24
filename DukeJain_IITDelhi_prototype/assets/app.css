@@ -590,6 +590,49 @@ input:focus-visible + .switch { outline: 2px solid var(--accent); outline-offset
 .suggest h3 { color: var(--accent-ink); }
 .suggest p { font-size: 17px; margin-top: 4px; }
 .modal .report { margin-top: 14px; }
+.kpi b .pos, .g-d .pos { color: var(--ok); } .g-d .neg { color: var(--danger); }
+.btn.danger { color: var(--danger); border-color: color-mix(in srgb, var(--danger) 30%, white); }
+.btn.danger:hover { color: var(--danger); border-color: var(--danger); background: color-mix(in srgb, var(--danger) 6%, white); }
+
+/* Growth: weekly bars, then one small line chart per skill */
+.g-h { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.g-h b { font-size: 15px; }
+.g-sub { font-size: 12px; color: var(--ink-3); }
+.gwide { background: var(--paper); border-radius: var(--r2); padding: 14px 16px 8px; margin-bottom: 12px; }
+.ggrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px; }
+.gcard { border: 1px solid var(--line); border-radius: var(--r2); padding: 14px 14px 6px; }
+.gcard--empty { align-self: start; padding-bottom: 14px; background: var(--paper); border-color: transparent; }
+.g-d { font-size: 13px; color: var(--ink-3); margin: 4px 0 6px; min-height: 18px; }
+.gchart { display: block; width: 100%; height: auto; overflow: visible; }
+.gc-grid { stroke: var(--line-2); stroke-width: 1; }
+.gc-ax { fill: var(--ink-3); font: 500 11px var(--sans); }
+.gchart--bars .gc-ax { font-size: 12px; }
+.gc-val { fill: var(--ink); font: 700 12px var(--mono); }
+.gchart--bars .gc-val { font-size: 13px; }
+.gc-lvl { stroke: var(--ink-4); stroke-width: 1.5; stroke-dasharray: 4 4; }
+.gc-lvl-t { fill: var(--ink-3); font: 600 10px var(--sans); }
+.gc-line { fill: none; stroke: var(--accent); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.gc-pt circle:not(.gc-hit) { fill: var(--card); stroke: var(--accent); stroke-width: 2; }
+.gc-pt.is-now circle:not(.gc-hit), .gc-pt:hover circle:not(.gc-hit) { fill: var(--accent); stroke: var(--card); }
+.gc-hit { fill: transparent; stroke: none; }
+.gc-bar path { fill: #C9C6FA; transition: fill .15s; }
+.gc-bar.is-now path, .gc-bar:hover path { fill: var(--accent); }
+
+/* Other AI agents */
+.ag-top { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; }
+.ag-top .muted { font-size: 13px; margin: 2px 0 14px; }
+.ag-sum { display: grid; justify-items: end; flex: none; font-size: 12px; color: var(--ink-3); }
+.ag-sum b { font: 700 26px var(--display); color: var(--ink); line-height: 1.1; }
+.ag-list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
+.ag-list li { display: grid; grid-template-columns: 38px 1fr 150px auto; gap: 14px; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.ag-ic { width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); }
+.ag-n, .ag-u { display: grid; gap: 1px; min-width: 0; }
+.ag-n b, .ag-u b { font-size: 14px; }
+.ag-n em, .ag-u em { font-style: normal; font-size: 12.5px; color: var(--ink-3); }
+.ag-list .btn { min-width: 92px; }
+.ag-list li.is-blocked .ag-ic { background: color-mix(in srgb, var(--danger) 9%, white); color: var(--danger); }
+.ag-list li.is-blocked .ag-n b { color: var(--ink-3); }
+.agents .fine { text-align: left; margin-top: 12px; }
 
 /* ---------- Responsive ---------- */
 @media (max-width: 1180px) {
@@ -664,6 +707,11 @@ input:focus-visible + .switch { outline: 2px solid var(--accent); outline-offset
   .form { padding: 18px; }
   .rel-row { grid-template-columns: 90px 1fr 44px; gap: 8px; }
   .rel-key { margin-left: 0; }
+  .ag-list li { grid-template-columns: 38px 1fr auto; }
+  .ag-u { grid-column: 2; grid-row: 2; }
+  .ag-list .btn { grid-column: 3; grid-row: 1 / 3; }
+  .ag-top { flex-direction: column; gap: 4px; }
+  .ag-sum { justify-items: start; grid-auto-flow: column; gap: 8px; align-items: baseline; margin-bottom: 10px; }
   .pgrid, .pgrid--2 { grid-template-columns: 1fr; }
   .hand-card h2 { font-size: 24px; }
   .code { font-size: 34px; padding: 14px 16px; }
