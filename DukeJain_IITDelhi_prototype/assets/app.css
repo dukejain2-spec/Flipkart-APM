@@ -4,8 +4,6 @@
    Plus Jakarta Sans and JetBrains Mono are used if installed, otherwise the closest system faces. */
 :root {
   --page: #EEECF6;
-  /* The backdrop behind the app frame, in the logo's four colours. The frame keeps its own light wash on top. */
-  --backdrop: radial-gradient(70% 80% at 0% 0%, rgba(47, 149, 255, .75) 0%, rgba(47, 149, 255, 0) 70%), radial-gradient(60% 75% at 100% 0%, rgba(129, 82, 253, .7) 0%, rgba(129, 82, 253, 0) 70%), radial-gradient(65% 80% at 100% 100%, rgba(255, 138, 98, .7) 0%, rgba(255, 138, 98, 0) 70%), radial-gradient(60% 75% at 0% 100%, rgba(240, 105, 155, .65) 0%, rgba(240, 105, 155, 0) 70%), #ECEAF8;
   --surface: #FBFAFE; --card: #FFFFFF; --glass: rgba(255, 255, 255, .72); --glass-2: rgba(255, 255, 255, .85);
   --paper: #F5F3FB; --paper-2: #EDEAF6;
   --ink: #0B0A46; --ink-2: #43416B; --ink-3: #66648A; --ink-4: #A9A7C6;
@@ -15,7 +13,8 @@
   --together: #B4471B; --together-soft: #FFF3EA; --coin: #FF9F43;
   --grad: linear-gradient(120deg, #2F95FF 0%, #8152FD 40%, #F0699B 72%, #FFA758 100%);
   --ring: linear-gradient(120deg, #FFD6C2, #CFDCFF 45%, #E9D2FA);
-  --wash: radial-gradient(55% 45% at 12% 16%, #FFE3D3 0%, rgba(255, 227, 211, 0) 70%), radial-gradient(50% 50% at 90% 18%, #D8E4FF 0%, rgba(216, 228, 255, 0) 70%), radial-gradient(40% 40% at 4% 96%, #DDF4E8 0%, rgba(221, 244, 232, 0) 70%), radial-gradient(45% 45% at 55% 100%, #ECDDFB 0%, rgba(236, 221, 251, 0) 70%), #FBFAFE;
+  /* The app background in the logo's colours: blue, violet, orange, pink at the edges, light in the middle where text sits. */
+  --wash: radial-gradient(55% 60% at 0% 0%, rgba(47, 149, 255, .42) 0%, rgba(47, 149, 255, 0) 70%), radial-gradient(50% 60% at 100% 0%, rgba(129, 82, 253, .38) 0%, rgba(129, 82, 253, 0) 70%), radial-gradient(55% 60% at 100% 100%, rgba(255, 138, 98, .38) 0%, rgba(255, 138, 98, 0) 70%), radial-gradient(50% 60% at 0% 100%, rgba(240, 105, 155, .34) 0%, rgba(240, 105, 155, 0) 70%), #FBFAFE;
   --rookie: #D2378F; --explorer: #B4471B; --achiever: #1E73D6; --pro: #5852F2; --master: #0B0A46;
   --ok: #1E8A62; --ok-soft: #E3F4EC; --warn: #A75A0B; --danger: #D23A5F; --care: #8A3FC7;
   --r1: 10px; --r2: 15px; --r3: 20px; --r4: 26px;
@@ -28,7 +27,7 @@
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; }
-body { background: var(--backdrop); background-attachment: fixed; color: var(--ink); font: 15px/1.5 var(--sans); -webkit-font-smoothing: antialiased; }
+body { background: var(--page); color: var(--ink); font: 15px/1.5 var(--sans); -webkit-font-smoothing: antialiased; }
 h1, h2, h3 { font-family: var(--display); font-weight: 700; letter-spacing: -.025em; margin: 0; line-height: 1.12; }
 p { margin: 0; }
 a { color: var(--accent); text-decoration: none; }
@@ -141,8 +140,8 @@ input:focus-visible + .switch { outline: 2px solid var(--accent); outline-offset
 .lvl--new { --c: var(--ink-2); background: var(--paper-2); }
 
 /* ---------- Page canvas (start, setup, handover, splash, parent login) ---------- */
-.bare { min-height: 100vh; padding: 20px; }
-.canvas { min-height: calc(100vh - 40px); border-radius: var(--r4); background: var(--wash); border: 1px solid rgba(255, 255, 255, .9); box-shadow: 0 24px 60px -24px rgba(11, 10, 70, .25); overflow: hidden; }
+.bare { min-height: 100vh; padding: 16px; }
+.canvas { min-height: calc(100vh - 32px); border-radius: var(--r4); background: var(--wash); border: 1px solid rgba(255, 255, 255, .9); overflow: hidden; }
 
 /* S0 Start */
 .start { max-width: 900px; margin: 0 auto; padding: 64px 16px 36px; display: flex; flex-direction: column; align-items: center; gap: 44px; }
@@ -273,8 +272,8 @@ input:focus-visible + .switch { outline: 2px solid var(--accent); outline-offset
 .pl-card .fine b { font-family: var(--mono); color: var(--ink); }
 
 /* ---------- App frame: nav rail + top bar + columns ---------- */
-.shell { height: 100vh; height: 100dvh; padding: 20px; display: flex; }
-.frame { flex: 1; min-width: 0; display: flex; border-radius: var(--r4); overflow: hidden; background: var(--wash); border: 1px solid rgba(255, 255, 255, .9); box-shadow: 0 24px 60px -24px rgba(11, 10, 70, .25); }
+.shell { height: 100vh; height: 100dvh; padding: 16px; display: flex; }
+.frame { flex: 1; min-width: 0; display: flex; border-radius: var(--r4); overflow: hidden; background: var(--wash); border: 1px solid rgba(255, 255, 255, .9); }
 .nav { width: 84px; flex: none; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 18px 0 14px; margin: 12px 0 12px 12px; background: var(--glass); border-radius: var(--r3); position: relative; z-index: 30; }
 .nav-mark { margin-bottom: 18px; }
 .nav-fill { flex: 1; }
