@@ -1243,15 +1243,14 @@
   /* ---------- Bud-e Parent: extension report. Other AI agents, with a block switch for each ---------- */
   function viewParentAgents(main) {
     const n = esc(name()), list = D.report.agents;
-    const uses = list.reduce((t, a) => t + a.uses, 0), used = list.filter(a => a.uses).length, blocked = list.filter(a => S.blocked[a.id]).length;
+    const uses = list.reduce((t, a) => t + a.uses, 0), blocked = list.filter(a => S.blocked[a.id]).length;
     main.innerHTML = `<div class="page page--report">
       <header class="page-h"><div><p class="eyebrow">Extension report · ${D.today.week}</p><h1>Other AI agents</h1>
         <p class="sub">What the browser extension noticed on ${n}'s device. Names and counts only, never the sites he visited or what he typed.</p></div></header>
       ${!S.setup.perms.extension ? `<section class="rsec"><p>The browser extension is off, so other AI agents on ${n}'s device aren't noticed.</p>
         <p class="muted"><button class="link" data-go="pperms">Turn it on in Permissions</button></p></section>` : `
-      <div class="kpis">
+      <div class="kpis kpis--2">
         <div class="kpi"><span>Uses this week</span><b>${uses}</b><em>across all agents</em></div>
-        <div class="kpi"><span>Agents used</span><b>${used} of ${list.length}</b><em>noticed so far</em></div>
         <div class="kpi"><span>Blocked</span><b>${blocked}</b><em>${blocked === 1 ? "agent" : "agents"} can't open</em></div>
       </div>
       <section class="rsec agents"><h3>Agents</h3>
