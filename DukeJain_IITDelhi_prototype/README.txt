@@ -36,4 +36,5 @@ NOTES
 - Every agent reply is scripted. No AI calls, no network requests.
 - Everything is saved in this browser. Reset from the profile menu or the start screen.
 - Anything off the demo path shows "Not part of this prototype."
+- The Bud-e mark is alive: its eyes follow the mouse, and it giggles when clicked.
 - Persona: Aarav, 14, Class 9, Pune. Friend: Riya.

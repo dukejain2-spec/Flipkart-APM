@@ -50,18 +50,36 @@
     mail: '<rect x="3.5" y="5.5" width="17" height="13" rx="2"/><path d="m4 7 8 6 8-6"/>',
     bell: '<path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 1.5h-15zM10 20.5h4"/>',
     data: '<ellipse cx="12" cy="6" rx="7" ry="2.5"/><path d="M5 6v12c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5V6M5 12c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5"/>',
-    plug: '<path d="M9 3.5v4M15 3.5v4M6.5 7.5h11v3a5.5 5.5 0 0 1-11 0zM12 16v4.5"/>'
+    plug: '<path d="M9 3.5v4M15 3.5v4M6.5 7.5h11v3a5.5 5.5 0 0 1-11 0zM12 16v4.5"/>',
+    mic: '<rect x="9" y="3.5" width="6" height="11" rx="3"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v2.5"/>',
+    clip: '<path d="m19 11.5-6.8 6.8a4.5 4.5 0 0 1-6.4-6.4l7.4-7.4a3 3 0 0 1 4.2 4.2l-7.3 7.3a1.5 1.5 0 0 1-2.1-2.1l6.5-6.5"/>'
   };
   const icon = (n, s = 18, cls = "") => `<svg class="ic ${cls}" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[n] || ""}</svg>`;
 
-  /* The Bud-e character mark: a gradient "B" with a sleepy, friendly face. Each copy gets its own gradient id. */
+  /* The Bud-e character mark: a "B" built from three solid layers (blue stem, pink upper bowl, orange lower bowl)
+     with hard edges between them, a white visor face (one eye open, one winking) and two sparks.
+     Live marks follow the mouse with their eyes and giggle when clicked (see the bottom of this file). */
   let markId = 0;
-  const mark = (s = 28) => {
-    const id = "bdg" + (++markId);
-    return `<svg class="mark" width="${s}" height="${s}" viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="${id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3F7CF7"/><stop offset=".42" stop-color="#6A4BF3"/><stop offset=".72" stop-color="#E35DC0"/><stop offset="1" stop-color="#FF9A45"/></linearGradient></defs><path d="M15 5h19c10.5 0 17.5 6.2 17.5 14.6 0 4.6-2 8.3-5.2 10.6 6.3 2.4 10.2 7.6 10.2 14.1C56.5 53.4 49.4 59 38.4 59H15a9 9 0 0 1-9-9V14a9 9 0 0 1 9-9z" fill="url(#${id})"/><rect x="12" y="27" width="35" height="20" rx="10" fill="#fff"/><path d="M20.5 36.2q3.6 3.4 7.2 0M32.5 36.2q3.6 3.4 7.2 0" fill="none" stroke="#14152E" stroke-width="2.6" stroke-linecap="round"/></svg>`;
+  const mark = (s = 28, live = false) => {
+    const id = "bd" + (++markId), small = s < 24;
+    return `<svg class="mark${live ? " mark--live" : ""}" width="${s}" height="${s}" viewBox="24 14 212 212" ${live ? 'role="img" aria-label="Bud-e"' : 'aria-hidden="true"'}><defs>
+      <linearGradient id="${id}s" x1="0" y1="0" x2=".25" y2="1"><stop offset="0" stop-color="#4A8DF7"/><stop offset=".55" stop-color="#5A66F4"/><stop offset="1" stop-color="#7A55F4"/></linearGradient>
+      <linearGradient id="${id}u" x1="0" y1="0" x2="1" y2=".35"><stop offset="0" stop-color="#B862D3"/><stop offset=".5" stop-color="#E8738F"/><stop offset="1" stop-color="#F29662"/></linearGradient>
+      <linearGradient id="${id}l" x1=".2" y1="0" x2=".5" y2="1"><stop offset="0" stop-color="#F4A45C"/><stop offset=".6" stop-color="#EE8A82"/><stop offset="1" stop-color="#E070B0"/></linearGradient></defs>
+      <g class="m-body">
+        <path d="M80 18H140a58 58 0 0 1 0 116H80z" fill="url(#${id}u)"/>
+        <path d="M80 100H150a61 61 0 0 1 0 122H80z" fill="url(#${id}l)"/>
+        <path d="M74 18H118C136 50 150 90 150 130C150 172 150 204 168 222H74a44 44 0 0 1-44-44V62a44 44 0 0 1 44-44z" fill="url(#${id}s)"/>
+        ${small ? "" : '<path d="M57 110 66 82 94 110z" fill="#3E25C9" opacity=".35"/>'}
+        <rect x="48" y="108" width="132" height="76" rx="38" fill="#fff"/>
+        <g class="m-eyes"><g class="m-open"><circle class="m-eye" cx="90" cy="146" r="10.5" fill="#15123A"/><path d="M128 152 150 140" stroke="#15123A" stroke-width="10" stroke-linecap="round"/></g>
+          ${live ? '<path class="m-happy" d="M79 151Q90 134 101 151M128 151Q139 134 150 151" fill="none" stroke="#15123A" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>' : ""}</g>
+      </g>
+      ${small ? "" : '<g class="m-sparks" stroke-width="9" stroke-linecap="round"><path class="m-sp1" d="M206 68 224 54" stroke="#F08A5D"/><path class="m-sp2" d="M206 98H230" stroke="#D452C8"/></g>'}
+    </svg>`;
   };
-  const wordmark = () => '<span class="wordmark">Bud<i></i><b>e</b></span>';
-  const logo = (s = 28) => `<span class="logo">${mark(s)}${wordmark()}</span>`;
+  const wordmark = () => '<span class="wordmark">Bud<i></i>e</span>';
+  const logo = (s = 28) => `<span class="logo">${mark(s, true)}${wordmark()}</span>`;
 
   /* ---------- Saved state ---------- */
   const KEY = "bude.prototype.v2";
@@ -190,11 +208,12 @@
       app.innerHTML = parentShell();
       viewParent($("#main"));
     } else {
-      app.innerHTML = `<div class="bare">${ROUTES[r]()}</div>`;
+      app.innerHTML = `<div class="bare"><div class="canvas">${ROUTES[r]()}</div></div>`;
       const after = AFTER[r]; if (after) after();
     }
     save();
     window.scrollTo(0, 0);
+    queueAim();
   }
   const AFTER = {};
 
@@ -202,34 +221,34 @@
   function quickSetup() { S.setup.done = true; S.setup.account = true; S.setup.perms.consent = true; }
 
   /* ---------- Shells ---------- */
-  function childShell(r) {
-    const tab = (id, label, ic) => `<a href="#/${id}" class="tab ${r === id ? "is-on" : ""}">${icon(ic, 18)}<span>${label}</span></a>`;
-    return `<div class="shell shell--child">
-      <header class="top">
-        <a href="#/start" class="top-brand" aria-label="Bud-e start">${logo(26)}</a>
-        <nav class="tabs" aria-label="Main">${tab("chat", "Chat", "chat")}${tab("earn", "Earn tokens", "coin")}${tab("progress", "My progress", "chart")}</nav>
-        <div class="top-right">
-          <label class="switch-label" title="Shortcut: B"><span>Behind the scenes</span><input type="checkbox" id="bts" ${S.bts ? "checked" : ""}><i class="switch"></i></label>
-          <button class="token-pill" data-drawer>${icon("coin", 16)}<b class="token-count">${S.tokens}</b></button>
-          ${profileButton(name()[0], "child")}
-        </div>
-      </header>
+  /* Both apps share one frame: a soft colour-washed canvas, a nav rail on the left, a top bar of status pills. */
+  const tab = (href, label, ic, on) => `<a href="#/${href}" class="tab ${on ? "is-on" : ""}" ${on ? 'aria-current="page"' : ""}>${icon(ic, 20)}<span>${label}</span></a>`;
+  const weekday = () => D.today.long.split(",")[0];
+  function frame(cls, nav, top, body) {
+    return `<div class="shell ${cls}"><div class="frame">
+      <nav class="nav" aria-label="Main"><span class="nav-mark">${mark(38, true)}</span>${nav}</nav>
       <div class="body">
-        <main id="main" class="main"></main>
-        <aside class="side" id="side" aria-label="Your areas and tokens"></aside>
+        <header class="top"><span class="top-mark">${mark(30, true)}</span><span class="top-date">${weekday()}, ${clock()}</span><div class="top-right">${top}</div></header>
+        ${body}
       </div>
-      <div class="drawer-scrim" data-drawer></div>
-    </div>`;
+    </div></div>`;
+  }
+  function childShell(r) {
+    return frame("shell--child",
+      `${tab("chat", "Home", "home", r === "chat")}${tab("progress", "My progress", "chart", r === "progress")}${tab("earn", "Earn tokens", "coin", r === "earn")}
+       <span class="nav-fill"></span><button class="tab tab--settings" data-off>${icon("cog", 20)}<span>Settings</span></button>${profileButton(name()[0], "child")}`,
+      `<label class="switch-label" title="Shortcut: B"><span>Behind the scenes</span><input type="checkbox" id="bts" ${S.bts ? "checked" : ""}><i class="switch"></i></label>
+       <button class="pill-stat token-pill" data-drawer aria-label="Tokens and areas"><i class="coin-dot"></i><b class="token-count">${S.tokens}</b><span>tokens</span></button>
+       <span class="pill-stat wallet-pill">Wallet <b class="wallet-count">${rupee(S.wallet)}</b></span>`,
+      `<div class="cols"><main id="main" class="main"></main><aside class="side" id="side" aria-label="Your areas and tokens"></aside></div>
+       <div class="drawer-scrim" data-drawer></div>`);
   }
   function parentShell() {
-    return `<div class="shell shell--parent">
-      <header class="top">
-        <a href="#/start" class="top-brand" aria-label="Bud-e start">${logo(26)}</a>
-        <nav class="tabs" aria-label="Main"><a href="#/parent" class="tab is-on">${icon("chart", 18)}<span>Weekly report</span></a><button class="tab" data-off>${icon("cog", 18)}<span>Settings</span></button></nav>
-        <div class="top-right"><span class="role-note">Parent account</span>${profileButton(S.setup.parent.name[0] || "N", "parent")}</div>
-      </header>
-      <main id="main" class="main main--wide"></main>
-    </div>`;
+    return frame("shell--parent",
+      `${tab("parent", "Weekly report", "chart", true)}
+       <span class="nav-fill"></span><button class="tab tab--settings" data-off>${icon("cog", 20)}<span>Settings</span></button>${profileButton(S.setup.parent.name[0] || "N", "parent")}`,
+      `<span class="pill-stat"><i class="role-dot"></i>Parent account</span>`,
+      `<div class="cols"><main id="main" class="main main--wide"></main></div>`);
   }
   function profileButton(initial, role) {
     return `<div class="profile"><button class="avatar avatar--${role}" data-menu aria-label="Profile menu">${esc(initial)}</button>
@@ -264,9 +283,6 @@
         <div class="bar"><i style="width:${pct}%"></i></div>
         <a href="#/earn" class="btn primary block">${icon("coin", 17)} Earn tokens</a>
       </section>
-      <section class="panel wallet-mini">
-        ${icon("wallet", 18)}<div><b>${rupee(S.wallet)}</b><span>left of ${rupee(S.setup.walletMonthly)} this month</span></div>
-      </section>
       <section class="panel areas">
         <div class="panel-h"><b>My areas</b><a href="#/progress">See all</a></div>
         ${areas}
@@ -278,6 +294,7 @@
   function refreshLive() {
     const side = $("#side"); if (side) side.innerHTML = sideHTML();
     $$(".token-count").forEach(el => { el.textContent = S.tokens; });
+    $$(".wallet-count").forEach(el => { el.textContent = rupee(S.wallet); });
     if (route() === "chat") renderComposer();
     if (route() === "earn" || route() === "progress") { const m = $("#main"); if (m && !m.contains(document.activeElement)) ROUTES[route()](m); }
   }
@@ -292,7 +309,7 @@
   function viewStart() {
     return `<div class="start">
       <div class="start-hero">
-        <div class="start-mark">${mark(84)}</div>
+        <div class="hero-mark">${mark(150, true)}</div>
         <h1>${wordmark()}</h1>
         <p class="tagline">${esc(D.product.tagline)}</p>
         <p class="lede">Bud-e sits between a child and their personal AI agent. Chores happen instantly. For the moments that build a person, the AI does less as the child gets better.</p>
@@ -329,7 +346,7 @@
   }
   function setupFrame(n, title, sub, body) {
     return `<div class="setup">
-      <header class="setup-top"><a href="#/start" aria-label="Bud-e start">${logo(24)}</a>${steps(n)}</header>
+      <header class="setup-top"><a href="#/start" aria-label="Bud-e start">${logo(30)}</a>${steps(n)}</header>
       <div class="setup-body"><h1>${title}</h1><p class="sub">${sub}</p>${body}</div>
     </div>`;
   }
@@ -467,7 +484,7 @@
       S.setup.perms.extension ? "Installing the browser extension" : "Skipping the browser extension",
       S.setup.perms.wallet ? "Opening a " + rupee(S.setup.walletMonthly) + " monthly wallet" : "No wallet"
     ];
-    $("#layer").innerHTML = `<div class="scrim"></div><div class="modal provision"><div class="prov-mark">${mark(44)}</div><h2>Setting up Bud-e</h2><ul>${items.map(t => `<li><span class="spin"></span>${esc(t)}</li>`).join("")}</ul></div>`;
+    $("#layer").innerHTML = `<div class="scrim"></div><div class="modal provision"><div class="prov-mark">${mark(52, true)}</div><h2>Setting up Bud-e</h2><ul>${items.map(t => `<li><span class="spin"></span>${esc(t)}</li>`).join("")}</ul></div>`;
     $("#layer").classList.add("open");
     const lis = $$(".provision li");
     for (const li of lis) { li.classList.add("is-now"); await sleep(rand(380, 620)); li.classList.remove("is-now"); li.classList.add("is-done"); $(".spin", li).outerHTML = icon("check", 15); }
@@ -496,7 +513,7 @@
   function viewWelcome() {
     return `<div class="welcome">
       <div class="wel-card">
-        <div class="wel-mark">${mark(64)}</div>
+        <div class="wel-mark">${mark(84, true)}</div>
         <h1>Hey ${esc(name())} 👋</h1>
         <p class="sub">Meet Bud-e. Your agent still does everything you ask; Bud-e just makes sure you keep growing too.</p>
         <ul class="wel-points">${D.welcome.map(w => `<li><span>${icon(w.icon, 20)}</span><p>${esc(w.text)}</p></li>`).join("")}</ul>
@@ -519,7 +536,7 @@
     S.thread.push(m); save();
     const t = $("#thread");
     if (t) {
-      $(".thread-empty", t) && $(".thread-empty", t).remove();
+      if ($(".thread-empty", t)) { $(".thread-empty", t).remove(); $(".chat").classList.remove("chat--home"); }
       const prev = S.thread[S.thread.length - 2];
       t.insertAdjacentHTML("beforeend", msgHTML(m, prev));
       syncWaitButtons();
@@ -935,31 +952,45 @@
       f.title = chat.noFaster;
     } else { f.hidden = true; }
     const ta = $("#input");
-    if (ta) ta.placeholder = w && w.input ? "Write it in your own words…" : w ? "Pick an option, or type your answer…" : "Message my agent…";
+    if (ta) ta.placeholder = w && w.input ? "Write it in your own words…" : w ? "Pick an option, or type your answer…" : "Ask Bud-e anything…";
   }
 
+  /* Home suggestions are grouped by how much the agent does: chores instantly, the rest together, feelings with care. */
+  const SUG_GROUPS = [
+    { label: "Done for you, instantly", tone: "instant", match: t => t.area === "chore" },
+    { label: "Done together", tone: "together", match: t => t.skill },
+    { label: "Just talk", tone: "care", match: t => t.area === "feelings" }
+  ];
+  const greeting = () => { const h = new Date().getHours(); return h < 12 ? "Morning" : h < 17 ? "Afternoon" : "Evening"; };
+
   function viewChat(main) {
-    main.innerHTML = `<section class="chat">
-      <div class="chat-h"><div class="agent-id"><span class="agent-av">${mark(30)}</span><div><b>My agent</b><span>${esc(S.setup.child.provider)} · through Bud-e</span></div></div>
+    const home = !S.thread.length;
+    main.innerHTML = `<section class="chat ${home ? "chat--home" : ""}">
+      <div class="chat-h"><div class="agent-id"><span class="agent-av">${mark(30, true)}</span><div><b>My agent</b><span>${esc(S.setup.child.provider)} · through Bud-e</span></div></div>
         <span class="chat-date">${D.today.long}</span></div>
       <div class="scroll" id="scroll"><div class="thread" id="thread"></div></div>
       <div class="dock">
         <div class="chips" id="chips" hidden></div>
-        <form class="composer" id="composer" autocomplete="off">
-          <button type="button" class="icon-btn" data-off aria-label="Attach">${icon("plus", 18)}</button>
-          <input id="input" placeholder="Message my agent…" aria-label="Message my agent">
-          <button type="button" class="faster" id="faster" hidden></button>
-          <button class="send" aria-label="Send">${icon("send", 18)}</button>
-        </form>
+        <div class="ring"><form class="composer" id="composer" autocomplete="off">
+          <input id="input" placeholder="Ask Bud-e anything…" aria-label="Message my agent">
+          <div class="composer-row">
+            <div class="composer-tools"><button type="button" class="tool" data-off>${icon("clip", 15)}<span>Attach</span></button><button type="button" class="tool" data-off>${icon("mic", 15)}<span>Voice</span></button></div>
+            <div class="composer-go"><button type="button" class="faster" id="faster" hidden></button><button class="send" aria-label="Send"><span>Send</span>${icon("send", 16)}</button></div>
+          </div>
+        </form></div>
+        <div class="home-foot"><span><b>${S.didIt.length}</b> solo ${S.didIt.length === 1 ? "win" : "wins"} this week</span><span>Chores are always free</span><span>${icon("lock", 13)} Your chats stay private</span></div>
       </div>
     </section>`;
     const t = $("#thread");
-    if (!S.thread.length) {
+    if (home) {
+      const tasks = D.suggestions.map(id => taskDef(id));
       t.innerHTML = `<div class="thread-empty">
-        <div class="empty-mark">${mark(54)}</div>
-        <h2>Hi ${esc(name())}. What's up?</h2>
-        <p>Ask for anything: homework, plans, messages, shopping. Chores happen instantly; for the rest, I'll match how much I do to how ready you are.</p>
-        <div class="empty-chips">${D.suggestions.map(id => taskDef(id)).map(x => `<button class="chip chip--sug" data-task="${x.id}">${esc(x.chip)}</button>`).join("")}</div>
+        <div class="hero-mark hero-mark--home">${mark(150, true)}</div>
+        <h1><span>${greeting()}, ${esc(name())}.</span><br>What are we doing today?</h1>
+        <div class="sug-groups">${SUG_GROUPS.map(g => {
+          const list = tasks.filter(g.match);
+          return list.length ? `<div class="sug sug--${g.tone}"><span class="sug-l">${g.label}</span><div class="sug-chips">${list.map(x => `<button class="chip chip--sug chip--${g.tone}" data-task="${x.id}">${esc(x.chip)}</button>`).join("")}</div></div>` : "";
+        }).join("")}</div>
       </div>`;
     } else {
       t.innerHTML = S.thread.map((m, i) => msgHTML(m, S.thread[i - 1])).join("");
@@ -1151,6 +1182,39 @@
     }
   });
   window.addEventListener("hashchange", () => { document.body.classList.remove("drawer-open"); render(); });
+
+  /* ---------- The live Bud-e mark: eyes follow the mouse; a click makes it giggle ---------- */
+  let lookAt = null, lookFrame = 0;
+  function aimEyes() {
+    lookFrame = 0;
+    $$(".mark--live").forEach(m => {
+      const eyes = $(".m-eyes", m), r = m.getBoundingClientRect();
+      if (!eyes || !r.width) return;
+      if (!lookAt) { eyes.style.transform = ""; return; }
+      const dx = lookAt.x - (r.left + r.width * .46), dy = lookAt.y - (r.top + r.height * .62);
+      const d = Math.hypot(dx, dy) || 1, k = Math.min(1, d / 240);
+      eyes.style.transform = `translate(${(dx / d * 13 * k).toFixed(1)}px, ${(dy / d * 8 * k).toFixed(1)}px)`;
+    });
+  }
+  const queueAim = () => { if (!lookFrame) lookFrame = requestAnimationFrame(aimEyes); };
+  document.addEventListener("mousemove", e => { lookAt = { x: e.clientX, y: e.clientY }; queueAim(); });
+  document.documentElement.addEventListener("mouseleave", () => { lookAt = null; queueAim(); });
+  window.addEventListener("hashchange", queueAim);
+  document.addEventListener("click", e => {
+    const m = e.target.closest && e.target.closest(".mark--live");
+    if (!m || m.classList.contains("is-giggling")) return;
+    m.classList.add("is-giggling");
+    setTimeout(() => m.classList.remove("is-giggling"), 950);
+    const r = m.getBoundingClientRect();
+    if (r.width < 56) return;
+    const b = document.createElement("div");
+    b.className = "giggle";
+    b.textContent = ["hehe", "hihi!", "heh, that tickles"][rand(0, 2)];
+    b.style.left = r.left + r.width * .86 + "px";
+    b.style.top = r.top + r.height * .08 + "px";
+    document.body.appendChild(b);
+    setTimeout(() => b.remove(), 1300);
+  });
 
   if (!location.hash) location.replace("#/start");
   render();
