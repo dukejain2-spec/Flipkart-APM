@@ -194,10 +194,10 @@
   /* ---------- Router ---------- */
   const ROUTES = {
     start: viewStart, child: viewChildProfile, permissions: viewPermissions, handover: viewHandover, splash: viewSplash,
-    chat: viewChat, earn: viewEarn, wallet: viewWallet, progress: viewProgress, plogin: viewParentLogin, parent: viewParent, pperms: viewParentPerms
+    chat: viewChat, earn: viewEarn, wallet: viewWallet, progress: viewProgress, plogin: viewParentLogin, parent: viewParent, pagents: viewParentAgents, pperms: viewParentPerms
   };
   const CHILD = ["chat", "earn", "wallet", "progress"];
-  const PARENT = ["parent", "pperms"];
+  const PARENT = ["parent", "pagents", "pperms"];
   const route = () => (location.hash.replace(/^#\/?/, "").split("?")[0] || "start");
   function go(r) { if (route() === r) render(); else location.hash = "#/" + r; }
 
@@ -260,7 +260,7 @@
   }
   function parentShell(r) {
     return frame("shell--parent",
-      `${tab("parent", "Weekly report", "chart", r === "parent")}${tab("pperms", "Permissions", "shield", r === "pperms")}
+      `${tab("parent", "Weekly report", "chart", r === "parent")}${tab("pagents", "Extension report", "puzzle", r === "pagents")}${tab("pperms", "Permissions", "shield", r === "pperms")}
        <span class="nav-fill"></span><button class="tab tab--settings" data-off>${icon("cog", 20)}<span>Settings</span></button>${profileButton(S.setup.parent.name[0] || "N", "parent")}`,
       `<span class="pill-stat"><i class="role-dot"></i>Bud-e Parent · ${esc(name())}'s device linked</span>`,
       `<div class="cols"><main id="main" class="main main--wide"></main></div>`);
@@ -313,7 +313,7 @@
     ["S5", "Home", "chat"], ["S6", "Chore", "task:cab"], ["S7", "New skill + algebra", "task:algebra"],
     ["S8", "Relationships", "task:apology"], ["S9", "Gift + wallet", "task:gift"], ["S10", "Feelings", "task:feelings"],
     ["S11", "Tokens + earn", "earn"], ["S12", "Wallet", "wallet"], ["S13", "My skills", "progress"], ["S14", "Parent code login", "plogin"],
-    ["S15", "Parent report", "parent"], ["S16", "Edit permissions", "pperms"]
+    ["S15", "Parent report", "parent"], ["S16", "Extension report", "pagents"], ["S17", "Edit permissions", "pperms"]
   ];
   function viewStart() {
     return `<div class="start">
@@ -1174,7 +1174,7 @@
     </svg>`;
   }
 
-  function reportHTML(extra = "") {
+  function reportHTML() {
     const n = esc(name()), age = S.setup.child.age;
     let selfSum = 0, totalSum = 0;
     const rel = D.report.reliance.map(r => {
@@ -1227,41 +1227,49 @@
         <div class="gwide"><div class="g-h"><b>Did it himself</b><span class="g-sub">Share of all tasks, each week</span></div>${barChart(D.report.selfShare.concat(weekShare), labels)}</div>
         <div class="ggrid">${cards}</div>
       </section>
-      ${extra}
       <section class="rsec suggest"><h3>${icon("spark", 17)} One suggestion</h3><p>${esc(suggestion)}</p></section>
     </div>`;
   }
 
-  /* Other AI agents: a section of its own on the parent dashboard, with a block switch for each. */
-  function agentsHTML() {
-    const n = esc(name());
-    if (!S.setup.perms.extension) return `<section class="rsec agents"><h3>${icon("puzzle", 17)} Other AI agents</h3>
-      <p class="muted">The browser extension is off, so other AI agents on ${n}'s device aren't noticed. <button class="link" data-go="pperms">Turn it on in Permissions</button></p></section>`;
-    const list = D.report.agents, uses = list.reduce((t, a) => t + a.uses, 0), blocked = list.filter(a => S.blocked[a.id]).length;
-    return `<section class="rsec agents"><div class="ag-top"><div><h3>${icon("puzzle", 17)} Other AI agents</h3>
-        <p class="muted">Noticed by the browser extension on ${n}'s device this week. Names and counts only, never the sites he visited or what he typed.</p></div>
-        <div class="ag-sum"><b>${uses}</b><span>uses this week</span><span>${blocked} blocked</span></div></div>
-      <ul class="ag-list">${list.map(a => { const b = !!S.blocked[a.id]; return `<li class="${b ? "is-blocked" : ""}">
-        <span class="ag-ic">${icon(b ? "block" : "plug", 17)}</span>
-        <div class="ag-n"><b>${esc(a.name)}</b><em>${esc(a.kind)}</em></div>
-        <div class="ag-u"><b>${a.uses} ${a.uses === 1 ? "time" : "times"}</b><em>${b ? (a.since ? "Blocked since " + esc(a.since) : "Blocked today") : a.last ? "Last used " + esc(a.last) : "Not used this week"}</em></div>
-        <button class="btn small${b ? "" : " danger"}" data-block="${a.id}">${b ? "Unblock" : "Block"}</button></li>`; }).join("")}</ul>
-      <p class="fine">A blocked agent won't open on ${n}'s device or in his browser. He sees a short note that you've blocked it.</p></section>`;
-  }
   function viewParent(main) {
     main.innerHTML = `<div class="page page--report">
       <header class="page-h"><div><p class="eyebrow">Weekly report · ${D.today.week}</p><h1>${esc(name())}'s week</h1>
         <p class="sub">${esc(name())}, ${S.setup.child.age} · Class ${S.setup.child.classNo} · ${esc(S.setup.child.provider)} through Bud-e</p></div>
         <button class="btn ghost" data-off>Download PDF</button></header>
-      ${reportHTML(agentsHTML())}
+      ${reportHTML()}
+    </div>`;
+  }
+
+  /* ---------- Bud-e Parent: extension report. Other AI agents, with a block switch for each ---------- */
+  function viewParentAgents(main) {
+    const n = esc(name()), list = D.report.agents;
+    const uses = list.reduce((t, a) => t + a.uses, 0), used = list.filter(a => a.uses).length, blocked = list.filter(a => S.blocked[a.id]).length;
+    main.innerHTML = `<div class="page page--report">
+      <header class="page-h"><div><p class="eyebrow">Extension report · ${D.today.week}</p><h1>Other AI agents</h1>
+        <p class="sub">What the browser extension noticed on ${n}'s device. Names and counts only, never the sites he visited or what he typed.</p></div></header>
+      ${!S.setup.perms.extension ? `<section class="rsec"><p>The browser extension is off, so other AI agents on ${n}'s device aren't noticed.</p>
+        <p class="muted"><button class="link" data-go="pperms">Turn it on in Permissions</button></p></section>` : `
+      <div class="kpis">
+        <div class="kpi"><span>Uses this week</span><b>${uses}</b><em>across all agents</em></div>
+        <div class="kpi"><span>Agents used</span><b>${used} of ${list.length}</b><em>noticed so far</em></div>
+        <div class="kpi"><span>Blocked</span><b>${blocked}</b><em>${blocked === 1 ? "agent" : "agents"} can't open</em></div>
+      </div>
+      <section class="rsec agents"><h3>Agents</h3>
+        <p class="muted">Block an agent to stop it opening on ${n}'s device and in his browser. He sees a short note that you've blocked it.</p>
+        <ul class="ag-list">${list.map(a => { const b = !!S.blocked[a.id]; return `<li class="${b ? "is-blocked" : ""}">
+          <span class="ag-ic">${icon(b ? "block" : "plug", 17)}</span>
+          <div class="ag-n"><b>${esc(a.name)}</b><em>${esc(a.kind)}</em></div>
+          <div class="ag-u"><b>${a.uses} ${a.uses === 1 ? "time" : "times"}</b><em>${b ? (a.since ? "Blocked since " + esc(a.since) : "Blocked today") : a.last ? "Last used " + esc(a.last) : "Not used this week"}</em></div>
+          <button class="btn small${b ? "" : " danger"}" data-block="${a.id}">${b ? "Unblock" : "Block"}</button></li>`; }).join("")}</ul>
+      </section>`}
     </div>`;
     main.onclick = e => {
       const b = e.target.closest("[data-block]");
       if (!b) return;
-      const a = D.report.agents.find(x => x.id === b.dataset.block);
+      const a = list.find(x => x.id === b.dataset.block);
       S.blocked[a.id] = !S.blocked[a.id]; save();
       const y = main.scrollTop;
-      viewParent(main); main.scrollTop = y;
+      viewParentAgents(main); main.scrollTop = y;
       toast(a.name + (S.blocked[a.id] ? " blocked on " : " unblocked on ") + name() + "'s device.", "ok");
     };
   }

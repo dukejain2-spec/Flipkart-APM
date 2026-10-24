@@ -38,9 +38,10 @@ Start: "Set up Aarav's device". The "Jump to a screen" list on the start screen 
  S13    My skills                         levels, next steps, "What my parents see"
  S14    Bud-e Parent: code login          the code from S3 (the login screen shows it in this prototype)
  S15    Weekly report                     faster-response tokens, did it himself (x of y), AI reliance
-                                          vs expected, six-week growth charts, other AI agents (block
-                                          or unblock each), one suggestion. Never chats.
- S16    Permissions                       turn permissions on or off for Aarav's device
+                                          vs expected, six-week growth charts, one suggestion. Never chats.
+ S16    Extension report (nav)            other AI agents the extension noticed, with uses; block or
+                                          unblock each one
+ S17    Permissions                       turn permissions on or off for Aarav's device
 
 RIGHT AND WRONG ANSWERS
  Algebra   Wrong first move (divide by 2 / add 7) -> hint, try again; wrong twice -> the step
