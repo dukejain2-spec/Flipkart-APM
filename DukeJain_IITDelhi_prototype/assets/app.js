@@ -83,21 +83,21 @@
   const logo = (s = 28) => `<span class="logo">${mark(s, true)}${wordmark()}</span>`;
 
   /* ---------- Saved state ---------- */
-  const KEY = "bude.prototype.v2";
+  const KEY = "bude.prototype.v3";
   function fresh() {
     const c = D.child, skills = {};
     D.areas.forEach(a => a.skills.forEach(s => { skills[s.id] = { rating: s.rating }; }));
     const perms = {};
     D.permissions.forEach(p => { perms[p.id] = p.on; });
     return {
-      v: 2, role: null, bts: false,
+      v: 3, role: null,
       setup: {
-        done: false, account: false,
-        parent: { name: D.parent.name, contact: D.parent.contact, password: D.parent.password },
+        done: false, code: null,
+        parent: { name: D.parent.name },
         child: { name: c.name, age: c.age, classNo: c.classNo, uses: c.uses.slice(), provider: c.provider, usedBefore: c.usedBefore },
         perms, walletMonthly: c.walletMonthly
       },
-      welcomed: false,
+      parentIn: false, newSkill: false,
       tokens: c.tokens, spent: 0, earned: 0, tokenLog: [],
       wallet: c.wallet, orders: [],
       skills, ratingLog: [],
@@ -107,7 +107,7 @@
     };
   }
   function load() {
-    try { const s = JSON.parse(localStorage.getItem(KEY)); if (s && s.v === 2) return s; } catch (e) { /* storage blocked */ }
+    try { const s = JSON.parse(localStorage.getItem(KEY)); if (s && s.v === 3) return s; } catch (e) { /* storage blocked */ }
     return fresh();
   }
   let S = load();
@@ -141,6 +141,13 @@
   function earnTokens(n, label) { S.tokens += n; S.earned += n; logTokens(n, label); changed(); floatTokens(n); }
   function level(id) { const r = S.skills[id].rating; return r == null ? null : levelFor(r, S.setup.child.age); }
   function rely(areaId, self) { const r = S.reliance[areaId] || (S.reliance[areaId] = { self: 0, total: 0 }); r.self += self; r.total += 1; }
+  const article = w => (/^[aeiou]/i.test(w) ? "an " : "a ") + w;
+  /* Pocket money left this month: the monthly amount, less what went earlier this month and this session's orders. */
+  const walletLeft = () => Math.max(0, S.setup.walletMonthly - (D.child.walletMonthly - D.child.wallet) - S.orders.reduce((n, o) => n + o.price, 0));
+
+  /* ---------- The Bud-e Parent code ---------- */
+  const makeCode = () => String(rand(1000, 9999)) + String(rand(1000, 9999));
+  const showCode = c => c.slice(0, 4) + " " + c.slice(4);
 
   /* ---------- Toasts, modals, menus ---------- */
   function toast(text, kind = "") {
@@ -184,30 +191,32 @@
 
   /* ---------- Router ---------- */
   const ROUTES = {
-    start: viewStart, signup: viewSignup, child: viewChildProfile, permissions: viewPermissions, handover: viewHandover,
-    welcome: viewWelcome, chat: viewChat, earn: viewEarn, progress: viewProgress, parent: viewParent
+    start: viewStart, child: viewChildProfile, permissions: viewPermissions, handover: viewHandover, splash: viewSplash,
+    chat: viewChat, earn: viewEarn, progress: viewProgress, plogin: viewParentLogin, parent: viewParent, pperms: viewParentPerms
   };
   const CHILD = ["chat", "earn", "progress"];
+  const PARENT = ["parent", "pperms"];
   const route = () => (location.hash.replace(/^#\/?/, "").split("?")[0] || "start");
   function go(r) { if (route() === r) render(); else location.hash = "#/" + r; }
 
   function render() {
     let r = route();
     if (!ROUTES[r]) r = "start";
+    /* Bud-e Parent opens only after the code login. */
+    if (PARENT.includes(r) && !S.parentIn) { location.replace("#/plogin"); return; }
     const app = $("#app");
     document.body.dataset.route = r;
-    document.body.classList.toggle("bts-on", !!S.bts);
     if (CHILD.includes(r)) {
       if (!S.setup.done) quickSetup();
       S.role = "child";
+      if (r === "progress") S.newSkill = false;
       app.innerHTML = childShell(r);
       ROUTES[r]($("#main"));
       refreshLive();
-    } else if (r === "parent") {
-      if (!S.setup.done) quickSetup();
+    } else if (PARENT.includes(r)) {
       S.role = "parent";
-      app.innerHTML = parentShell();
-      viewParent($("#main"));
+      app.innerHTML = parentShell(r);
+      ROUTES[r]($("#main"));
     } else {
       app.innerHTML = `<div class="bare"><div class="canvas">${ROUTES[r]()}</div></div>`;
       const after = AFTER[r]; if (after) after();
@@ -218,8 +227,11 @@
   }
   const AFTER = {};
 
-  /* Jumping straight into the child's app (demo rail, "I'm Aarav") uses the default setup. */
-  function quickSetup() { S.setup.done = true; S.setup.account = true; S.setup.perms.consent = true; }
+  /* Jumping straight into either app (demo rail, "I'm Aarav") uses the default setup and its code. */
+  function quickSetup() {
+    S.setup.done = true; S.setup.perms.consent = true;
+    if (!S.setup.code) S.setup.code = makeCode();
+  }
 
   /* ---------- Shells ---------- */
   /* Both apps share one frame: a soft colour-washed canvas, a nav rail on the left, a top bar of status pills. */
@@ -236,27 +248,26 @@
   }
   function childShell(r) {
     return frame("shell--child",
-      `${tab("chat", "Home", "home", r === "chat")}${tab("progress", "My progress", "chart", r === "progress")}${tab("earn", "Earn tokens", "coin", r === "earn")}
+      `${tab("chat", "Home", "home", r === "chat")}${tab("progress", "My skills", "trophy", r === "progress").replace("</a>", S.newSkill ? '<i class="tab-dot" aria-label="New skill"></i></a>' : "</a>")}${tab("earn", "Earn tokens", "coin", r === "earn")}
        <span class="nav-fill"></span><button class="tab tab--settings" data-off>${icon("cog", 20)}<span>Settings</span></button>${profileButton(name()[0], "child")}`,
-      `<label class="switch-label" title="Shortcut: B"><span>Behind the scenes</span><input type="checkbox" id="bts" ${S.bts ? "checked" : ""}><i class="switch"></i></label>
-       <button class="pill-stat token-pill" data-drawer aria-label="Tokens and areas"><i class="coin-dot"></i><b class="token-count">${S.tokens}</b><span>tokens</span></button>
-       <span class="pill-stat wallet-pill">Wallet <b class="wallet-count">${rupee(S.wallet)}</b></span>`,
+      `<button class="pill-stat token-pill" data-drawer aria-label="Tokens and areas"><i class="coin-dot"></i><b class="token-count">${S.tokens}</b><span>tokens</span></button>
+       ${S.setup.perms.wallet ? `<span class="pill-stat wallet-pill">Wallet <b class="wallet-count">${rupee(S.wallet)}</b></span>` : ""}`,
       `<div class="cols"><main id="main" class="main"></main><aside class="side" id="side" aria-label="Your areas and tokens"></aside></div>
        <div class="drawer-scrim" data-drawer></div>`);
   }
-  function parentShell() {
+  function parentShell(r) {
     return frame("shell--parent",
-      `${tab("parent", "Weekly report", "chart", true)}
+      `${tab("parent", "Weekly report", "chart", r === "parent")}${tab("pperms", "Permissions", "shield", r === "pperms")}
        <span class="nav-fill"></span><button class="tab tab--settings" data-off>${icon("cog", 20)}<span>Settings</span></button>${profileButton(S.setup.parent.name[0] || "N", "parent")}`,
-      `<span class="pill-stat"><i class="role-dot"></i>Parent account</span>`,
+      `<span class="pill-stat"><i class="role-dot"></i>Bud-e Parent · ${esc(name())}'s device linked</span>`,
       `<div class="cols"><main id="main" class="main main--wide"></main></div>`);
   }
   function profileButton(initial, role) {
     return `<div class="profile"><button class="avatar avatar--${role}" data-menu aria-label="Profile menu">${esc(initial)}</button>
       <div class="menu" hidden>
         <div class="menu-h">${role === "child" ? esc(name()) + ", " + S.setup.child.age : esc(S.setup.parent.name) + " · " + D.parent.relation}</div>
-        ${role === "child" ? `<button data-switch="parent">${icon("swap", 16)} Switch to ${esc(S.setup.parent.name.split(" ")[0])} (parent)</button>`
-                           : `<button data-switch="chat">${icon("swap", 16)} Switch to ${esc(name())}</button>`}
+        ${role === "child" ? `<button data-switch="parent">${icon("swap", 16)} Open Bud-e Parent</button>`
+                           : `<button data-switch="chat">${icon("swap", 16)} Switch to ${esc(name())}'s device</button><button data-logout>${icon("back", 16)} Log out</button>`}
         <button data-go="start">${icon("home", 16)} Start screen</button>
         <button data-reset>${icon("refresh", 16)} Reset prototype</button>
       </div></div>`;
@@ -274,7 +285,7 @@
           if (r == null) return `<div class="sk"><span class="sk-name">${esc(s.name)}</span><span class="lvl lvl--new">New</span></div>`;
           const l = levelFor(r, age);
           return `<div class="sk"><span class="sk-name">${esc(s.name)}</span><span class="lvl lvl--${l.i}">${l.name}</span>
-            <span class="sk-bar"><i style="width:${l.pct}%"></i></span><span class="num">${r}</span></div>`;
+            <span class="sk-bar"><i style="width:${l.pct}%"></i></span></div>`;
         }).join("");
       return `<div class="area"><div class="area-h">${icon(areaIcon(a.id), 15)}<b>${esc(a.name)}</b></div>${rows}</div>`;
     }).join("");
@@ -285,7 +296,7 @@
         <a href="#/earn" class="btn primary block">${icon("coin", 17)} Earn tokens</a>
       </section>
       <section class="panel areas">
-        <div class="panel-h"><b>My areas</b><a href="#/progress">See all</a></div>
+        <div class="panel-h"><b>My areas</b><a href="#/progress">My skills</a></div>
         ${areas}
         <p class="side-foot">Levels are for ${levelFor(0, age).group}. Chores aren't an area: they're always instant and free.</p>
       </section>`;
@@ -302,10 +313,11 @@
 
   /* ---------- S0 Start ---------- */
   const RAIL = [
-    ["S1", "Parent sign-up", "signup"], ["S2", "Child profile", "child"], ["S3", "Permissions", "permissions"], ["S4", "Handover", "handover"],
+    ["S1", "Child details", "child"], ["S2", "Permissions", "permissions"], ["S3", "Code + handover", "handover"], ["S4", "I'm Aarav", "splash"],
     ["S5", "Home", "chat"], ["S6", "Chore", "task:cab"], ["S7", "New skill + algebra", "task:algebra"], ["S8", "Hard problem + Faster", "task:cubic"],
     ["S9", "Relationships", "task:apology"], ["S10", "Gift + wallet", "task:gift"], ["S11", "Feelings", "task:feelings"],
-    ["S12", "Earn tokens", "earn"], ["S13", "My progress", "progress"], ["S14", "Parent report", "parent"]
+    ["S12", "Earn tokens", "earn"], ["S13", "My skills", "progress"], ["S14", "Parent code login", "plogin"],
+    ["S15", "Parent report", "parent"], ["S16", "Edit permissions", "pperms"]
   ];
   function viewStart() {
     return `<div class="start">
@@ -315,8 +327,9 @@
         <p class="tagline">${esc(D.product.tagline)}</p>
         <p class="lede">Bud-e sits between a child and their personal AI agent. Chores happen instantly. For the moments that build a person, the AI does less as the child gets better.</p>
         <div class="start-btns">
-          <button class="btn primary lg" data-go="signup">${icon("user", 18)} I'm a parent</button>
-          <button class="btn ghost lg" data-go="${S.setup.done ? (S.welcomed ? "chat" : "welcome") : "welcome"}">I'm ${esc(name())}</button>
+          <button class="btn primary lg" data-go="child">${icon("user", 18)} Set up ${esc(name())}'s device</button>
+          <button class="btn ghost lg" data-go="splash">I'm ${esc(name())}</button>
+          <button class="btn ghost lg" data-go="plogin">${icon("shield", 18)} Bud-e Parent</button>
         </div>
       </div>
       <nav class="rail" aria-label="Jump to a screen">
@@ -329,20 +342,22 @@
   function jump(to) {
     if (to.startsWith("task:")) {
       const id = to.slice(5);
-      quickSetup(); S.welcomed = true;
+      quickSetup();
       if (id === "cubic" && S.skills.algebra.rating == null) { S.skills.algebra.rating = 393; save(); }
       pendingPrefill = taskDef(id).prompt;
       go("chat");
       return;
     }
-    if (["signup", "child", "permissions", "handover"].includes(to)) { S.setup.account = true; }
-    if (to === "handover") { S.setup.perms.consent = true; quickSetup(); }
+    if (to === "handover" || to === "splash" || to === "plogin") quickSetup();
+    if (to === "plogin") S.parentIn = false;
+    if (PARENT.includes(to)) { quickSetup(); S.parentIn = true; }
+    save();
     go(to);
   }
 
-  /* ---------- S1–S4 Parent setup ---------- */
+  /* ---------- S1–S3 Setting up the child's device (filled in by the parent) ---------- */
   function steps(n) {
-    const names = ["Account", "Child", "Permissions", "Handover"];
+    const names = ["Child", "Permissions", "Code"];
     return `<ol class="steps">${names.map((s, i) => `<li class="${i + 1 < n ? "is-done" : i + 1 === n ? "is-now" : ""}"><span>${i + 1 < n ? icon("check", 13) : i + 1}</span>${s}</li>`).join("")}</ol>`;
   }
   function setupFrame(n, title, sub, body) {
@@ -352,38 +367,9 @@
     </div>`;
   }
 
-  function viewSignup() {
-    const p = S.setup.parent;
-    return setupFrame(1, "Create your parent account", "You set things up and read the weekly report. Your child uses the app.", `
-      <form class="form card" id="signup" novalidate>
-        <label class="field"><span>Full name</span><input name="name" autocomplete="name" value="${esc(p.name)}"></label>
-        <label class="field"><span>Email or phone</span><input name="contact" autocomplete="email" value="${esc(p.contact)}"></label>
-        <label class="field"><span>Password</span><div class="pw"><input name="password" type="password" autocomplete="new-password" value="${esc(p.password)}"><button type="button" class="link" data-pw>Show</button></div><em class="hint">At least 8 characters</em></label>
-        <p class="form-err" hidden></p>
-        <button class="btn primary lg block" type="submit">Create account</button>
-        <p class="fine">Already have an account? <button type="button" class="link" data-off>Sign in</button></p>
-      </form>`);
-  }
-  AFTER.signup = () => {
-    const f = $("#signup");
-    $("[data-pw]", f).addEventListener("click", e => { const i = f.password; i.type = i.type === "password" ? "text" : "password"; e.target.textContent = i.type === "password" ? "Show" : "Hide"; });
-    f.addEventListener("submit", async e => {
-      e.preventDefault();
-      const err = $(".form-err", f);
-      const v = { name: f.name.value.trim(), contact: f.contact.value.trim(), password: f.password.value };
-      const msg = !v.name ? "Add your name." : !/^\S+@\S+\.\S+$|^[+\d][\d\s-]{7,}$/.test(v.contact) ? "Enter a valid email or phone number." : v.password.length < 8 ? "Use at least 8 characters for the password." : "";
-      err.hidden = !msg; err.textContent = msg;
-      if (msg) return;
-      const b = $("button[type=submit]", f); b.disabled = true; b.innerHTML = '<span class="spin"></span> Creating account…';
-      await sleep(700);
-      S.setup.parent = v; S.setup.account = true; save();
-      go("child");
-    });
-  };
-
   function viewChildProfile() {
     const c = S.setup.child;
-    return setupFrame(2, "About your child", "This sets their starting point. You can change it later.", `
+    return setupFrame(1, "Set up your child's device", "You fill this in once, on their device. It sets their starting point.", `
       <form class="form card" id="childf" novalidate>
         <div class="row2">
           <label class="field"><span>Child's name</span><input name="name" value="${esc(c.name)}"></label>
@@ -401,7 +387,7 @@
           <em class="hint" id="usedHint">${c.usedBefore ? "With your permission, past use helps estimate starting levels." : "Starting levels will come from class averages and the first few chats."}</em>
         </fieldset>
         <p class="form-err" hidden></p>
-        <div class="form-nav"><button type="button" class="btn ghost" data-go="signup">${icon("back", 16)} Back</button><button class="btn primary" type="submit">Next ${icon("arrow", 16)}</button></div>
+        <div class="form-nav"><button type="button" class="btn ghost" data-go="start">${icon("back", 16)} Back</button><button class="btn primary" type="submit">Next ${icon("arrow", 16)}</button></div>
       </form>`);
   }
   AFTER.child = () => {
@@ -421,24 +407,44 @@
   };
 
   const permIcon = { consent: "shield", agent: "plug", past: "data", restrict: "block", extension: "puzzle", data: "lock", wallet: "wallet", notify: "bell" };
-  function viewPermissions() {
+  /* Permission cards, shared by setup (on the child's device) and Bud-e Parent. In Bud-e Parent the two required ones
+     stay on while Bud-e is active. */
+  function permCards(inParent) {
     const s = S.setup, c = s.child;
-    const cards = D.permissions.map(p => {
+    return D.permissions.map(p => {
       const off = p.id === "past" && !c.usedBefore;
       const on = off ? false : s.perms[p.id];
+      const locked = inParent && p.required;
       const why = p.why.replace(/Aarav/g, esc(c.name));
       return `<div class="perm ${on ? "is-on" : ""} ${off ? "is-off" : ""}" data-perm="${p.id}">
         <span class="perm-ic">${icon(permIcon[p.id], 20)}</span>
         <div class="perm-txt"><b>${esc(p.title)}${p.required ? '<em class="req">Required</em>' : ""}${p.optional ? '<em class="opt">Optional</em>' : ""}</b>
           <p>${off ? "Not needed: " + esc(c.name) + " hasn't used an agent before." : why}</p>
+          ${locked ? `<p class="perm-lock">${icon("lock", 13)} Stays on while Bud-e is active. To withdraw it, remove ${esc(c.name)}'s device in Settings.</p>` : ""}
           ${p.detail ? `<details><summary>What exactly is stored</summary><ul>${p.detail.map(d => `<li>${esc(d)}</li>`).join("")}</ul></details>` : ""}
           ${p.id === "wallet" ? `<label class="amount">Monthly amount <span>₹</span><input type="number" min="0" step="100" id="walletAmt" value="${s.walletMonthly}"></label>` : ""}
         </div>
-        <label class="toggle"><input type="checkbox" ${on ? "checked" : ""} ${off ? "disabled" : ""} aria-label="${esc(p.title)}"><i class="switch"></i></label>
+        <label class="toggle"><input type="checkbox" ${on ? "checked" : ""} ${off || locked ? "disabled" : ""} aria-label="${esc(p.title)}"><i class="switch"></i></label>
       </div>`;
     }).join("");
-    return setupFrame(3, "Permissions", "Each one is explained. Only the first two are required.", `
-      <div class="perms">${cards}</div>
+  }
+  /* Wires the toggles and the wallet amount; `after` runs on every change. */
+  function bindPerms(after) {
+    $$(".perm").forEach(card => {
+      const input = $(".toggle input", card);
+      input.addEventListener("change", () => {
+        S.setup.perms[card.dataset.perm] = input.checked;
+        card.classList.toggle("is-on", input.checked);
+        save(); after(card.dataset.perm);
+      });
+    });
+    const amt = $("#walletAmt");
+    amt.addEventListener("change", () => { S.setup.walletMonthly = Math.max(0, +amt.value || 0); save(); after("walletAmt"); });
+  }
+  function viewPermissions() {
+    return setupFrame(2, "Permissions", "Each one is explained. Only the first two are required.", `
+      <div class="lock-note">${icon("lock", 18)}<p><b>These permissions can't be changed on this device.</b> After setup, only you can change them, from Bud-e Parent on your phone.</p></div>
+      <div class="perms">${permCards(false)}</div>
       <div class="seebox card">
         <div><h3>${icon("eye", 18)} You will see</h3><ul>${D.willSee.map(x => `<li>${icon("check", 15)}${esc(x)}</li>`).join("")}</ul></div>
         <div><h3>${icon("lock", 18)} You won't see</h3><ul>${D.wontSee.map(x => `<li class="no">${icon("x", 15)}${esc(x)}</li>`).join("")}</ul></div>
@@ -451,18 +457,9 @@
       const ok = S.setup.perms.consent && S.setup.perms.agent;
       $("#finish").classList.toggle("is-blocked", !ok);
       $("#finish").setAttribute("aria-disabled", ok ? "false" : "true");
+      $("#permErr").hidden = true;
     };
-    $$(".perm").forEach(card => {
-      const input = $(".toggle input", card);
-      input.addEventListener("change", () => {
-        S.setup.perms[card.dataset.perm] = input.checked;
-        card.classList.toggle("is-on", input.checked);
-        $("#permErr").hidden = true;
-        save(); sync();
-      });
-    });
-    const amt = $("#walletAmt");
-    amt.addEventListener("input", () => { S.setup.walletMonthly = Math.max(0, +amt.value || 0); save(); });
+    bindPerms(sync);
     sync();
     $("#finish").addEventListener("click", () => {
       const err = $("#permErr");
@@ -483,7 +480,9 @@
       past ? "Estimating starting levels from past use (no chats imported)" : "Setting starting levels from Class " + c.classNo + " averages",
       "Setting up " + D.child.tokensWeekly + " tokens a week",
       S.setup.perms.extension ? "Installing the browser extension" : "Skipping the browser extension",
-      S.setup.perms.wallet ? "Opening a " + rupee(S.setup.walletMonthly) + " monthly wallet" : "No wallet"
+      S.setup.perms.wallet ? "Opening a " + rupee(S.setup.walletMonthly) + " monthly wallet" : "No wallet",
+      "Locking these permissions to Bud-e Parent",
+      "Making your Bud-e Parent code"
     ];
     $("#layer").innerHTML = `<div class="scrim"></div><div class="modal provision"><div class="prov-mark">${mark(52, true)}</div><h2>Setting up Bud-e</h2><ul>${items.map(t => `<li><span class="spin"></span>${esc(t)}</li>`).join("")}</ul></div>`;
     $("#layer").classList.add("open");
@@ -491,46 +490,51 @@
     for (const li of lis) { li.classList.add("is-now"); await sleep(rand(380, 620)); li.classList.remove("is-now"); li.classList.add("is-done"); $(".spin", li).outerHTML = icon("check", 15); }
     await sleep(300);
     $("#layer").classList.remove("open"); $("#layer").innerHTML = "";
-    const monthly = S.setup.walletMonthly;
-    S.wallet = Math.max(0, monthly - (D.child.walletMonthly - D.child.wallet));
-    S.setup.done = true; save();
+    S.setup.code = makeCode();
+    S.wallet = walletLeft();
+    S.setup.done = true; S.parentIn = false; save();
     go("handover");
   }
 
+  /* S3: the code for Bud-e Parent, then the handover. */
   function viewHandover() {
     const n = esc(name());
     return `<div class="handover">
       <div class="hand-card">
+        <p class="eyebrow">${icon("check", 14)} Setup complete</p>
+        <section class="code-card card">
+          <h1>Your Bud-e Parent code</h1>
+          <div class="code" aria-label="Code ${esc(S.setup.code.split("").join(" "))}">${esc(showCode(S.setup.code))}</div>
+          <p class="sub">Open <b>Bud-e Parent</b> on your phone and enter this code. That's where you'll see ${n}'s weekly report and change permissions.</p>
+        </section>
         <div class="hand-ic">${icon("swap", 28)}</div>
-        <p class="eyebrow">Setup complete</p>
-        <h1>Hand the device to ${n}.</h1>
-        <p class="sub">${esc(S.setup.parent.name.split(" ")[0])}, you'll get ${n}'s first weekly report on Sunday. It shows progress, never chats.</p>
-        <button class="btn primary lg" data-go="welcome">I'm ${n} ${icon("arrow", 18)}</button>
-        <button class="link" data-switch="parent">See what the parent report looks like</button>
+        <h2>Now hand the device to ${n}.</h2>
+        <button class="btn primary lg" data-go="splash">I'm ${n} ${icon("arrow", 18)}</button>
+        <button class="link" data-go="plogin">Open Bud-e Parent instead</button>
       </div>
     </div>`;
   }
 
-  function viewWelcome() {
-    return `<div class="welcome">
-      <div class="wel-card">
-        <div class="wel-mark">${mark(84, true)}</div>
-        <h1>Hey ${esc(name())} 👋</h1>
-        <p class="sub">Meet Bud-e. Your agent still does everything you ask; Bud-e just makes sure you keep growing too.</p>
-        <ul class="wel-points">${D.welcome.map(w => `<li><span>${icon(w.icon, 20)}</span><p>${esc(w.text)}</p></li>`).join("")}</ul>
-        <div class="wel-tokens">
-          <div>${icon("coin", 22)}<b>${S.tokens}</b><span>tokens this week</span></div>
-          <p>Use them for a <b>Faster response</b> when you're in a hurry. Earn more by doing things yourself. They reset every ${D.today.reset}.</p>
-        </div>
-        <button class="btn primary lg block" id="letsgo">Let's go</button>
-      </div>
+  /* S4 "I'm Aarav": the mark pops in and winks, the name and the privacy promise follow, then home. */
+  function viewSplash() {
+    return `<div class="splash">
+      <div class="splash-glow"></div>
+      <div class="splash-mark">${mark(170, true)}</div>
+      <h1 class="splash-word">${wordmark()}</h1>
+      <p class="splash-hi">Hey ${esc(name())} 👋</p>
+      <p class="splash-note">${icon("lock", 15)} Your chats are private. Your parents see your progress, not your conversations.</p>
     </div>`;
   }
-  AFTER.welcome = () => { $("#letsgo").addEventListener("click", () => { quickSetup(); S.welcomed = true; save(); go("chat"); }); };
+  AFTER.splash = () => {
+    quickSetup(); save();
+    const done = () => { if (route() === "splash") go("chat"); };
+    $(".splash").addEventListener("click", done);
+    setTimeout(done, window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 900 : 3000);
+  };
 
   /* ---------- Chat engine ---------- */
   const CANCEL = { cancelled: true };
-  const chat = { run: 0, ctx: null, flow: null, waiting: null, faster: null, noFaster: null, typing: false, waitSeq: 0, queued: null };
+  const chat = { run: 0, ctx: null, flow: null, waiting: null, typing: false, waitSeq: 0, queued: null };
   let pendingPrefill = "";
 
   function push(m) {
@@ -562,8 +566,7 @@
 
   function tagFor(ctx, st) {
     const t = ctx.task;
-    if (ctx.off) return { text: "My agent", tone: "plain" };
-    if (st && st.tag === "check") return { text: `${ctx.area.tag} · ${ctx.skill.name} · Quick check: two steps`, tone: "check" };
+    if (st && st.tag === "check") return { text: `${ctx.area.tag} · ${ctx.skill.name} · New skill check`, tone: "check" };
     if (ctx.fast) return { text: `${ctx.area.tag}${ctx.area.id === "study" ? " · " + ctx.skill.name : ""} · Faster response: done for you`, tone: "fast" };
     if (ctx.challenge) return { text: `Challenge · ${ctx.area.name} · +${t.reward} tokens`, tone: "challenge" };
     if (t.tag) return { text: t.tag, tone: t.area === "chore" ? "chore" : t.area === "feelings" ? "care" : "care" };
@@ -571,32 +574,8 @@
     return { text: `${ctx.area.tag}${ctx.area.id === "study" ? " · " + ctx.skill.name : ""} · ${ctx.mode.name}: ${line}`, tone: ctx.mode.id };
   }
 
-  function btsFor(ctx, st) {
-    const t = ctx.task;
-    if (ctx.off) return { line: "detector found no matching task · nothing sent to the agent", steps: [["① Detector", "No area or chore matched"]] };
-    if (t.area === "chore") return { line: "chore · never rated · no tokens · no waiting", steps: [
-      ["① Detector", "Chore: booking a ride"], ["② Rating store", "Skipped: chores aren't rated"], ["③ Weight estimator", "Skipped"],
-      ["④ Instruction builder", "Just do it, instantly"], ["⑤ My agent (API)", "Booked the cab"], ["⑥ Output check", "Skipped for chores"], ["⑦ Result scorer", "Not scored"]] };
-    if (t.area === "feelings") return { line: "feelings · always handled with care · no rating · no tokens", steps: [
-      ["① Detector", "Feelings · low mood, no danger signs"], ["② Rating store", "Not used: feelings have no rating"], ["③ Weight estimator", "Always handled with care"],
-      ["④ Instruction builder", "Listen and support, ask one question, then point to a real person"], ["⑤ My agent (API)", "Reply generated"],
-      ["⑥ Output check", "Encourages a real person ✓ · doesn't act as a best friend ✓"], ["⑦ Result scorer", "Not scored"]] };
-    if (st && st.tag === "check") return { line: `new skill · quick two-step check · starting rating ${startRating(t.skill)}, +80 if both are right`, steps: null };
-    if (ctx.fast) return { line: `Faster response · task weight ${ctx.weight} → ${costFor(ctx.weight)} tokens · rating doesn't change`, steps: null };
-    const g = ctx.gap;
-    const steps = [
-      ["① Detector", `${ctx.area.name} · ${ctx.skill.name}${t.carriesFeelings ? " · carries feelings (apology)" : ""}`],
-      ["② Rating store", `${ctx.skill.name}: ${ctx.rating} (${levelFor(ctx.rating, S.setup.child.age).name}, ${levelFor(0, S.setup.child.age).group})`],
-      ["③ Weight estimator", `${ctx.weight} (${ctx.area.weightMeans})`],
-      ["④ Instruction builder", `gap ${signed(g)} → ${ctx.mode.name}: ${ctx.mode.instruction}${t.carriesFeelings ? " · never write a feelings message for him" : ""}${ctx.area.id === "money" ? " · no sponsored options" : ""}`],
-      ["⑤ My agent (API)", `Reply generated by ${S.setup.child.provider} with the hidden instructions`],
-      ["⑥ Output check", `Follows ${ctx.mode.name} ✓${t.carriesFeelings ? " · no message drafted for him ✓" : ""}`],
-      ["⑦ Result scorer", "After the task"]
-    ];
-    return { line: `child rating ${ctx.rating} · task weight ${ctx.weight} · gap ${signed(g)} → ${ctx.mode.name}`, steps };
-  }
-
-  /* The flow interpreter: runs DATA.flows[id] step by step. */
+  /* The flow interpreter: runs DATA.flows[id] step by step. With `fast` (Faster response, chosen when sending)
+     it starts at the flow's "fast" step. */
   async function startFlow(id, text, opts = {}) {
     cancelFlow();
     const run = chat.run;
@@ -609,24 +588,24 @@
     if (task.skill && S.skills[task.skill].rating == null && opts.challenge) { S.skills[task.skill].rating = startRating(task.skill); changed(); }
     chat.ctx = ctx; chat.flow = id;
     numbers(ctx);
-    push({ t: "child", text });
+    push({ t: "child", text, fast: !!opts.fast });
     renderChips(); renderComposer();
     try {
-      await runSteps(D.flows[id], ctx);
+      await runSteps(D.flows[id], ctx, opts.fast ? "fast" : null);
       S.done[id] = true;
     } catch (e) { if (e !== CANCEL) throw e; }
-    if (run === chat.run) { chat.ctx = null; chat.flow = null; chat.faster = null; chat.noFaster = null; save(); renderChips(); renderComposer(); }
+    if (run === chat.run) { chat.ctx = null; chat.flow = null; save(); renderChips(); renderComposer(); }
   }
   function cancelFlow() {
     chat.run++;
     if (chat.waiting) { const w = chat.waiting; chat.waiting = null; w.resolve(CANCEL); }
-    chat.ctx = null; chat.flow = null; chat.faster = null; chat.noFaster = null; chat.queued = null;
+    chat.ctx = null; chat.flow = null; chat.queued = null;
     hideTyping();
   }
 
-  async function runSteps(steps, ctx) {
+  async function runSteps(steps, ctx, from) {
     const at = id => { const i = steps.findIndex(s => s.id === id); if (i < 0) throw new Error("No step " + id); return i; };
-    let i = 0;
+    let i = from ? at(from) : 0;
     while (i < steps.length) {
       const st = steps[i];
       let next = i + 1;
@@ -636,28 +615,20 @@
         if (typeof r === "string") next = at(r);
       }
       if (st.from === "agent") {
-        chat.faster = st.faster || null; chat.noFaster = st.noFaster || null;
-        renderComposer();
         await typing(st.fast ? 280 : rand(600, 1000), ctx);
         const chips = typeof st.chips === "function" ? st.chips(ctx) : st.chips;
         const waits = !!(chips || st.input || st.card === "products");
         const wid = waits ? "w" + (++chat.waitSeq) : null;
-        const bts = btsFor(ctx, st);
-        if (bts.steps && ctx.pipelined) bts.steps = null;
-        if (bts.steps) ctx.pipelined = true;
-        push({ t: "agent", text: typeof st.text === "function" ? st.text(ctx) : st.text, tag: tagFor(ctx, st), bts,
+        push({ t: "agent", text: typeof st.text === "function" ? st.text(ctx) : st.text, tag: tagFor(ctx, st),
           card: st.card || null, cardData: cardData(st.card, ctx), wait: wid });
         if (waits) {
           const ans = await waitFor(wid, chips, st, ctx);
           alive(ctx);
-          if (ans.faster) next = at(ans.faster);
-          else {
-            ctx.answer = ans.label;
-            if (st.id) ctx.answers[st.id] = ans.label;
-            if (ans.product) ctx.product = ans.product;
-            push({ t: "child", text: ans.product ? `${ans.product.name}, ${rupee(ans.product.price)}` : ans.label });
-            if (ans.go) next = at(ans.go); else if (st.go) next = at(st.go);
-          }
+          ctx.answer = ans.label;
+          if (st.id) ctx.answers[st.id] = ans.label;
+          if (ans.product) ctx.product = ans.product;
+          push({ t: "child", text: ans.product ? `${ans.product.name}, ${rupee(ans.product.price)}` : ans.label });
+          if (ans.go) next = at(ans.go); else if (st.go) next = at(st.go);
         } else if (st.go) next = at(st.go);
       }
       if (st.end) break;
@@ -703,11 +674,14 @@
     return { chip: best, score: bestScore };
   }
 
-  function detect(text) { return D.tasks.find(t => t.match.test(text)); }
+  /* For now the only new requests are the pre-fed prompts (picked from the drop-down, or typed out in full). */
+  const norm = s => String(s).toLowerCase().replace(/[−–]/g, "-").replace(/\s+/g, " ").trim();
+  const promptTask = text => { const s = norm(text); return s ? D.prompts.map(taskDef).find(t => norm(t.prompt) === s || norm(t.chip) === s) : null; };
 
+  /* Returns false when the text wasn't taken, so the composer keeps it. */
   function typed(raw) {
     const text = raw.trim();
-    if (!text) return;
+    if (!text) return false;
     if (chat.waiting) {
       const w = chat.waiting;
       if (w.input) return answer({ label: text });
@@ -716,31 +690,17 @@
         if (p) return answer({ product: p, label: p.name });
       }
       const { chip, score } = closestChip(text, w.chips);
-      const other = detect(text);
-      if (!score && other && other.id !== chat.flow) return startFlow(other.id, text);
+      const other = promptTask(text);
+      if (!score && other && other.id !== chat.flow) return startFlow(other.id, other.prompt);
       if (w.products) return answer({ product: w.ctx.products[0], label: w.ctx.products[0].name });
       const c = chip || chipObj(w.chips[0]);
       return answer({ label: c.label, go: c.go });
     }
     if (chat.ctx) { chat.queued = text; return; }
-    const t = detect(text);
-    if (t) {
-      return startFlow(t.id, text);
-    }
-    offPathReply(text);
-  }
-
-  async function offPathReply(text) {
-    cancelFlow();
-    const ctx = { run: chat.run, off: true, task: {} };
-    chat.ctx = ctx;
-    push({ t: "child", text });
-    try {
-      await typing(500, ctx);
-      push({ t: "agent", text: "That one isn't part of this prototype yet. Try one of the suggestions below.", tag: tagFor(ctx), bts: btsFor(ctx) });
-      toast("Not part of this prototype.");
-    } catch (e) { if (e !== CANCEL) throw e; }
-    if (ctx.run === chat.run) { chat.ctx = null; renderChips(); renderComposer(); }
+    const t = promptTask(text);
+    if (t) return startFlow(t.id, t.prompt);
+    toast("For now, you can only use the pre-fed prompts.");
+    return false;
   }
 
   /* ---------- Flow actions ---------- */
@@ -754,23 +714,24 @@
       const yes = await modal({ cls: "unlock", html: `<div class="unlock-badge">${icon("spark", 30)}</div>
           <p class="eyebrow">New skill unlocked</p><h2>${esc(sk.name)}</h2>
           <p>First time with ${esc(sk.name.toLowerCase())} here. We'll start you at a level that fits, and it grows as you do.</p>`,
-        actions: [{ label: "No, I'm not new to this", value: "no" }, { label: "Yes, let's go", value: "yes", primary: true }] });
+        actions: [{ label: "No, I'm not new to this skill", value: "no" }, { label: "Yes, let's go", value: "yes", primary: true }] });
       alive(ctx);
       if (yes === "no") {
-        push({ t: "child", text: "No, I'm not new to this" });
+        push({ t: "child", text: "No, I'm not new to this skill" });
         if (!st.noCheck) return "check";
         setStart(ctx, startRating(id) + 80, "claimed");
-        return start;
-      }
-      setStart(ctx, startRating(id), "new");
+      } else setStart(ctx, startRating(id), "new");
+      push({ t: "skill", data: cardData("skill", ctx) });
+      await flyToSkills(ctx.skill.name);
+      alive(ctx);
       return start;
     },
     miss(st, ctx) { ctx.misses++; },
+    /* Three right: +80 on the class starting point; two right: +40; otherwise the starting point itself. */
     checkResult(st, ctx) {
-      const base = startRating(ctx.task.skill);
-      setStart(ctx, ctx.misses ? base : base + 80, "checked");
-      return "start";
+      setStart(ctx, startRating(ctx.task.skill) + ({ 0: 80, 1: 40 }[ctx.misses] || 0), "checked");
     },
+    async flySkill(st, ctx) { await flyToSkills(ctx.skill.name); },
     byMode(st, ctx) { numbers(ctx); return st.routes[ctx.mode.id]; },
     hint(st, ctx) { ctx.hints++; },
 
@@ -789,8 +750,7 @@
       if (st.bonus) floatTokens(st.bonus);
       const up = after.i > before.i;
       push({ t: "score", up, text: up ? `Level up: ${ctx.skill.name} is now ${after.name}` : st.say || (result === 1 ? "That's all you" : "Done with a little help"),
-        sub: (st.bonus ? `+${st.bonus} bonus tokens · ` : "") + (up ? "" : `${ctx.skill.name}: ${after.name}`),
-        bts: { line: `result ${result} (${D.rating.results[result]}) · expected ${exp.toFixed(2)} · ${old} + ${D.rating.K} × (${result} − ${exp.toFixed(2)}) = ${now}` } });
+        sub: [st.bonus ? `+${st.bonus} bonus tokens` : "", up ? "" : `${ctx.skill.name}: ${after.name}`].filter(Boolean).join(" · ") });
       if (up) toast(`${ctx.skill.name}: ${before.name} → ${after.name}`, "ok");
     },
 
@@ -800,9 +760,7 @@
       S.fasterOn.push(ctx.task.id);
       rely(ctx.area.id, 0);
       changed();
-      push({ t: "child", text: "⚡ Faster response: just do this one" });
-      push({ t: "score", spend: true, text: `−${c} tokens`, sub: `${S.tokens} left this week · this one won't raise your rating`,
-        bts: { line: `weight ${ctx.weight} → ${D.costs.find(x => ctx.weight <= x.max).label} task → ${c} tokens · result scorer skipped` } });
+      push({ t: "score", spend: true, text: `−${c} tokens`, sub: `${S.tokens} left this week · this one won't raise your rating` });
     },
 
     note(st, ctx) { push({ t: "note", text: st.text, icon: st.icon || "info" }); },
@@ -850,18 +808,54 @@
     S.skills[id].rating = rating; changed();
     numbers(ctx);
     const l = levelFor(rating, S.setup.child.age), sk = skillDef(id);
-    const past = S.setup.perms.past && S.setup.child.usedBefore;
+    const right = 3 - Math.min(3, ctx.misses);
     const text = {
-      new: `New skill: ${sk.name}. You're starting as an ${l.name}.`,
-      checked: ctx.misses ? `No worries. You're starting ${sk.name} as an ${l.name}; we'll build from here.` : `You handled both. You're starting ${sk.name} as an ${l.name}.`,
-      claimed: `Got it. You're starting ${sk.name} as an ${l.name}. This problem is the check.`
+      new: `New skill: ${sk.name}. You're starting as ${article(l.name)}.`,
+      checked: `You got ${right} of 3. You're starting ${sk.name} as ${article(l.name)}${right < 3 ? "; we'll build from here" : ""}.`,
+      claimed: `Got it. You're starting ${sk.name} as ${article(l.name)}. This problem is the check.`
     }[how];
-    const bonus = rating - startRating(id);
-    push({ t: "note", icon: "spark", text,
-      bts: { line: `starting rating ${rating} = class average ${sk.base}${past ? ` ${signed(sk.pastAdj)} from past data` : " (no past data)"}${bonus ? ` + ${bonus} (not new to it)` : ""}` } });
+    push({ t: "note", icon: "spark", text });
+  }
+
+  /* A newly unlocked skill flies from its card in the chat into the My skills tab, which then shows a dot until visited. */
+  async function flyToSkills(skillName) {
+    const m = S.thread.slice().reverse().find(x => x.t === "skill" || x.card === "skill");
+    if (m) (m.data || m.cardData).filed = true;
+    S.newSkill = true; save();
+    const card = $$(".skillcard").pop(), tabEl = $('.tab[href="#/progress"]');
+    const target = tabEl && tabEl.querySelector(".ic");
+    if (card && target && target.getClientRects().length && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      await sleep(350);
+      const a = card.getBoundingClientRect(), b = target.getBoundingClientRect();
+      const ghost = card.cloneNode(true);
+      ghost.classList.add("skillcard--fly");
+      Object.assign(ghost.style, { left: a.left + "px", top: a.top + "px", width: a.width + "px" });
+      document.body.appendChild(ghost);
+      card.classList.add("is-filed");
+      const dx = b.left + b.width / 2 - (a.left + a.width / 2), dy = b.top + b.height / 2 - (a.top + a.height / 2);
+      const flight = ghost.animate([
+        { transform: "none", opacity: 1 },
+        { transform: `translate(${dx * .45}px, ${dy * .45 - 70}px) scale(.62) rotate(-6deg)`, opacity: 1, offset: .5 },
+        { transform: `translate(${dx}px, ${dy}px) scale(.12)`, opacity: .15 }
+      ], { duration: 950, easing: "cubic-bezier(.55, 0, .3, 1)" });
+      /* Browsers pause animations in background tabs; never let that hold up the chat. */
+      await Promise.race([flight.finished.catch(() => {}), sleep(1100)]);
+      ghost.remove();
+    } else if (card) card.classList.add("is-filed");
+    const t = $('.tab[href="#/progress"]');
+    if (t) {
+      if (!$(".tab-dot", t)) t.insertAdjacentHTML("beforeend", '<i class="tab-dot" aria-label="New skill"></i>');
+      t.classList.remove("is-bump"); void t.offsetWidth; t.classList.add("is-bump");
+    }
+    toast(`${skillName} added to My skills`, "ok");
+    await sleep(300);
   }
 
   function cardData(card, ctx) {
+    if (card === "skill") {
+      const r = S.skills[ctx.task.skill].rating, l = levelFor(r, S.setup.child.age);
+      return { name: ctx.skill.name, area: ctx.area.name, areaId: ctx.area.id, level: l.name, i: l.i };
+    }
     if (card === "products") return { items: ctx.products.map(p => Object.assign({}, p)), wallet: ctx.challenge ? null : S.wallet };
     if (card === "draft") return { text: ctx.draft };
     if (card === "order") return { id: ctx.orderId, name: ctx.product.name, price: ctx.product.price, wallet: S.wallet };
@@ -871,19 +865,19 @@
   /* ---------- Chat rendering ---------- */
   function msgHTML(m, prev) {
     switch (m.t) {
-      case "child": return `<div class="msg msg--me"><div class="bubble">${esc(m.text)}</div></div>`;
+      case "child": return `<div class="msg msg--me">${m.fast ? `<span class="me-fast">${icon("bolt", 13)} Faster response</span>` : ""}<div class="bubble">${esc(m.text)}</div></div>`;
       case "agent": {
         const showTag = !(prev && prev.t === "agent" && prev.tag && prev.tag.text === m.tag.text);
         return `<div class="msg msg--agent ${showTag ? "" : "is-cont"}">
           ${showTag ? `<div class="tag tag--${m.tag.tone}">${mark(16)}<span>${esc(m.tag.text)}</span></div>` : ""}
           <div class="bubble">${esc(m.text).replace(/\n/g, "<br>")}</div>
           ${m.card ? cardHTML(m) : ""}
-          ${btsHTML(m.bts, showTag)}
         </div>`;
       }
-      case "note": return `<div class="note">${icon(m.icon || "info", 15)}<span>${esc(m.text)}</span>${m.bts ? btsHTML(m.bts) : ""}</div>`;
+      case "skill": return skillCardHTML(m.data);
+      case "note": return `<div class="note">${icon(m.icon || "info", 15)}<span>${esc(m.text)}</span></div>`;
       case "score": return `<div class="score ${m.up ? "is-up" : ""} ${m.spend ? "is-spend" : ""}">
-          <span class="score-ic">${icon(m.spend ? "bolt" : m.up ? "trophy" : "check", 16)}</span><div class="score-t"><b>${esc(m.text)}</b>${m.sub ? `<span>${esc(m.sub)}</span>` : ""}</div>${btsHTML(m.bts)}</div>`;
+          <span class="score-ic">${icon(m.spend ? "bolt" : m.up ? "trophy" : "check", 16)}</span><div class="score-t"><b>${esc(m.text)}</b>${m.sub ? `<span>${esc(m.sub)}</span>` : ""}</div></div>`;
       case "riya": return `<div class="card riya"><div class="riya-h"><span class="r-av">R</span><div><b>${esc(D.child.friend)}</b><span>Messages</span></div></div>
           ${D.riya.map(x => `<div class="r-msg"><span>${esc(x.text)}</span><em>${esc(x.time)}</em></div>`).join("")}</div>`;
       case "sent": return `<div class="card sent"><div class="sent-h">${icon("checks", 16)}<span>Sent to ${esc(D.child.friend)}, in your words</span></div><div class="sent-b">${esc(m.text)}</div><em>from ${esc(name())} · ${clock()}</em></div>`;
@@ -892,13 +886,12 @@
       default: return "";
     }
   }
-  function btsHTML(b, full = true) {
-    if (!b) return "";
-    return `<div class="bts"><div class="bts-line">${icon("eye", 13)}<span>${esc(b.line)}</span></div>
-      ${full && b.steps ? `<details><summary>Pipeline</summary><ol>${b.steps.map(([k, v]) => `<li><b>${esc(k)}</b><span>${esc(v)}</span></li>`).join("")}</ol></details>` : ""}</div>`;
-  }
+  const skillCardHTML = d => `<div class="card skillcard ${d.filed ? "is-filed" : ""}"><span class="sc-ic">${icon(areaIcon(d.areaId), 20)}</span>
+    <div class="sc-t"><b>${esc(d.name)}</b><span>${esc(d.area)} · new skill</span></div><span class="lvl lvl--${d.i}">${esc(d.level)}</span>
+    <span class="sc-filed">${icon("check", 14)} In My skills</span></div>`;
   function cardHTML(m) {
     const d = m.cardData;
+    if (m.card === "skill") return skillCardHTML(d);
     if (m.card === "ride") { const r = D.ride; return `<div class="card ride"><div class="ride-ic">${icon("car", 22)}</div><div class="ride-b">
         <b>Cab booked · pickup ${esc(r.pickup)}</b><span>${esc(r.from)} → ${esc(r.to)}</span><span class="muted">${esc(r.car)} · arrives ${esc(r.arrive)}</span></div><span class="free">Free</span></div>`; }
     if (m.card === "products") return `<div class="card products">
@@ -915,53 +908,75 @@
     $$("[data-w]").forEach(b => { b.disabled = b.dataset.w !== cur; });
   }
 
-  function suggestions() {
-    const ids = [];
-    D.suggestions.forEach(id => {
-      if (!S.done[id]) ids.push(id);
-      if (id === "algebra" && S.done.algebra && !S.done.cubic) ids.push("cubic");
-    });
-    return ids.map(taskDef);
-  }
+  /* Reply chips: only the answers to the agent's current question. */
   function renderChips() {
     const box = $("#chips"); if (!box) return;
-    let html = "";
-    if (chat.waiting) {
-      html = chat.waiting.chips.map(chipObj).map((c, i) => `<button class="chip ${chat.waiting.input ? "chip--draft" : ""}" data-chip="${i}">${chat.waiting.input ? icon("pen", 14) : ""}${esc(c.label)}</button>`).join("");
-    } else if (!chat.ctx && S.thread.length) {
-      const s = suggestions();
-      html = s.length ? s.map(t => `<button class="chip chip--sug" data-task="${t.id}">${esc(t.chip)}</button>`).join("")
-        : `<a class="chip chip--sug" href="#/earn">${icon("coin", 14)} Earn tokens</a><a class="chip chip--sug" href="#/progress">${icon("chart", 14)} See my progress</a>`;
-    }
+    const w = chat.waiting;
+    const html = w ? w.chips.map(chipObj).map((c, i) => `<button class="chip ${w.input ? "chip--draft" : ""} ${c.primary ? "chip--go" : ""}" data-chip="${i}">${w.input ? icon("pen", 14) : ""}${esc(c.label)}${c.primary ? icon("arrow", 15) : ""}</button>`).join("") : "";
     box.innerHTML = html;
     box.hidden = !html;
   }
+
+  /* Faster response is chosen when sending a new request, next to Send, and never partway through a chat. */
+  function fasterState(t) {
+    if (!t) return { state: "idle", why: "Pick a prompt first. For now, only the pre-fed prompts work." };
+    if (t.area === "chore") return { state: "free", why: "Chores are always instant and free, so no tokens are needed." };
+    if (t.area === "feelings") return { state: "locked", why: "Feelings aren't something to rush, so there's no Faster response here." };
+    if (t.carriesFeelings) return { state: "locked", why: "Messages that carry feelings are written by you, so there's no Faster response here." };
+    const cost = costFor(t.weight);
+    return S.tokens < cost ? { state: "short", cost, why: `This needs ${cost} tokens and you have ${S.tokens}. Earn more from Earn tokens.` }
+      : { state: "ready", cost, why: `Uses ${cost} tokens. Your agent just does it, and your rating doesn't change.` };
+  }
   function renderComposer() {
-    const f = $("#faster"); if (!f) return;
-    const w = chat.waiting, ctx = chat.ctx;
-    const can = !!(w && chat.faster && ctx && ctx.weight);
-    if (can) {
-      const cost = costFor(ctx.weight);
-      f.hidden = false;
-      f.disabled = S.tokens < cost;
-      f.innerHTML = `${icon("bolt", 16)}<span>Faster response</span><em>${cost}</em>`;
-      f.title = S.tokens < cost ? "Not enough tokens. Earn more from Earn tokens." : `Uses ${cost} tokens`;
-      f.dataset.blocked = "";
-    } else if (w && chat.noFaster) {
-      f.hidden = false; f.disabled = false; f.dataset.blocked = chat.noFaster;
-      f.innerHTML = `${icon("lock", 16)}<span>Faster response</span>`;
-      f.title = chat.noFaster;
-    } else { f.hidden = true; }
-    const ta = $("#input");
-    if (ta) ta.placeholder = w && w.input ? "Write it in your own words…" : w ? "Pick an option, or type your answer…" : "Ask Bud-e anything…";
+    const wrap = $("#fasterWrap"), input = $("#input");
+    if (!wrap || !input) return;
+    const w = chat.waiting;
+    wrap.hidden = !!chat.ctx;
+    if (!chat.ctx) {
+      const f = fasterState(promptTask(input.value)), b = $("#faster");
+      b.className = "faster is-" + f.state;
+      b.title = f.why;
+      b.innerHTML = `${icon(f.state === "locked" ? "lock" : "bolt", 16)}<span>Faster response</span>${f.cost ? `<em>${f.cost}</em>` : f.state === "free" ? "<em>free</em>" : ""}`;
+    }
+    input.placeholder = w && w.input ? "Write it in your own words…" : w ? "Pick an option, or type your answer…" : chat.ctx ? "…" : "Type to see what I can help with…";
   }
 
-  /* Home suggestions are grouped by how much the agent does: chores instantly, the rest together, feelings with care. */
-  const SUG_GROUPS = [
-    { label: "Done for you, instantly", tone: "instant", match: t => t.area === "chore" },
+  /* The pre-fed prompts drop down from the composer while typing, grouped by how much the agent does. */
+  const PROMPT_GROUPS = [
+    { label: "Always got your back", tone: "instant", match: t => t.area === "chore" },
     { label: "Done together", tone: "together", match: t => t.skill },
     { label: "Just talk", tone: "care", match: t => t.area === "feelings" }
   ];
+  const promptMeta = t => t.area === "chore" ? "Instant · free" : t.area === "feelings" ? "With care" : area(t.area).tag + (t.area === "study" ? " · " + skillDef(t.skill).name : "");
+  let promptHL = -1;
+  function renderPrompts() {
+    const box = $("#prompts"), input = $("#input");
+    const words = norm(input.value).split(" ").filter(Boolean);
+    const all = D.prompts.map(taskDef);
+    let list = all.filter(t => words.every(w => norm(t.prompt + " " + t.chip).includes(w)));
+    const none = !list.length;
+    if (none) list = all;
+    let n = 0;
+    box.innerHTML = `<div class="prompts-h">${icon("info", 14)}<span>For now, you can only use these pre-fed prompts.</span></div>
+      ${none ? `<p class="prompts-none">Nothing matches “${esc(input.value.trim())}”. Pick one of these:</p>` : ""}
+      ${PROMPT_GROUPS.map(g => {
+        const items = list.filter(g.match);
+        return items.length ? `<div class="pgroup"><span class="pgroup-l pgroup-l--${g.tone}">${g.label}</span>
+          ${items.map(t => `<button type="button" class="prompt ${n++ === promptHL ? "is-hl" : ""}" data-prompt="${t.id}" role="option"><span>${esc(t.prompt)}</span><em>${esc(promptMeta(t))}</em></button>`).join("")}</div>` : "";
+      }).join("")}`;
+  }
+  function openPrompts() {
+    const box = $("#prompts");
+    if (!box || chat.ctx) return;
+    if (promptTask($("#input").value)) { closePrompts(); return; }
+    promptHL = -1; renderPrompts(); box.hidden = false;
+  }
+  function closePrompts() { const box = $("#prompts"); if (box) box.hidden = true; promptHL = -1; }
+  function pickPrompt(id) {
+    const input = $("#input");
+    input.value = taskDef(id).prompt;
+    closePrompts(); renderComposer(); input.focus();
+  }
   const greeting = () => { const h = new Date().getHours(); return h < 12 ? "Morning" : h < 17 ? "Afternoon" : "Evening"; };
 
   function viewChat(main) {
@@ -972,11 +987,15 @@
       <div class="scroll" id="scroll"><div class="thread" id="thread"></div></div>
       <div class="dock">
         <div class="chips" id="chips" hidden></div>
-        <div class="ring"><form class="composer" id="composer" autocomplete="off">
-          <input id="input" placeholder="Ask Bud-e anything…" aria-label="Message my agent">
+        <div class="ring"><div class="prompts" id="prompts" role="listbox" aria-label="Pre-fed prompts" hidden></div>
+          <form class="composer" id="composer" autocomplete="off">
+          <input id="input" placeholder="Type to see what I can help with…" aria-label="Message my agent" aria-controls="prompts">
           <div class="composer-row">
             <div class="composer-tools"><button type="button" class="tool" data-off>${icon("clip", 15)}<span>Attach</span></button><button type="button" class="tool" data-off>${icon("mic", 15)}<span>Voice</span></button></div>
-            <div class="composer-go"><button type="button" class="faster" id="faster" hidden></button><button class="send" aria-label="Send"><span>Send</span>${icon("send", 16)}</button></div>
+            <div class="composer-go">
+              <div class="faster-wrap" id="fasterWrap"><button type="button" class="faster" id="faster"></button><small class="tok-left"><b class="token-count">${S.tokens}</b> tokens left</small></div>
+              <button class="send" aria-label="Send"><span>Send</span>${icon("send", 16)}</button>
+            </div>
           </div>
         </form></div>
         <div class="home-foot"><span><b>${S.didIt.length}</b> solo ${S.didIt.length === 1 ? "win" : "wins"} this week</span><span>Chores are always free</span><span>${icon("lock", 13)} Your chats stay private</span></div>
@@ -984,38 +1003,59 @@
     </section>`;
     const t = $("#thread");
     if (home) {
-      const tasks = D.suggestions.map(id => taskDef(id));
       t.innerHTML = `<div class="thread-empty">
         <div class="hero-mark hero-mark--home">${mark(150, true)}</div>
         <h1><span>${greeting()}, ${esc(name())}.</span><br>What are we doing today?</h1>
-        <div class="sug-groups">${SUG_GROUPS.map(g => {
-          const list = tasks.filter(g.match);
-          return list.length ? `<div class="sug sug--${g.tone}"><span class="sug-l">${g.label}</span><div class="sug-chips">${list.map(x => `<button class="chip chip--sug chip--${g.tone}" data-task="${x.id}">${esc(x.chip)}</button>`).join("")}</div></div>` : "";
-        }).join("")}</div>
+        <p class="home-hint">Start typing to pick a prompt. Then press <b>Send</b>, or <b>Faster response</b> if you're in a hurry.</p>
       </div>`;
     } else {
       t.innerHTML = S.thread.map((m, i) => msgHTML(m, S.thread[i - 1])).join("");
       if (chat.typing) t.insertAdjacentHTML("beforeend", `<div class="msg msg--agent typing"><div class="bubble"><i></i><i></i><i></i></div></div>`);
     }
-    syncWaitButtons(); renderChips(); renderComposer();
+    syncWaitButtons(); renderChips();
     requestAnimationFrame(scrollDown);
-    const input = $("#input");
-    $("#composer").addEventListener("submit", e => { e.preventDefault(); const v = input.value; input.value = ""; typed(v); });
+    const input = $("#input"), box = $("#prompts");
+    $("#composer").addEventListener("submit", e => {
+      e.preventDefault();
+      const v = input.value; input.value = ""; closePrompts();
+      if (typed(v) === false && !chat.ctx) { input.value = v; openPrompts(); }
+      renderComposer();
+    });
+    input.addEventListener("input", () => { renderComposer(); openPrompts(); });
+    input.addEventListener("click", openPrompts);
+    input.addEventListener("blur", () => setTimeout(closePrompts, 120));
+    input.addEventListener("keydown", e => {
+      if (e.key === "ArrowDown" && box.hidden) { openPrompts(); return; }
+      if (box.hidden) return;
+      const items = $$(".prompt", box);
+      if ((e.key === "ArrowDown" || e.key === "ArrowUp") && items.length) {
+        e.preventDefault();
+        promptHL = e.key === "ArrowDown" ? (promptHL + 1) % items.length : promptHL <= 0 ? items.length - 1 : promptHL - 1;
+        items.forEach((b, i) => b.classList.toggle("is-hl", i === promptHL));
+        items[promptHL].scrollIntoView({ block: "nearest" });
+      } else if (e.key === "Enter" && promptHL >= 0) { e.preventDefault(); pickPrompt(items[promptHL].dataset.prompt); }
+      else if (e.key === "Escape") closePrompts();
+    });
+    /* mousedown, not click, so the input keeps focus while a prompt is picked */
+    box.addEventListener("mousedown", e => { e.preventDefault(); const b = e.target.closest("[data-prompt]"); if (b) pickPrompt(b.dataset.prompt); });
     $("#faster").addEventListener("click", onFaster);
     if (pendingPrefill) { input.value = pendingPrefill; pendingPrefill = ""; }
+    renderComposer();
     if (window.matchMedia("(min-width: 760px)").matches) input.focus();
   }
 
-  async function onFaster(e) {
-    const b = e.currentTarget;
-    if (b.dataset.blocked) { toast(b.dataset.blocked); return; }
-    const w = chat.waiting, ctx = chat.ctx;
-    if (!w || !chat.faster || !ctx) return;
-    const cost = costFor(ctx.weight), target = chat.faster;
+  async function onFaster() {
+    if (chat.ctx) return;
+    const input = $("#input"), t = promptTask(input.value), f = fasterState(t);
+    if (f.state === "idle") { toast("Pick a prompt first."); input.focus(); openPrompts(); return; }
+    if (f.state === "free") { toast(f.why); input.value = ""; closePrompts(); startFlow(t.id, t.prompt); return; }
+    if (f.state !== "ready") { toast(f.why); return; }
     const ok = await modal({ cls: "confirm", html: `<div class="confirm-ic">${icon("bolt", 24)}</div><h2>Faster response?</h2>
-        <p>This will use <b>${cost} tokens</b> (you have ${S.tokens}). Continue?</p><p class="muted">Faster responses don't raise your rating.</p>`,
-      actions: [{ label: "Cancel", value: false, cancel: true }, { label: "Yes, use " + cost, value: true, primary: true }] });
-    if (ok && chat.waiting === w) answer({ faster: target });
+        <p>This will use <b>${f.cost} tokens</b> (you have ${S.tokens}). Continue?</p><p class="muted">Faster responses don't raise your rating.</p>`,
+      actions: [{ label: "Cancel", value: false, cancel: true }, { label: "Yes, use " + f.cost, value: true, primary: true }] });
+    if (!ok || chat.ctx || promptTask(input.value) !== t) return;
+    input.value = ""; closePrompts();
+    startFlow(t.id, t.prompt, { fast: true });
   }
 
   /* ---------- S12 Earn tokens ---------- */
@@ -1052,14 +1092,14 @@
           const r = S.skills[s.id].rating;
           if (r == null) return `<div class="prog prog--new"><div class="prog-t"><b>${esc(s.name)}</b><span class="lvl lvl--new">Not unlocked</span></div><p class="muted">Unlocks the first time you ask about ${esc(s.name.toLowerCase())}.</p></div>`;
           const l = levelFor(r, age), n = movesToNext(r);
-          return `<div class="prog"><div class="prog-t"><b>${esc(s.name)}</b><span class="lvl lvl--${l.i}">${l.name}</span><span class="num">${r}</span></div>
+          return `<div class="prog"><div class="prog-t"><b>${esc(s.name)}</b><span class="lvl lvl--${l.i}">${l.name}</span></div>
             <div class="ladder">${D.levels.bands.map((b, i) => `<span class="${i < l.i ? "is-past" : i === l.i ? "is-now" : ""}">${i === l.i ? `<i style="width:${l.pct}%"></i>` : ""}</span>`).join("")}</div>
             <p class="muted">${l.next ? `${esc(s.name)}: ${n} more on your own to reach ${l.next.name}` : "Top level for your age group"}</p></div>`;
         }).join("");
       return `<section class="panel parea"><div class="panel-h"><span class="pa-ic">${icon(areaIcon(a.id), 18)}</span><b>${esc(a.name)}</b></div>${body}</section>`;
     }).join("");
     main.innerHTML = `<div class="page">
-      <header class="page-h"><div><h1>My progress</h1><p class="sub">Levels compare you with ${levelFor(0, age).group}, so they grow with you.</p></div>
+      <header class="page-h"><div><h1>My skills</h1><p class="sub">Levels compare you with ${levelFor(0, age).group}, so they grow with you.</p></div>
         <button class="btn ghost" id="parentsee">${icon("eye", 17)} What my parents see</button></header>
       <div class="levels-key">${D.levels.bands.map((b, i) => `<span class="lvl lvl--${i}">${b.name}</span>`).join(`<span class="arrow">${icon("chevron", 14)}</span>`)}</div>
       <div class="pgrid">${areas}</div>
@@ -1129,19 +1169,72 @@
     </div>`;
   }
 
+  /* ---------- Bud-e Parent: code login ---------- */
+  function viewParentLogin() {
+    const n = esc(name()), code = S.setup.done && S.setup.code;
+    return `<div class="plogin">
+      <div class="pl-card card">
+        <div class="pl-brand">${mark(56, true)}<div>${wordmark()}<em>Parent</em></div></div>
+        <h1>Log in with your code</h1>
+        <p class="sub">Enter the 8-digit code shown on ${n}'s device at the end of setup.</p>
+        <form id="plf" novalidate>
+          <input class="code-in" name="code" inputmode="numeric" autocomplete="one-time-code" placeholder="0000 0000" maxlength="9" aria-label="Bud-e Parent code">
+          <p class="form-err" hidden></p>
+          <button class="btn primary lg block" type="submit">Log in</button>
+        </form>
+        <p class="fine">${code ? `Prototype: the code from setup is <b>${esc(showCode(code))}</b>.` : `No device is set up yet. <button class="link" data-go="child">Set up ${n}'s device</button> to get a code.`}</p>
+      </div>
+      <button class="link" data-go="start">${icon("back", 14)} Back to start</button>
+    </div>`;
+  }
+  AFTER.plogin = () => {
+    const f = $("#plf"), input = f.code, err = $(".form-err", f);
+    input.addEventListener("input", () => {
+      const d = input.value.replace(/\D/g, "").slice(0, 8);
+      input.value = d.length > 4 ? d.slice(0, 4) + " " + d.slice(4) : d;
+      err.hidden = true;
+    });
+    f.addEventListener("submit", async e => {
+      e.preventDefault();
+      const d = input.value.replace(/\D/g, "");
+      const msg = !S.setup.done ? "Set up " + name() + "'s device first. The code appears when setup finishes."
+        : d.length !== 8 ? "The code has 8 digits." : d !== S.setup.code ? "That code doesn't match. Check the code on " + name() + "'s device." : "";
+      err.hidden = !msg; err.textContent = msg;
+      if (msg) { input.classList.add("shake"); setTimeout(() => input.classList.remove("shake"), 500); return; }
+      const b = $("button[type=submit]", f); b.disabled = true; b.innerHTML = '<span class="spin"></span> Linking ' + esc(name()) + "'s device…";
+      await sleep(700);
+      S.parentIn = true; save();
+      go("parent");
+    });
+    input.focus();
+  };
+
+  /* ---------- Bud-e Parent: permissions (the only place they can change) ---------- */
+  function viewParentPerms(main) {
+    main.innerHTML = `<div class="page">
+      <header class="page-h"><div><p class="eyebrow">${icon("shield", 14)} ${esc(name())}'s device</p><h1>Permissions</h1>
+        <p class="sub">Only you can change these, from here. ${esc(name())}'s device shows them but can't change them.</p></div></header>
+      <div class="perms">${permCards(true)}</div>
+    </div>`;
+    bindPerms(id => {
+      if (id === "walletAmt") S.wallet = walletLeft();
+      const p = D.permissions.find(x => x.id === id);
+      save();
+      toast(id === "walletAmt" ? "Monthly wallet set to " + rupee(S.setup.walletMonthly) + "." : p.title + (S.setup.perms[id] ? " turned on." : " turned off.") + " " + name() + "'s device updates now.", "ok");
+    });
+  }
+
   /* ---------- Global events ---------- */
   document.addEventListener("click", e => {
-    const el = e.target.closest("[data-chip],[data-task],[data-pick],[data-menu],[data-switch],[data-go],[data-reset],[data-off],[data-jump],[data-challenge],[data-drawer]");
+    const el = e.target.closest("[data-chip],[data-pick],[data-menu],[data-switch],[data-logout],[data-go],[data-reset],[data-off],[data-jump],[data-challenge],[data-drawer]");
     $$(".menu").forEach(m => { if (!el || !el.hasAttribute("data-menu") || !m.parentElement.contains(el)) m.hidden = true; });
     if (!el) return;
     const d = el.dataset;
     if (d.chip != null && chat.waiting) {
       const c = chipObj(chat.waiting.chips[+d.chip]);
       answer({ label: c.label, go: c.go });
-    } else if (d.task) {
-      if (chat.ctx) cancelFlow();
-      const t = taskDef(d.task);
-      typed(t.prompt);
+    } else if (d.logout != null) {
+      S.parentIn = false; save(); toast("Logged out of Bud-e Parent.", "ok"); go("plogin");
     } else if (d.pick && chat.waiting && chat.waiting.products) {
       const p = chat.waiting.ctx.products.find(x => x.id === d.pick);
       answer({ product: p, label: p.name });
@@ -1169,17 +1262,6 @@
       setTimeout(() => startFlow(ch.id, "Start challenge: " + ch.title.replace(/\s*\(.*\)$/, ""), { challenge: true }), 50);
     } else if (d.drawer != null) {
       document.body.classList.toggle("drawer-open");
-    }
-  });
-  document.addEventListener("change", e => {
-    if (e.target.id === "bts") { S.bts = e.target.checked; save(); document.body.classList.toggle("bts-on", S.bts); }
-  });
-  document.addEventListener("keydown", e => {
-    const tag = (e.target.tagName || "").toLowerCase();
-    if ((e.key === "b" || e.key === "B") && !["input", "textarea", "select"].includes(tag) && !e.ctrlKey && !e.metaKey && CHILD.includes(route())) {
-      S.bts = !S.bts; save(); document.body.classList.toggle("bts-on", S.bts);
-      const t = $("#bts"); if (t) t.checked = S.bts;
-      toast(S.bts ? "Behind the scenes: on" : "Behind the scenes: off");
     }
   });
   window.addEventListener("hashchange", () => { document.body.classList.remove("drawer-open"); render(); });

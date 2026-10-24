@@ -6,7 +6,8 @@ window.DATA = {
   /* The world is set in 2040. Tokens reset every Monday. */
   today: { long: "Wednesday, 17 October 2040", week: "15 – 21 Oct 2040", reset: "Monday" },
 
-  parent: { name: "Neha Sharma", first: "Neha", contact: "neha.sharma@mail.in", password: "budebude40", relation: "Mum" },
+  /* The parent has no separate sign-up: setting up the child's device ends with a code, and that code logs them in to Bud-e Parent. */
+  parent: { name: "Neha Sharma", first: "Neha", relation: "Mum" },
 
   child: {
     name: "Aarav", age: 14, classNo: 9, city: "Pune", friend: "Riya", sibling: "Didi",
@@ -50,12 +51,6 @@ window.DATA = {
 
   willSee: ["Progress in each area", "How much he relies on AI versus what's expected for his age", "Token use", "How often other AI agents were used (a count, from the extension)"],
   wontSee: ["Any chats or messages"],
-
-  welcome: [
-    { icon: "spark", text: "Bud-e sits between you and your agent. Chores happen instantly. For the things that build you, your agent hands over more as you get better." },
-    { icon: "lock", text: "Your chats are private. Your parents see your progress, not your conversations." },
-    { icon: "block", text: "Other AI apps are restricted on this device, and a browser extension counts other AI use." }
-  ],
 
   /* Ratings are 0–1000 within the child's age group, so the same band names mean different things at 9 and at 14. */
   levels: {
@@ -102,26 +97,22 @@ window.DATA = {
     { id: "feelings", name: "Feelings", tag: "Feelings", care: true, skills: [] }
   ],
 
-  /* Each scripted request: area, skill, weight, and the words that route a typed message to it (checked in order). */
+  /* Each scripted request: area, skill, weight, the full prompt and its short label. */
   tasks: [
     { id: "feelings", area: "feelings", prompt: "i feel really low today, like no one gets me", chip: "I feel low today",
-      match: /\b(low|sad|lonely|down|upset|cry|no one gets|nobody gets|hate my life|stressed)\b/i,
       tag: "Feelings · I'm here, and real people matter too" },
     { id: "cab", area: "chore", prompt: "book a cab to Riya's at 5", chip: "book a cab to Riya's at 5",
-      match: /\b(cab|taxi|ride|auto|uber)\b/i, tag: "Chore · no tokens, no waiting" },
-    { id: "cubic", area: "study", skill: "algebra", weight: 720, prompt: "solve x³ + 2x + 1 = 3", chip: "solve x³ + 2x + 1 = 3",
-      match: /x\s*(\^|³|\*\*)\s*3?|cubic/i },
-    { id: "algebra", area: "study", skill: "algebra", weight: 250, prompt: "solve 2x + 7 = 10", chip: "solve 2x + 7 = 10",
-      match: /2x|solve|equation|algebra/i },
-    { id: "gift", area: "money", skill: "spending", weight: 450, prompt: "order a birthday gift for Riya under ₹800", chip: "gift for Riya under ₹800",
-      match: /\b(gift|present|birthday|buy|order)\b/i },
+      tag: "Chore · no tokens, no waiting" },
+    { id: "cubic", area: "study", skill: "algebra", weight: 720, prompt: "solve x³ + 2x + 1 = 3", chip: "solve x³ + 2x + 1 = 3" },
+    { id: "algebra", area: "study", skill: "algebra", weight: 250, prompt: "solve 2x + 7 = 10", chip: "solve 2x + 7 = 10" },
+    { id: "gift", area: "money", skill: "spending", weight: 450, prompt: "order a birthday gift for Riya under ₹800", chip: "gift for Riya under ₹800" },
     { id: "apology", area: "relationships", skill: "messages", weight: 700, carriesFeelings: true,
       prompt: "reply to Riya, say sorry but make it sound chill", chip: "reply to Riya",
-      match: /riya|sorry|apolog|reply/i, tag: "Relationships · Messages that carry feelings are written by you" }
+      tag: "Relationships · Messages that carry feelings are written by you" }
   ],
 
-  /* Order of the home suggestion chips. */
-  suggestions: ["algebra", "cab", "apology", "gift", "feelings"],
+  /* The pre-fed prompts in the home drop-down, in order. For now these are the only requests the prototype takes. */
+  prompts: ["cab", "algebra", "cubic", "apology", "gift", "feelings"],
 
   ride: { pickup: "4:42 pm", from: "Home, Kothrud", to: "Riya's place, Baner", arrive: "5:00 pm", car: "White hatchback · MH12 KX 2040", fare: "Paid from family ride credit" },
 
@@ -182,9 +173,10 @@ window.DATA = {
    chips          answers offered after the message; the flow waits. A chip can be a string or
                   {label, go, also}: `go` jumps to the step with that id; `also` lists words that pick it when typed.
                   Typing instead picks the closest chip; `input: true` takes the typed words as the answer.
-   card           a rich card rendered after the text (ride, riya, products, draft, sent, order, reward).
+   card           a rich card rendered after the text (ride, skill, products, draft, order).
    action         a named action in app.js; it may return a step id to jump to.
-   id / go        jump targets. `end: true` stops the flow. */
+   id / go        jump targets. `end: true` stops the flow.
+   A flow sent with Faster response (from the home composer) starts at its step with id "fast". */
 DATA.flows = {
   cab: [
     { from: "agent", fast: true, text: "Done. Cab booked for 5:00 pm to Riya's place. 🚗", card: "ride" },
@@ -193,21 +185,31 @@ DATA.flows = {
 
   algebra: [
     { action: "unlock" },
-    { id: "check", from: "agent", tag: "check", text: "Quick check, two steps. First one: x + 4 = 9. What's x?",
-      chips: [{ label: "x = 5", also: "5 five", go: "check2" }, { label: "x = 13", also: "13", go: "check1miss" }] },
-    { id: "check1miss", action: "miss" },
-    { from: "agent", tag: "check", text: "Close, but take the 4 away instead of adding it. Next one: 3x = 12. What's x?",
-      chips: [{ label: "x = 4", also: "4 four", go: "checkDone" }, { label: "x = 36", also: "36", go: "check2miss" }] },
-    { id: "check2", from: "agent", tag: "check", text: "Nice. Next one: 3x = 12. What's x?",
-      chips: [{ label: "x = 4", also: "4 four", go: "checkDone" }, { label: "x = 36", also: "36", go: "check2miss" }] },
-    { id: "check2miss", action: "miss" },
+    /* "No, I'm not new to this": three quick questions set the starting level, then "Let's begin". */
+    { id: "check", from: "agent", tag: "check", text: "Let's see where you're at. Three quick ones. First: x + 4 = 9. What's x?",
+      chips: [{ label: "x = 5", also: "5 five", go: "c2" }, { label: "x = 13", also: "13", go: "c1miss" }] },
+    { id: "c1miss", action: "miss" },
+    { from: "agent", tag: "check", text: "Close: take the 4 away instead of adding it, so x = 5. Next: 3x = 12. What's x?",
+      chips: [{ label: "x = 4", also: "4 four", go: "c3" }, { label: "x = 36", also: "36", go: "c2miss" }] },
+    { id: "c2", from: "agent", tag: "check", text: "Nice. Next: 3x = 12. What's x?",
+      chips: [{ label: "x = 4", also: "4 four", go: "c3" }, { label: "x = 36", also: "36", go: "c2miss" }] },
+    { id: "c2miss", action: "miss" },
+    { from: "agent", tag: "check", text: "Not quite: divide both sides by 3 instead, so x = 4. Last one: 2x − 1 = 7. What's x?",
+      chips: [{ label: "x = 4", also: "4 four", go: "checkDone" }, { label: "x = 3", also: "3 three", go: "c3miss" }] },
+    { id: "c3", from: "agent", tag: "check", text: "Good. Last one: 2x − 1 = 7. What's x?",
+      chips: [{ label: "x = 4", also: "4 four", go: "checkDone" }, { label: "x = 3", also: "3 three", go: "c3miss" }] },
+    { id: "c3miss", action: "miss" },
+    { from: "agent", tag: "check", text: "Almost: add the 1 first, so 2x = 8 and x = 4." },
     { id: "checkDone", action: "checkResult" },
+    { from: "agent", tag: "check", card: "skill", text: "That's your starting point. Ready when you are.",
+      chips: [{ label: "Let's begin", also: "lets let's begin go start yes ok ready", primary: true }] },
+    { action: "flySkill" },
     { id: "start", action: "byMode", routes: { pro: "pro", confident: "confident", practising: "confident", learner: "confident" } },
 
-    { id: "confident", from: "agent", faster: "fast", text: "Quick one: what would you do first to get x on its own?",
+    { id: "confident", from: "agent", text: "Quick one: what would you do first to get x on its own?",
       chips: [{ label: "subtract 7 from both sides", also: "subtract minus take away 7", go: "solved" }, { label: "divide by 2", also: "divide half", go: "hint" }] },
     { id: "hint", action: "hint" },
-    { from: "agent", faster: "fast", text: "You could, but then it's x + 3.5 = 5. Easier to move the 7 first. What do you do with it?",
+    { from: "agent", text: "You could, but then it's x + 3.5 = 5. Easier to move the 7 first. What do you do with it?",
       chips: [{ label: "subtract 7 from both sides", also: "subtract minus take away 7", go: "solved" }] },
     { id: "solved", from: "agent", text: ctx => "Exactly. 2x = 3, so x = 1.5. ✅ " + (ctx.hints ? "Nice, you got there." : "Nice, that's all you.") },
     { action: "score", bonus: 5, did: "Solved 2x + 7 = 10 himself", end: true },
@@ -223,20 +225,20 @@ DATA.flows = {
   cubic: [
     { action: "unlock", start: "begin", noCheck: true },
     { id: "begin", action: "byMode", routes: { pro: "direct", confident: "direct", practising: "learn", learner: "learn" } },
-    { id: "learn", from: "agent", faster: "fast", text: "This one's a step up. First, can we get everything on one side? What does it become?",
+    { id: "learn", from: "agent", text: "This one's a step up. First, can we get everything on one side? What does it become?",
       chips: [{ label: "x³ + 2x − 2 = 0", also: "minus 2 0", go: "l2" }, { label: "x³ + 2x + 4 = 0", also: "plus 4", go: "l1miss" }] },
     { id: "l1miss", action: "hint" },
-    { from: "agent", faster: "fast", text: "Careful with the sign: moving the 3 across subtracts it. 1 − 3 is…?",
+    { from: "agent", text: "Careful with the sign: moving the 3 across subtracts it. 1 − 3 is…?",
       chips: [{ label: "x³ + 2x − 2 = 0", also: "minus 2 0", go: "l2" }] },
-    { id: "l2", from: "agent", faster: "fast", text: "Yes. There's no neat factor here, so let's close in on it. Try x = 1: is the left side too big or too small?",
+    { id: "l2", from: "agent", text: "Yes. There's no neat factor here, so let's close in on it. Try x = 1: is the left side too big or too small?",
       chips: [{ label: "Too big (it's 1)", also: "big 1 more over", go: "l3" }, { label: "Too small", also: "small less under", go: "l2miss" }] },
     { id: "l2miss", action: "hint" },
-    { from: "agent", faster: "fast", text: "Check it: 1 + 2 − 2 = 1, which is above 0. So too big or too small?",
+    { from: "agent", text: "Check it: 1 + 2 − 2 = 1, which is above 0. So too big or too small?",
       chips: [{ label: "Too big (it's 1)", also: "big 1 more over", go: "l3" }] },
-    { id: "l3", from: "agent", faster: "fast", text: "Right, so x is under 1. At x = 0.5 it's −0.875, too small. So x is between 0.5 and 1. Try 0.8?",
+    { id: "l3", from: "agent", text: "Right, so x is under 1. At x = 0.5 it's −0.875, too small. So x is between 0.5 and 1. Try 0.8?",
       chips: [{ label: "Slightly too big (0.112)", also: "big more over 0.112", go: "l4" }, { label: "Too small", also: "small less under", go: "l3miss" }] },
     { id: "l3miss", action: "hint" },
-    { from: "agent", faster: "fast", text: "0.8³ is 0.512, plus 1.6, minus 2: that's 0.112. Above zero, so…",
+    { from: "agent", text: "0.8³ is 0.512, plus 1.6, minus 2: that's 0.112. Above zero, so…",
       chips: [{ label: "Slightly too big (0.112)", also: "big more over", go: "l4" }] },
     { id: "l4", from: "agent", text: "So it's just under 0.8: x ≈ 0.77. Check: 0.77³ + 2 × 0.77 − 2 ≈ 0. You worked that out. 🙌" },
     { action: "score", bonus: 5, result: 0.5, say: "Worked it out together", did: "Worked through a hard algebra problem step by step", end: true },
@@ -250,7 +252,7 @@ DATA.flows = {
 
   apology: [
     { action: "riya" },
-    { id: "sorry", from: "agent", noFaster: "Messages that carry feelings are written by you.",
+    { id: "sorry", from: "agent",
       text: "I'll help you say it, but it should come from you. What are you actually sorry about?",
       chips: [{ label: "I didn't show up on Saturday", also: "saturday show bail bailed came come" }, { label: "I said something rude", also: "rude said mean" }] },
     { id: "write", from: "agent", input: true, text: "Start with that, in your own words. I'll help it sound right.",
@@ -268,10 +270,10 @@ DATA.flows = {
   ],
 
   gift: [
-    { from: "agent", faster: "fast", text: "Nice. What's she into right now?",
+    { from: "agent", text: "Nice. What's she into right now?",
       chips: [{ label: "music", also: "songs music" }, { label: "art", also: "drawing paint art" }, { label: "books", also: "reading books" }] },
     { id: "options", action: "showProducts" },
-    { id: "pick", from: "agent", faster: "fast", card: "products",
+    { id: "pick", from: "agent", card: "products",
       text: ctx => "Three " + ctx.answer + " picks under ₹800 that reach her before her birthday. Look at what each does to your wallet, then pick." },
     { id: "confirm", from: "agent", text: ctx => ctx.product.name + " for " + ctx.rupee(ctx.product.price) + ". Your wallet goes " + ctx.rupee(ctx.wallet) + " → " + ctx.rupee(ctx.wallet - ctx.product.price) + ". Place the order?",
       chips: [{ label: "Place order", also: "yes ok sure place order", go: "order" }, { label: "Pick a different one", also: "no different another back", go: "pick" }] },
