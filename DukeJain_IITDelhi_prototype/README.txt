@@ -14,19 +14,31 @@ task's weight, and the gap decides how much the agent does:
   0..+200 Practising (hints) | > +200 Learner (step by step).
 Ratings update after each task (Elo, K = 40). The child sees level names, never numbers.
 
+TWO APPS
+ Bud-e         the child's device. The parent sets it up once, on that device.
+ Bud-e Parent  the parent's phone. Log in with the code shown at the end of setup.
+               Permissions can only be changed here, never on the child's device.
+
 THE DEMO PATH (2-3 minutes)
-Start: "I'm a parent". The "Jump to a screen" list on the start screen goes to any screen.
- S1-S4  Sign up, child profile, permissions (consent is required), hand over to Aarav.
- S5     Home: five prompts, as chips or typed. Each one runs end to end.
+Start: "Set up Aarav's device". The "Jump to a screen" list on the start screen goes to any screen.
+ S1-S3  Child details, permissions (consent is required; locked to Bud-e Parent), the Bud-e Parent code.
+ S4     "I'm Aarav": the logo animation, then home.
+ S5     Home: start typing and pick one of the five pre-fed prompts from the drop-down
+        (for now only those work). Then press Send, or Faster response, which shows
+        the tokens left underneath. Faster response is offered only here, when sending.
  S6     book a cab to Riya's at 5         chore: instant, no tokens
- S7     solve 2x + 7 = 10                 New skill pop-up, then two steps
+ S7     solve 2x + 7 = 10                 New skill unlocked: "Yes, let's go", or "No, I'm not new to this skill"
+                                          for three quick questions, then "Let's begin": the skill flies into
+                                          My skills. Then two steps.
  S8     reply to Riya                     he writes the apology; "Sent, in your words"
- S9     gift for Riya under Rs 800        options with wallet impact; the wallet shows only here
+ S9     gift for Riya under Rs 800        options with wallet impact; the wallet shows in the chat only here
  S10    I feel low today                  support, then real people first
  S11    Tokens (nav)                      balance, challenges to earn (e.g. headphones -> +40), history
  S12    Wallet (nav)                      pocket money left, orders
- S13    My progress                       levels, next steps, "What my parents see"
- S14    Profile menu -> Switch to parent  weekly report, never chats
+ S13    My skills                         levels, next steps, "What my parents see"
+ S14    Bud-e Parent: code login          the code from S3 (the login screen shows it in this prototype)
+ S15    Weekly report                     progress, never chats
+ S16    Permissions                       turn permissions on or off for Aarav's device
 
 RIGHT AND WRONG ANSWERS
  Algebra   Wrong first move (divide by 2 / add 7) -> hint, try again; wrong twice -> the step
@@ -37,11 +49,8 @@ RIGHT AND WRONG ANSWERS
  Gift      "No idea, you pick" -> nudged to choose; an option arriving after her birthday
            -> warned, pick another or order anyway.
  Correct answers never pay tokens. Tokens come from the weekly 500 and from challenges.
- Faster response (next to Send) works in algebra (10) and gift (50).
-
-BEHIND THE SCENES
-The "Behind the scenes" switch (or press B) shows under each reply:
-child rating, task weight, gap and mode, the pipeline, and each rating update.
+ Faster response (next to Send, when sending) works for algebra (10) and gift (50).
+ Chores go through free; the apology and feelings prompts can't use it.
 
 NOTES
 - Every agent reply is scripted. No AI calls, no network requests.

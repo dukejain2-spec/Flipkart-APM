@@ -6,7 +6,8 @@ window.DATA = {
   /* The world is set in 2040. Tokens reset every Monday. */
   today: { long: "Wednesday, 17 October 2040", week: "15 – 21 Oct 2040", reset: "Monday" },
 
-  parent: { name: "Neha Sharma", first: "Neha", contact: "neha.sharma@mail.in", password: "budebude40", relation: "Mum" },
+  /* The parent has no separate sign-up: setting up the child's device ends with a code, and that code logs them in to Bud-e Parent. */
+  parent: { name: "Neha Sharma", first: "Neha", relation: "Mum" },
 
   child: {
     name: "Aarav", age: 14, classNo: 9, city: "Pune", friend: "Riya", sibling: "Didi",
@@ -50,12 +51,6 @@ window.DATA = {
 
   willSee: ["Progress in each area", "How much he relies on AI versus what's expected for his age", "Token use", "How often other AI agents were used (a count, from the extension)"],
   wontSee: ["Any chats or messages"],
-
-  welcome: [
-    { icon: "spark", text: "Bud-e sits between you and your agent. Chores happen instantly. For the things that build you, your agent hands over more as you get better." },
-    { icon: "lock", text: "Your chats are private. Your parents see your progress, not your conversations." },
-    { icon: "block", text: "Other AI apps are restricted on this device, and a browser extension counts other AI use." }
-  ],
 
   /* Ratings are 0–1000 within the child's age group, so the same band names mean different things at 9 and at 14. */
   levels: {
@@ -102,24 +97,22 @@ window.DATA = {
     { id: "feelings", name: "Feelings", tag: "Feelings", care: true, skills: [] }
   ],
 
-  /* Each scripted request: area, skill, weight, and the words that route a typed message to it (checked in order). */
+  /* Each scripted request: area, skill, weight, the full prompt and its short label. */
   tasks: [
     { id: "feelings", area: "feelings", prompt: "i feel really low today, like no one gets me", chip: "I feel low today",
-      match: /\b(low|sad|lonely|down|upset|cry|no one gets|nobody gets|hate my life|stressed)\b/i,
       tag: "Feelings · I'm here, and real people matter too" },
     { id: "cab", area: "chore", prompt: "book a cab to Riya's at 5", chip: "book a cab to Riya's at 5",
-      match: /\b(cab|taxi|ride|auto|uber)\b/i, tag: "Chore · no tokens, no waiting" },
-    { id: "algebra", area: "study", skill: "algebra", weight: 250, prompt: "solve 2x + 7 = 10", chip: "solve 2x + 7 = 10",
-      match: /2x\s*\+\s*7|\balgebra\b/i },
-    { id: "gift", area: "money", skill: "spending", weight: 450, prompt: "order a birthday gift for Riya under ₹800", chip: "gift for Riya under ₹800",
-      match: /\b(gift|present|birthday|buy|order)\b/i },
+      tag: "Chore · no tokens, no waiting" },
+    { id: "algebra", area: "study", skill: "algebra", weight: 250, prompt: "solve 2x + 7 = 10", chip: "solve 2x + 7 = 10" },
+    { id: "gift", area: "money", skill: "spending", weight: 450, prompt: "order a birthday gift for Riya under ₹800", chip: "gift for Riya under ₹800" },
     { id: "apology", area: "relationships", skill: "messages", weight: 700, carriesFeelings: true,
       prompt: "reply to Riya, say sorry but make it sound chill", chip: "reply to Riya",
-      match: /riya|sorry|apolog|reply/i, tag: "Relationships · Messages that carry feelings are written by you" }
+      tag: "Relationships · Messages that carry feelings are written by you" }
   ],
 
-  /* The five prompts the prototype runs end to end, in home-chip order. */
-  suggestions: ["algebra", "cab", "apology", "gift", "feelings"],
+  /* The five pre-fed prompts in the home drop-down, in order. For now these are the only requests the prototype takes,
+     and each one runs end to end. */
+  prompts: ["cab", "algebra", "apology", "gift", "feelings"],
 
   ride: { pickup: "4:42 pm", from: "Home, Kothrud", to: "Riya's place, Baner", arrive: "5:00 pm", car: "White hatchback · MH12 KX 2040", fare: "Paid from family ride credit" },
 
@@ -181,9 +174,10 @@ window.DATA = {
    chips          answers offered after the message; the flow waits. A chip can be a string or
                   {label, go, also}: `go` jumps to the step with that id; `also` lists words that pick it when typed.
                   Typing instead picks the closest chip; `input: true` takes the typed words as the answer.
-   card           a rich card rendered after the text (ride, riya, products, draft, sent, order, reward).
+   card           a rich card rendered after the text (ride, skill, products, draft, order).
    action         a named action in app.js; it may return a step id to jump to.
-   id / go        jump targets. `end: true` stops the flow. */
+   id / go        jump targets. `end: true` stops the flow.
+   A flow sent with Faster response (from the home composer) starts at its step with id "fast". */
 DATA.flows = {
   cab: [
     { from: "agent", fast: true, text: "Done. Cab booked for 5:00 pm to Riya's place. 🚗", card: "ride" },
@@ -194,35 +188,45 @@ DATA.flows = {
      go; a second wrong answer on a step gets the step shown. Result: 1 on your own, 0.5 with hints, 0 if a step was shown. */
   algebra: [
     { action: "unlock" },
-    { id: "check", from: "agent", tag: "check", text: "Quick check, two steps. First one: x + 4 = 9. What's x?",
-      chips: [{ label: "x = 5", also: "5 five", go: "check2" }, { label: "x = 13", also: "13", go: "check1miss" }] },
-    { id: "check1miss", action: "miss" },
-    { from: "agent", tag: "check", text: "Close, but take the 4 away instead of adding it. Next one: 3x = 12. What's x?",
-      chips: [{ label: "x = 4", also: "4 four", go: "checkDone" }, { label: "x = 36", also: "36", go: "check2miss" }] },
-    { id: "check2", from: "agent", tag: "check", text: "Nice. Next one: 3x = 12. What's x?",
-      chips: [{ label: "x = 4", also: "4 four", go: "checkDone" }, { label: "x = 36", also: "36", go: "check2miss" }] },
-    { id: "check2miss", action: "miss" },
+    /* "No, I'm not new to this": three quick questions set the starting level, then "Let's begin". */
+    { id: "check", from: "agent", tag: "check", text: "Let's see where you're at. Three quick ones. First: x + 4 = 9. What's x?",
+      chips: [{ label: "x = 5", also: "5 five", go: "c2" }, { label: "x = 13", also: "13", go: "c1miss" }] },
+    { id: "c1miss", action: "miss" },
+    { from: "agent", tag: "check", text: "Close: take the 4 away instead of adding it, so x = 5. Next: 3x = 12. What's x?",
+      chips: [{ label: "x = 4", also: "4 four", go: "c3" }, { label: "x = 36", also: "36", go: "c2miss" }] },
+    { id: "c2", from: "agent", tag: "check", text: "Nice. Next: 3x = 12. What's x?",
+      chips: [{ label: "x = 4", also: "4 four", go: "c3" }, { label: "x = 36", also: "36", go: "c2miss" }] },
+    { id: "c2miss", action: "miss" },
+    { from: "agent", tag: "check", text: "Not quite: divide both sides by 3 instead, so x = 4. Last one: 2x − 1 = 7. What's x?",
+      chips: [{ label: "x = 4", also: "4 four", go: "checkDone" }, { label: "x = 3", also: "3 three", go: "c3miss" }] },
+    { id: "c3", from: "agent", tag: "check", text: "Good. Last one: 2x − 1 = 7. What's x?",
+      chips: [{ label: "x = 4", also: "4 four", go: "checkDone" }, { label: "x = 3", also: "3 three", go: "c3miss" }] },
+    { id: "c3miss", action: "miss" },
+    { from: "agent", tag: "check", text: "Almost: add the 1 first, so 2x = 8 and x = 4." },
     { id: "checkDone", action: "checkResult" },
+    { from: "agent", tag: "check", card: "skill", text: "That's your starting point. Ready when you are.",
+      chips: [{ label: "Let's begin", also: "lets let's begin go start yes ok ready", primary: true }] },
+    { action: "flySkill" },
     { id: "start", action: "byMode", routes: { pro: "pro", confident: "confident", practising: "confident", learner: "confident" } },
 
-    { id: "confident", from: "agent", faster: "fast", text: "Quick one: what would you do first to get x on its own?",
+    { id: "confident", from: "agent", text: "Quick one: what would you do first to get x on its own?",
       chips: [{ label: "subtract 7 from both sides", also: "subtract minus take away 7", go: "step2" },
               { label: "divide by 2", also: "divide half", go: "miss1" },
               { label: "add 7 to both sides", also: "add plus", go: "miss1" }] },
     { id: "miss1", action: "hint" },
-    { from: "agent", faster: "fast", text: ctx => (ctx.answer === "divide by 2"
+    { from: "agent", text: ctx => (ctx.answer === "divide by 2"
         ? "You could, but then it's x + 3.5 = 5, which is messier."
         : "Adding 7 makes it 2x + 14 = 17: the 7 is still stuck to the x.") + " Which move gets rid of the + 7?",
       chips: [{ label: "subtract 7 from both sides", also: "subtract minus take away 7", go: "step2" },
               { label: "divide by 2", also: "divide half", go: "show1" }, { label: "add 7 to both sides", also: "add plus", go: "show1" }] },
     { id: "show1", action: "shown" },
-    { from: "agent", faster: "fast", text: "Here's that step: subtract 7 from both sides, because 7 − 7 cancels out. 2x + 7 − 7 = 10 − 7, so 2x = 3. Your turn for the last bit: what's x?",
+    { from: "agent", text: "Here's that step: subtract 7 from both sides, because 7 − 7 cancels out. 2x + 7 − 7 = 10 − 7, so 2x = 3. Your turn for the last bit: what's x?",
       chips: [{ label: "x = 1.5", also: "1.5 one and a half 3/2", go: "solved" }, { label: "x = 6", also: "6 six", go: "miss2" }, { label: "x = 1", also: "1 one", go: "miss2" }] },
 
-    { id: "step2", from: "agent", faster: "fast", text: "Yes. That leaves 2x = 3. What's x?",
+    { id: "step2", from: "agent", text: "Yes. That leaves 2x = 3. What's x?",
       chips: [{ label: "x = 1.5", also: "1.5 one and a half 3/2", go: "solved" }, { label: "x = 6", also: "6 six", go: "miss2" }, { label: "x = 1", also: "1 one", go: "miss2" }] },
     { id: "miss2", action: "hint" },
-    { from: "agent", faster: "fast", text: ctx => (ctx.answer === "x = 6"
+    { from: "agent", text: ctx => (ctx.answer === "x = 6"
         ? "That's 2 × 3. But 2x means 2 times x, so we undo it by dividing, not multiplying."
         : "Check it: 2 × 1 is 2, not 3.") + " What's 3 ÷ 2?",
       chips: [{ label: "x = 1.5", also: "1.5 one and a half 3/2", go: "solved" }, { label: "x = 6", also: "6 six", go: "show2" }, { label: "x = 1", also: "1 one", go: "show2" }] },
@@ -244,21 +248,21 @@ DATA.flows = {
      draft, or asking the agent to write it. Each gets pushed back, and he rewrites. */
   apology: [
     { action: "riya" },
-    { id: "sorry", from: "agent", noFaster: "Messages that carry feelings are written by you.",
+    { id: "sorry", from: "agent",
       text: "I'll help you say it, but it should come from you. What are you actually sorry about?",
       chips: [{ label: "I didn't show up on Saturday", also: "saturday show bail bailed came come", go: "write" },
               { label: "I said something rude", also: "rude said mean", go: "write" },
               { label: "Nothing, she's overreacting", also: "nothing overreacting her fault not me", go: "blameHer" }] },
     { id: "blameHer", action: "hint" },
-    { id: "blameHer2", from: "agent", noFaster: "Messages that carry feelings are written by you.",
+    { id: "blameHer2", from: "agent",
       text: "Maybe she is. But \"whatever, forget it\" usually means she cares and feels let down. Was there anything on your side?",
       chips: [{ label: "I didn't show up on Saturday", also: "saturday show bail bailed came come", go: "write" },
               { label: "I said something rude", also: "rude said mean", go: "write" },
               { label: "No, I'll leave it", also: "no leave it skip forget", go: "leave" }] },
-    { id: "write", from: "agent", input: true, noFaster: "Messages that carry feelings are written by you.",
+    { id: "write", from: "agent", input: true,
       text: "Start with that, in your own words. I'll help it sound right.", chips: ctx => ctx.draftChips() },
     { id: "draftIn", action: "checkDraft" },
-    { id: "feedback", from: "agent", card: "draft", noFaster: "Messages that carry feelings are written by you.",
+    { id: "feedback", from: "agent", card: "draft",
       text: "That's honest and chill. Maybe add a plan, like \"can we go this weekend instead?\"",
       chips: [{ label: "Add the plan", also: "add plan weekend yes", go: "addPlan" }, { label: "Send to Riya", also: "send as is no", go: "send" }] },
     { id: "addPlan", action: "addPlan" },
@@ -266,10 +270,10 @@ DATA.flows = {
     { id: "send", action: "send" },
     { action: "score", result: 0.5, say: "Written by you, with a little help", did: "Wrote his own apology to a friend", end: true },
 
-    { id: "blame", from: "agent", input: true, noFaster: "Messages that carry feelings are written by you.",
+    { id: "blame", from: "agent", input: true,
       text: "The \"but\" cancels the sorry: it reads like it's her fault. Try owning just your part, nothing about her.",
       chips: ctx => ctx.draftChips().slice(0, 1), go: "draftIn" },
-    { id: "ghost", from: "agent", input: true, noFaster: "Messages that carry feelings are written by you.",
+    { id: "ghost", from: "agent", input: true,
       text: "I won't write this one for you, but I'll make it sound right. Try a first line, even a rough one.",
       chips: ctx => ctx.draftChips().slice(0, 1), go: "draftIn" },
     { id: "leave", from: "agent", text: "Okay, your call. If you change your mind, just say \"reply to Riya\" and we'll write it together." },
@@ -279,17 +283,17 @@ DATA.flows = {
   /* Gift for Riya (money, weight 450, Practising: he picks). Wrong turns: asking the agent to choose, or picking an
      option that arrives after her birthday. The products card shows what each option does to his wallet. */
   gift: [
-    { id: "into", from: "agent", faster: "fast", text: "Nice. What's she into right now?",
+    { id: "into", from: "agent", text: "Nice. What's she into right now?",
       chips: [{ label: "music", also: "songs music", go: "options" }, { label: "art", also: "drawing paint art", go: "options" },
               { label: "books", also: "reading books", go: "options" }, { label: "No idea, you pick", also: "idk dunno you pick anything whatever", go: "nudge" }] },
     { id: "nudge", action: "hint" },
-    { id: "topic", from: "agent", faster: "fast", text: "A gift lands better when it comes from you, and a guess is fine. What does she talk about, or do on weekends?",
+    { id: "topic", from: "agent", text: "A gift lands better when it comes from you, and a guess is fine. What does she talk about, or do on weekends?",
       chips: [{ label: "music", also: "songs music" }, { label: "art", also: "drawing paint art" }, { label: "books", also: "reading books" }] },
     { id: "options", action: "showProducts" },
-    { id: "pick", from: "agent", faster: "fast", card: "products",
+    { id: "pick", from: "agent", card: "products",
       text: ctx => "Three " + ctx.topic + " picks under ₹800. Her birthday is Saturday, so check when each arrives, and what it does to your wallet. Then pick." },
     { action: "checkPick" },
-    { id: "late", from: "agent", faster: "fast",
+    { id: "late", from: "agent",
       text: ctx => "Heads up: the " + ctx.product.name.toLowerCase() + " arrives Sunday, a day after her birthday. Pick another, or order it anyway?",
       chips: [{ label: "Pick another", also: "another different other back", go: "repick" }, { label: "Order it anyway", also: "anyway yes order", go: "confirm" }] },
     { id: "repick", action: "hint", go: "pick" },
