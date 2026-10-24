@@ -56,29 +56,30 @@
   };
   const icon = (n, s = 18, cls = "") => `<svg class="ic ${cls}" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[n] || ""}</svg>`;
 
-  /* The Bud-e character mark: a "B" built from three solid layers (blue stem, pink upper bowl, orange lower bowl)
-     with hard edges between them, a white visor face (one eye open, one winking) and two sparks.
-     Live marks follow the mouse with their eyes and giggle when clicked (see the bottom of this file). */
+  /* The Bud-e character mark ("Winking Buddy" from color-theme-logo.jpeg): a "B" built from three solid layers with
+     hard edges between them (blue-to-violet stem, magenta-to-coral upper bowl, orange lower bowl), a white visor face
+     (one eye open, one winking) and two sparks. Live marks follow the mouse with their eyes and giggle when clicked
+     (see the bottom of this file). The viewBox includes the sparks, so nothing is clipped. */
   let markId = 0;
   const mark = (s = 28, live = false) => {
     const id = "bd" + (++markId), small = s < 24;
-    return `<svg class="mark${live ? " mark--live" : ""}" width="${s}" height="${s}" viewBox="24 14 212 212" ${live ? 'role="img" aria-label="Bud-e"' : 'aria-hidden="true"'}><defs>
-      <linearGradient id="${id}s" x1="0" y1="0" x2=".25" y2="1"><stop offset="0" stop-color="#4A8DF7"/><stop offset=".55" stop-color="#5A66F4"/><stop offset="1" stop-color="#7A55F4"/></linearGradient>
-      <linearGradient id="${id}u" x1="0" y1="0" x2="1" y2=".35"><stop offset="0" stop-color="#B862D3"/><stop offset=".5" stop-color="#E8738F"/><stop offset="1" stop-color="#F29662"/></linearGradient>
-      <linearGradient id="${id}l" x1=".2" y1="0" x2=".5" y2="1"><stop offset="0" stop-color="#F4A45C"/><stop offset=".6" stop-color="#EE8A82"/><stop offset="1" stop-color="#E070B0"/></linearGradient></defs>
+    return `<svg class="mark${live ? " mark--live" : ""}" width="${s}" height="${s}" viewBox="16 10 228 228" ${live ? 'role="img" aria-label="Bud-e"' : 'aria-hidden="true"'}><defs>
+      <linearGradient id="${id}s" x1="0" y1="0" x2=".3" y2="1"><stop offset="0" stop-color="#2F95FF"/><stop offset=".42" stop-color="#4C7DFD"/><stop offset=".72" stop-color="#6A5CFB"/><stop offset="1" stop-color="#8152FD"/></linearGradient>
+      <linearGradient id="${id}u" x1="0" y1="0" x2="1" y2=".3"><stop offset="0" stop-color="#C65ED8"/><stop offset=".5" stop-color="#F0699B"/><stop offset="1" stop-color="#FF8A62"/></linearGradient>
+      <linearGradient id="${id}l" x1=".3" y1="0" x2=".6" y2="1"><stop offset="0" stop-color="#FF9A4C"/><stop offset=".5" stop-color="#FFA758"/><stop offset="1" stop-color="#F57FB4"/></linearGradient></defs>
       <g class="m-body">
-        <path d="M80 18H140a58 58 0 0 1 0 116H80z" fill="url(#${id}u)"/>
-        <path d="M80 100H150a61 61 0 0 1 0 122H80z" fill="url(#${id}l)"/>
-        <path d="M74 18H118C136 50 150 90 150 130C150 172 150 204 168 222H74a44 44 0 0 1-44-44V62a44 44 0 0 1 44-44z" fill="url(#${id}s)"/>
-        ${small ? "" : '<path d="M57 110 66 82 94 110z" fill="#3E25C9" opacity=".35"/>'}
-        <rect x="48" y="108" width="132" height="76" rx="38" fill="#fff"/>
-        <g class="m-eyes"><g class="m-open"><circle class="m-eye" cx="90" cy="146" r="10.5" fill="#15123A"/><path d="M128 152 150 140" stroke="#15123A" stroke-width="10" stroke-linecap="round"/></g>
-          ${live ? '<path class="m-happy" d="M79 151Q90 134 101 151M128 151Q139 134 150 151" fill="none" stroke="#15123A" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>' : ""}</g>
+        <path d="M80 18H140a54 54 0 0 1 0 108H80z" fill="url(#${id}u)"/>
+        <path d="M80 104H147a59 59 0 0 1 0 118H80z" fill="url(#${id}l)"/>
+        <path d="M70 18H108C126 42 140 80 144 116C149 156 147 194 158 222H70a50 50 0 0 1-50-50V68a50 50 0 0 1 50-50z" fill="url(#${id}s)"/>
+        ${small ? "" : '<path d="M56 120 65 94 90 120z" fill="#3A27D6" opacity=".3"/>'}
+        <rect x="56" y="116" width="121" height="70" rx="35" fill="#fff"/>
+        <g class="m-eyes"><g class="m-open"><circle class="m-eye" cx="92" cy="151" r="10.5" fill="#0B0A46"/><path d="M133 155 154 143" stroke="#0B0A46" stroke-width="10" stroke-linecap="round"/></g>
+          ${live ? '<path class="m-happy" d="M81 156Q92 139 103 156M132 156Q143 139 154 156" fill="none" stroke="#0B0A46" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>' : ""}</g>
       </g>
-      ${small ? "" : '<g class="m-sparks" stroke-width="9" stroke-linecap="round"><path class="m-sp1" d="M206 68 224 54" stroke="#F08A5D"/><path class="m-sp2" d="M206 98H230" stroke="#D452C8"/></g>'}
+      ${small ? "" : '<g class="m-sparks" stroke-width="9.5" stroke-linecap="round"><path class="m-sp1" d="M206 96 226 80" stroke="#F4775F"/><path class="m-sp2" d="M213 120H237" stroke="#E04BCB"/></g>'}
     </svg>`;
   };
-  const wordmark = () => '<span class="wordmark">Bud<i></i>e</span>';
+  const wordmark = () => '<span class="wordmark">Bud<i></i><b>e</b></span>';
   const logo = (s = 28) => `<span class="logo">${mark(s, true)}${wordmark()}</span>`;
 
   /* ---------- Saved state ---------- */
@@ -1191,9 +1192,9 @@
       const eyes = $(".m-eyes", m), r = m.getBoundingClientRect();
       if (!eyes || !r.width) return;
       if (!lookAt) { eyes.style.transform = ""; return; }
-      const dx = lookAt.x - (r.left + r.width * .46), dy = lookAt.y - (r.top + r.height * .62);
+      const dx = lookAt.x - (r.left + r.width * .5), dy = lookAt.y - (r.top + r.height * .62);
       const d = Math.hypot(dx, dy) || 1, k = Math.min(1, d / 240);
-      eyes.style.transform = `translate(${(dx / d * 13 * k).toFixed(1)}px, ${(dy / d * 8 * k).toFixed(1)}px)`;
+      eyes.style.transform = `translate(${(dx / d * 11 * k).toFixed(1)}px, ${(dy / d * 8 * k).toFixed(1)}px)`;
     });
   }
   const queueAim = () => { if (!lookFrame) lookFrame = requestAnimationFrame(aimEyes); };
