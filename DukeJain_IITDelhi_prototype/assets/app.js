@@ -497,7 +497,7 @@
         <div class="perm-txt"><b>${esc(p.title)}${p.required ? '<em class="req">Required</em>' : ""}${p.optional ? '<em class="opt">Optional</em>' : ""}</b>
           <p>${off ? "Not needed: your child hasn't used an AI agent before." : esc(p.why)}</p>
           ${locked ? `<p class="perm-lock">${icon("lock", 13)} Stays on while Bud-e is active. To withdraw it, remove your child's device in Settings.</p>` : ""}
-          ${p.detail ? `<details><summary>What exactly is stored</summary><ul>${p.detail.map(d => `<li>${esc(d)}</li>`).join("")}</ul></details>` : ""}
+          ${p.detail ? `<details><summary>${esc(p.detailLabel || "What exactly is stored")}</summary><ul>${p.detail.map(d => `<li>${esc(d)}</li>`).join("")}</ul></details>` : ""}
           ${p.id === "wallet" ? `<label class="amount">Monthly amount <span>₹</span><input type="number" min="0" step="100" id="walletAmt" value="${s.walletMonthly}"></label>` : ""}
         </div>
         <label class="toggle"><input type="checkbox" ${on ? "checked" : ""} ${off || locked ? "disabled" : ""} aria-label="${esc(p.title)}"><i class="switch"></i></label>
@@ -555,7 +555,7 @@
       "Connecting " + c.name + "'s agent (" + c.provider + ")",
       past ? "Estimating starting levels from past use (no chats imported)" : "Setting starting levels from Class " + c.classNo + " averages",
       "Setting up " + D.child.tokensWeekly + " tokens a week",
-      S.setup.perms.extension ? "Installing the browser extension" : "Skipping the browser extension",
+      S.setup.perms.extension ? "Adding the Bud-e browser extension" : "Skipping the browser extension",
       S.setup.perms.wallet ? "Opening a " + rupee(S.setup.walletMonthly) + " monthly wallet" : "No wallet",
       "Locking these permissions to Bud-e Parent",
       "Making your Bud-e Parent code"
@@ -1480,8 +1480,8 @@
     main.innerHTML = `<div class="page page--report">
       <header class="page-h"><div><p class="eyebrow">Extension report · ${D.today.week}</p><h1>Other AI agents</h1>
         <p class="sub">What the browser extension noticed on ${n}'s device. Names and counts only, never the sites he visited or what he typed.</p></div></header>
-      ${!S.setup.perms.extension ? `<section class="rsec"><p>The browser extension is off, so other AI agents on ${n}'s device aren't noticed.</p>
-        <p class="muted"><button class="link" data-go="pperms">Turn it on in Permissions</button></p></section>` : `
+      ${!S.setup.perms.extension ? `<section class="rsec"><p>The Bud-e browser extension isn't added, so other AI agents on ${n}'s device aren't monitored.</p>
+        <p class="muted"><button class="link" data-go="pperms">Add it in Permissions</button></p></section>` : `
       <div class="kpis kpis--2">
         <div class="kpi"><span>Uses this week</span><b>${uses}</b><em>across all agents</em></div>
         <div class="kpi"><span>Blocked</span><b>${blocked}</b><em>${blocked === 1 ? "agent" : "agents"} can't open</em></div>
@@ -1558,7 +1558,9 @@
       if (id === "walletAmt") S.wallet = walletLeft();
       const p = D.permissions.find(x => x.id === id);
       save();
-      toast(id === "walletAmt" ? "Monthly wallet set to " + rupee(S.setup.walletMonthly) + "." : p.title + (S.setup.perms[id] ? " turned on." : " turned off.") + " " + name() + "'s device updates now.", "ok");
+      toast(id === "walletAmt" ? "Monthly wallet set to " + rupee(S.setup.walletMonthly) + "."
+        : id === "extension" ? (S.setup.perms.extension ? "Bud-e extension added to " + name() + "'s browsers. Other AI agents now show in the Extension report." : "Bud-e extension removed. Other AI agents on " + name() + "'s device are no longer monitored.")
+        : p.title + (S.setup.perms[id] ? " turned on." : " turned off.") + " " + name() + "'s device updates now.", "ok");
     });
   }
 
