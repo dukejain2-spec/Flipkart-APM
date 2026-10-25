@@ -61,6 +61,8 @@ BUD-E PARENT (parent.html)
  P4     Permissions                       turn permissions on or off for Aarav's device
 
 RIGHT AND WRONG ANSWERS
+ Algebra   Level up: he starts just below Achiever (420). Solving it on his own (+11 -> 431) plays the
+           level-up animation: Explorer -> Achiever. With a hint it's 411, still Explorer.
  Algebra   Wrong first move (divide by 2 / add 7) -> hint, try again; wrong twice -> the step
            is shown. Same for 2x = 3 (x = 6 / x = 1). Rating result: 1 on your own,
            0.5 with hints, 0 if a step was shown.

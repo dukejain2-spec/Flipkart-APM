@@ -882,7 +882,7 @@
     hint(st, ctx) { ctx.hints++; },
     shown(st, ctx) { ctx.hints++; ctx.shown = true; },
 
-    score(st, ctx) {
+    async score(st, ctx) {
       const id = ctx.task.skill, old = S.skills[id].rating;
       const result = st.result != null ? st.result : ctx.shown ? 0 : ctx.hints ? 0.5 : 1;
       const exp = expectedFor(ctx.weight - old);
@@ -895,8 +895,8 @@
       changed();
       const up = after.i > before.i;
       push({ t: "score", up, text: up ? `Level up: ${ctx.skill.name} is now ${after.name}` : st.say || (result === 1 ? "That's all you" : result ? "Done with a little help" : "Worked through it together"),
-        sub: up ? "" : `${ctx.skill.name}: ${after.name}` });
-      if (up) toast(`${ctx.skill.name}: ${before.name} → ${after.name}`, "ok");
+        sub: up ? `Rating ${old} → ${now}` : `${ctx.skill.name}: ${after.name}` });
+      if (up) { await levelUp(ctx.skill, before, after, old, now); alive(ctx); }
     },
 
     faster(st, ctx) {
@@ -973,6 +973,46 @@
       claimed: `Got it. You're starting ${sk.name} as ${article(l.name)}. This problem is the check.`
     }[how];
     push({ t: "note", icon: "spark", text });
+  }
+
+  /* Level up: the old level gives way to the new one, the next segment of the track fills with a shine, the rating
+     counts up, confetti bursts from the badge and the Bud-e mark giggles. Closing it bumps the My skills tab. */
+  async function levelUp(sk, before, after, from, to) {
+    const colours = ["#2F6BFF", "#7A5AF8", "#DD2590", "#F2A65E", "#0E9384", "#FDB022", "#4E88F5"];
+    const confetti = Array.from({ length: 32 }, (_, k) =>
+      `<i style="--a:${Math.round(k * 360 / 32)}deg;--d:${rand(90, 190)}px;--c:${colours[k % colours.length]};--t:${(k % 4) * 0.05 + .45}s"></i>`).join("");
+    const next = after.next;
+    const done = modal({ cls: "levelup", html: `<div class="lu-stage">
+          <span class="lu-rays" aria-hidden="true"></span>
+          <span class="lu-badge">${icon("trophy", 34)}<span class="confetti" aria-hidden="true">${confetti}</span></span>
+          <span class="lu-mark">${mark(54, true)}</span>
+        </div>
+        <p class="eyebrow eyebrow--accent">Level up · ${esc(sk.name)}</p>
+        <div class="lu-swap" aria-label="${esc(before.name)} to ${esc(after.name)}">
+          <span class="lu-old">${esc(before.name)}</span><span class="lu-new">${esc(after.name)}</span>
+        </div>
+        <p class="lu-rating"><b class="lu-num">${from}</b><span>rating</span><em>+${to - from}</em></p>
+        <div class="unlock-track lu-track">
+          <div class="track">${D.levels.bands.map((b, i) => `<i class="${i < after.i ? "is-done" : i === after.i ? "is-new" : ""}"></i>`).join("")}</div>
+          <div class="track-names">${D.levels.bands.map((b, i) => `<span class="${i === after.i ? "is-start" : ""}">${b.name}${i === after.i ? "<em>You're here</em>" : ""}</span>`).join("")}</div>
+          <p class="unlock-note">You did it on your own, so you moved up.${next ? ` Next: ${next.name} at ${next.min}.` : ""}</p>
+        </div>`,
+      actions: [{ label: "Nice!", value: true, primary: true }] });
+    const num = $(".levelup .lu-num"), m = $(".levelup .mark--live");
+    if (num && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setTimeout(() => { if (m) m.classList.add("is-giggling"); }, 650);
+      setTimeout(() => { if (m) m.classList.remove("is-giggling"); }, 1650);
+      const t0 = performance.now() + 700, dur = 900;
+      const tick = t => {
+        const k = Math.max(0, Math.min(1, (t - t0) / dur));
+        num.textContent = Math.round(from + (to - from) * (1 - Math.pow(1 - k, 3)));
+        if (k < 1 && num.isConnected) requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    } else if (num) num.textContent = to;
+    await done;
+    const tabEl = $('.tab[href="#/progress"]');
+    if (tabEl) { tabEl.classList.remove("is-bump"); void tabEl.offsetWidth; tabEl.classList.add("is-bump"); }
   }
 
   /* A newly unlocked skill flies from its card in the chat into the My skills tab, which then shows a dot until visited. */

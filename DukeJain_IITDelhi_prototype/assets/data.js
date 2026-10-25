@@ -89,7 +89,8 @@ window.DATA = {
 
   areas: [
     { id: "study", name: "Study", tag: "Study", weightMeans: "difficulty", skills: [
-      { id: "algebra", name: "Algebra", rating: null, base: 400, pastAdj: -20, chapter: "Linear equations" },
+      /* Algebra starts just below Achiever (430): solving 2x + 7 = 10 on his own (+11) levels him up, with hints it doesn't. */
+      { id: "algebra", name: "Algebra", rating: null, base: 440, pastAdj: -20, chapter: "Linear equations" },
       { id: "geometry", name: "Geometry", rating: 610 }
     ]},
     { id: "writing", name: "Writing", tag: "Writing", weightMeans: "difficulty", skills: [
