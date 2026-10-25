@@ -95,8 +95,9 @@ window.DATA = {
       /* Algebra starts just below Achiever (430): solving 2x + 7 = 10 on his own (+11) levels him up, with hints it doesn't. */
       { id: "algebra", name: "Algebra", rating: null, base: 440, pastAdj: -20, chapter: "Linear equations" },
       { id: "geometry", name: "Geometry", rating: 610 },
-      /* Physics is an Explorer (330); the falling-stone problem weighs 560, so he is a Learner on it and is taught step by step. */
-      { id: "physics", name: "Physics", rating: 330 }
+      /* Physics is new this week, like algebra: it unlocks on his first physics question. He starts as an Explorer (330);
+         the falling-stone problem weighs 560, so he is a Learner on it and is taught step by step. */
+      { id: "physics", name: "Physics", rating: null, base: 350, pastAdj: -20, chapter: "Motion under gravity" }
     ]},
     { id: "writing", name: "Writing", tag: "Writing", weightMeans: "difficulty", skills: [
       { id: "emails", name: "Emails & applications", rating: 540 }
@@ -321,7 +322,10 @@ DATA.flows = {
      he does each step. Three steps; a wrong answer gets a hint and another go, a second wrong answer gets the step shown.
      Result: 1 on his own, 0.5 with hints, 0 if a step was shown. A Pro (Laksh) gets the answer and the working. */
   science: [
-    { action: "byMode", routes: { pro: "pro", confident: "q1", practising: "q1", learner: "q1" } },
+    /* New skill unlocked: "Yes, let's go" starts him at 330, a Learner here; "No, I'm not new to this" starts him 80
+       higher (a Practising level), and this problem is the check. */
+    { action: "unlock", noCheck: true },
+    { id: "start", action: "byMode", routes: { pro: "pro", confident: "q1", practising: "q1", learner: "q1" } },
     { id: "q1", from: "agent",
       text: ctx => (ctx.mode.id === "learner"
         ? "Let's work through it together, one step at a time. The stone starts at rest and only gravity speeds it up."

@@ -153,6 +153,8 @@
   }
   let S = load();
   if (!S.blocked) S.blocked = fresh().blocked;
+  /* Older saved state: a skill added since (physics) joins with its starting value, so nothing reads a missing skill */
+  D.areas.forEach(a => a.skills.forEach(sk => { if (!S.skills[sk.id]) S.skills[sk.id] = { rating: sk.rating }; }));
   /* Older saved state: one agent, and the extension counted as installed if it was on */
   if (!S.setup.child.providers) S.setup.child.providers = [S.setup.child.provider];
   if (S.setup.extInstalled == null) S.setup.extInstalled = !!S.setup.perms.extension;
@@ -909,8 +911,16 @@
       if (st.did && result > 0) S.didIt.push(st.did);
       changed();
       const up = after.i > before.i;
-      push({ t: "score", up, text: up ? `Level up: ${ctx.skill.name} is now ${after.name}` : st.say || (result === 1 ? "That's all you" : result ? "Done with a little help" : "Worked through it together"),
-        sub: up ? `Rating ${old} → ${now}` : `${ctx.skill.name}: ${after.name}` });
+      /* All of it right, on his own: the level bar fills from where he was to where he is now (to the end, on a level up) */
+      const bar = result === 1 && now > old ? { skill: ctx.skill.name, from: before.pct, to: up ? 100 : after.pct, delta: now - old,
+        level: before.name, next: before.next ? before.next.name : null, after: after.name, up, moves: movesToNext(now),
+        afterNext: after.next ? after.next.name : null, fresh: true } : null;
+      const m = { t: "score", up, bar, text: up ? `Level up: ${ctx.skill.name} is now ${after.name}` : st.say || (result === 1 ? "That's all you" : result ? "Done with a little help" : "Worked through it together"),
+        sub: up ? `Rating ${old} → ${now}` : `${ctx.skill.name}: ${after.name}` };
+      push(m);
+      /* it fills once, as it arrives; drawn again later (another screen, reopening the chat) it rests full */
+      if (bar) { bar.fresh = false; save(); }
+      if (bar && up) await sleep(1500);
       if (up) { await levelUp(ctx.skill, before, after, old, now); alive(ctx); }
     },
 
@@ -1098,12 +1108,21 @@
       }
       case "skill": return skillCardHTML(m.data);
       case "note": return `<div class="note">${icon(m.icon || "info", 15)}<span>${esc(m.text)}</span></div>`;
-      case "score": return `<div class="score ${m.up ? "is-up" : ""} ${m.spend ? "is-spend" : ""}">
-          <span class="score-ic">${icon(m.spend ? "bolt" : m.up ? "trophy" : "check", 16)}</span><div class="score-t"><b>${esc(m.text)}</b>${m.sub ? `<span>${esc(m.sub)}</span>` : ""}</div></div>`;
+      case "score": return `<div class="score ${m.up ? "is-up" : ""} ${m.spend ? "is-spend" : ""} ${m.bar ? "has-bar" : ""}">
+          <span class="score-ic">${icon(m.spend ? "bolt" : m.up ? "trophy" : "check", 16)}</span><div class="score-t"><b>${esc(m.text)}</b>${m.sub ? `<span>${esc(m.sub)}</span>` : ""}</div>
+          ${m.bar ? levelBarHTML(m.bar) : ""}</div>`;
       case "reward": return `<div class="card reward"><div class="reward-n">+${m.n}</div><div><b>Challenge complete</b><span>${esc(m.text)}</span></div>${icon("coin", 30, "reward-ic")}</div>`;
       default: return "";
     }
   }
+  /* The level bar on a fully right answer: this level's name, the next one's, the rating gained, and the bar filling
+     from where he was to where he is now. On a level up it fills to the end and the next level lights up. */
+  const levelBarHTML = b => `<div class="lvbar ${b.fresh ? "is-new" : ""} ${b.up ? "is-up" : ""}" role="img"
+      aria-label="${esc(b.skill)}: ${esc(b.level)} bar from ${b.from}% to ${b.to}%${b.up ? ", now " + esc(b.after) : ""}">
+      <div class="lvbar-h"><span class="lvbar-l">${esc(b.level)}</span><em class="lvbar-d">+${b.delta}</em>${b.next ? `<span class="lvbar-n">${esc(b.next)}</span>` : ""}</div>
+      <div class="lvbar-t"><i style="--from:${b.from}%;--to:${b.to}%"></i></div>
+      <p class="lvbar-f">${b.up ? `${esc(b.skill)} is now ${esc(b.after)}${b.afterNext ? `. Next: ${esc(b.afterNext)}` : ""}` : b.next ? `${b.moves} more on your own to reach ${esc(b.next)}` : "Top level for your age group"}</p>
+    </div>`;
   /* The reply label: "Study · Algebra · Confident: quick check…" shows the part before the colon in caps, the rest as plain text. */
   const tagHTML = tag => {
     const [head, ...rest] = tag.text.split(": ");

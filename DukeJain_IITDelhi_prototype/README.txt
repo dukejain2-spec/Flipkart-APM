@@ -36,7 +36,8 @@ Start: "Set up Aarav's device". The "Jump to a screen" list on the start screen 
         the tokens left underneath. Faster response is offered only here, when sending.
  S6     solve 2x + 7 = 10                 Confident: New skill unlocked, one quick check, then his. Solved on
                                           his own, he levels up Explorer -> Achiever with an animation.
- S7     a stone dropped from 20 m         Learner (Physics, Explorer): taught step by step, he does each step
+ S7     a stone dropped from 20 m         New skill unlocked (Physics). "Yes, let's go": Learner, taught step by step,
+                                          he does each step. "No, I'm not new": starts higher, this problem is the check.
  S8     mail my class teacher             Pro (Emails, Achiever): written for him; "Make it shorter", "Send it";
                                           his rating doesn't move
  S9     buy a calculator for my exam      Practising (Spending): he picks from three; the wallet shows only here
@@ -77,6 +78,8 @@ RIGHT AND WRONG ANSWERS
  Calculator "No idea, you pick" -> nudged to choose; the programmable one (not allowed in exams) or
            the one arriving Tuesday (after Monday's exam) -> warned, pick another or buy anyway.
            Spending 300: 328 for his own good pick, 308 after a warning or a nudge. Wallet Rs 1,100 -> 450.
+ A scenario answered right all the way, on his own, ends with a level bar that fills from his old point
+ to his new one (+rating gained, how many more to the next level; on a level up it fills to the end).
  Correct answers never pay tokens. Tokens come from the weekly 500 and from challenges.
  Faster response (next to Send, when sending) works for algebra (10), science, the mail and the
  calculator (50 each). The feelings prompt can't use it.
