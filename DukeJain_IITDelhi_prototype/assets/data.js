@@ -13,10 +13,11 @@ window.DATA = {
   parent: { name: "Neha Sharma", first: "Neha", relation: "Mum" },
 
   child: {
-    name: "Aarav", age: 14, classNo: 9, city: "Pune", friend: "Riya", sibling: "Didi",
-    /* Halfway through the month he has already spent ₹900 of ₹2,000, so the gift options come with a nudge about his wallet. */
+    name: "Aarav", age: 14, classNo: 9, city: "Pune", sibling: "Didi",
+    /* Halfway through the month he has already spent ₹900 of ₹2,000, so the calculator options come with a nudge about his wallet. */
     tokens: 500, tokensWeekly: 500, wallet: 1100, walletMonthly: 2000, usedBefore: true,
-    provider: "Claude", uses: ["study", "writing", "messages", "shopping", "feelings"]
+    /* The agents he uses; setup allows several. The first is the one he chats with through Bud-e. */
+    provider: "Claude", providers: ["Claude"], uses: ["study", "writing", "messages", "shopping", "feelings"]
   },
 
   classes: [4, 5, 6, 7, 8, 9, 10, 11, 12],
@@ -44,7 +45,7 @@ window.DATA = {
       why: "Only used to estimate where your child starts in each skill." },
     { id: "restrict", title: "Restrict other AI apps on this device", on: true,
       why: "Stops the easiest bypass: opening another AI directly." },
-    { id: "extension", title: "Add the Bud-e browser extension", on: true,
+    { id: "extension", title: "Add the Bud-e browser extension", on: false, install: true,
       why: "Adds Bud-e's extension to the browsers on your child's device. It monitors the use of other AI agents (like ChatGPT or Gemini), so you can see which ones and how often in the Extension report and block any of them.",
       detailLabel: "What it monitors",
       detail: ["Monitors: which AI agent was opened, and how many times this week", "Never reads: the sites your child visits, searches or anything they type", "Shows in: Bud-e Parent, Extension report, where each agent can be blocked"] },
@@ -93,7 +94,9 @@ window.DATA = {
     { id: "study", name: "Study", tag: "Study", weightMeans: "difficulty", skills: [
       /* Algebra starts just below Achiever (430): solving 2x + 7 = 10 on his own (+11) levels him up, with hints it doesn't. */
       { id: "algebra", name: "Algebra", rating: null, base: 440, pastAdj: -20, chapter: "Linear equations" },
-      { id: "geometry", name: "Geometry", rating: 610 }
+      { id: "geometry", name: "Geometry", rating: 610 },
+      /* Physics is an Explorer (330); the falling-stone problem weighs 560, so he is a Learner on it and is taught step by step. */
+      { id: "physics", name: "Physics", rating: 330 }
     ]},
     { id: "writing", name: "Writing", tag: "Writing", weightMeans: "difficulty", skills: [
       { id: "emails", name: "Emails & applications", rating: 540 }
@@ -111,18 +114,21 @@ window.DATA = {
   tasks: [
     { id: "feelings", area: "feelings", prompt: "i feel really low today, like no one gets me", chip: "I feel low today",
       tag: "Feelings: I'm here, and real people matter too" },
-    { id: "cab", area: "chore", prompt: "book a cab to Riya's at 5", chip: "book a cab to Riya's at 5",
-      tag: "Chore: no tokens, no waiting" },
     { id: "algebra", area: "study", skill: "algebra", weight: 250, prompt: "solve 2x + 7 = 10", chip: "solve 2x + 7 = 10" },
-    { id: "gift", area: "money", skill: "spending", weight: 450, prompt: "order a birthday gift for Riya under ₹800", chip: "gift for Riya under ₹800" },
-    { id: "apology", area: "relationships", skill: "messages", weight: 700, carriesFeelings: true,
-      prompt: "reply to Riya, say sorry but make it sound chill", chip: "reply to Riya",
-      tag: "Relationships: messages that carry feelings are written by you" }
+    { id: "science", area: "study", skill: "physics", weight: 560,
+      prompt: "a stone is dropped from a 20 m high building. how long does it take to hit the ground? take g = 10 m/s²",
+      chip: "a stone dropped from 20 m: how long to fall?" },
+    { id: "mail", area: "writing", skill: "emails", weight: 300,
+      prompt: "write a mail to my class teacher asking for a retest, i was sick for tuesday's maths test",
+      chip: "mail my class teacher about a retest" },
+    { id: "calc", area: "money", skill: "spending", weight: 450,
+      prompt: "buy a calculator for my maths exam on monday, under ₹900", chip: "buy a calculator for my exam" }
   ],
 
   /* The five pre-fed prompts in the home drop-down, in order. For now these are the only requests the prototype takes,
-     and each one runs end to end. */
-  prompts: ["cab", "algebra", "apology", "gift", "feelings"],
+     and each one runs end to end. Together they show every mode: Confident (algebra, with a level up), Learner
+     (science), Pro (the mail), Practising (the calculator, with the wallet) and care (feelings). */
+  prompts: ["algebra", "science", "mail", "calc", "feelings"],
 
   /* Earlier chats this week, listed under Chats like a chat app's history. Opening the app as the child always starts
      a new chat; these stay one click away. Messages use the same shapes as live ones. */
@@ -151,32 +157,21 @@ window.DATA = {
     ] }
   ],
 
-  ride: { pickup: "4:42 pm", from: "Home, Kothrud", to: "Riya's place, Baner", arrive: "5:00 pm", car: "White hatchback · MH12 KX 2040", fare: "Paid from family ride credit" },
-
-  riya: [
-    { from: "riya", text: "you said you'd come", time: "Sat 6:12 pm" },
-    { from: "riya", text: "whatever, forget it", time: "Sat 9:40 pm" }
-  ],
-  riyaReply: "ok fine. saturday then? 🙂",
+  mail: {
+    to: "Ms Kulkarni, class teacher", subject: "Request for a retest: Tuesday's maths test",
+    body: "Dear Ms Kulkarni,\n\nI was unwell on Tuesday 16 October and missed the maths unit test. Could I please take a retest on a day that suits you? I have a note from my doctor and will bring it on Thursday.\n\nThank you,\n{name}, Class {class}",
+    short: "Dear Ms Kulkarni,\n\nI was ill on Tuesday and missed the maths test. Could I take a retest when it suits you? I'll bring my doctor's note.\n\nThank you,\n{name}, Class {class}"
+  },
 
   products: {
-    /* Her birthday is Saturday. `late` options arrive after it: picking one is the "wrong" branch.
-       `photo` is a product photo bundled in assets/img (so it works offline); `pic` names the line icon shown if it can't load;
-       `say` is how a sentence names it. */
-    music: [
-      { id: "earphones", say: "wired earphones", name: "Wired earphones, mint", photo: "assets/img/earphones.jpg", pic: "headphones", price: 499, note: "Arrives Thu", day: "Thursday" },
-      { id: "speaker", say: "mini Bluetooth speaker", name: "Mini Bluetooth speaker", photo: "assets/img/speaker.jpg", pic: "speaker", price: 780, note: "Arrives Sun", day: "Sunday", late: true },
-      { id: "posters", say: "gig poster set", name: "Gig poster set (3)", photo: "assets/img/posters.jpg", pic: "music", price: 350, note: "Arrives Thu", day: "Thursday" }
-    ],
-    art: [
-      { id: "sketch", say: "sketchbook and pencil set", name: "Sketchbook + pencil set", photo: "assets/img/sketch.jpg", pic: "pen", price: 450, note: "Arrives Thu", day: "Thursday" },
-      { id: "watercolour", say: "watercolour kit", name: "Watercolour kit", photo: "assets/img/watercolour.jpg", pic: "palette", price: 720, note: "Arrives Fri", day: "Friday" },
-      { id: "print", say: "framed art print", name: "Art print, framed", photo: "assets/img/print.jpg", pic: "frame", price: 600, note: "Arrives Sun", day: "Sunday", late: true }
-    ],
-    books: [
-      { id: "graphic", say: "hardback graphic novel", name: "Graphic novel, hardback", photo: "assets/img/graphic.jpg", pic: "book", price: 399, note: "Arrives Thu", day: "Thursday" },
-      { id: "poetry", say: "poetry collection", name: "Poetry collection + bookmark", photo: "assets/img/poetry.jpg", pic: "pen", price: 299, note: "Arrives Thu", day: "Thursday" },
-      { id: "mystery", say: "mystery book box", name: "Three-book mystery box", photo: "assets/img/mystery.jpg", pic: "search", price: 749, note: "Arrives Sun", day: "Sunday", late: true }
+    /* His maths exam is Monday. `badge` is the line on each card; `bad` options carry a `warn` (not allowed in the exam
+       hall, or arriving after it): picking one is the "wrong" branch. `pic` is the line icon; `say` is how a sentence names it. */
+    calc: [
+      { id: "sci", say: "scientific calculator", name: "Scientific, 240 functions", pic: "calc", price: 650, day: "Friday", badge: "Friday · allowed in exams" },
+      { id: "graph", say: "graphing calculator", name: "Graphing, programmable", pic: "calc", price: 890, day: "Friday", badge: "Not allowed in exams", bad: true,
+        warn: "the graphing calculator is programmable, and programmable calculators aren't allowed in board exams." },
+      { id: "basic", say: "basic scientific calculator", name: "Scientific, basic", pic: "calc", price: 420, day: "Tuesday", badge: "Tuesday · after your exam", bad: true,
+        warn: "the basic one arrives Tuesday, the day after your exam." }
     ],
     headphones: [
       { id: "over", say: "over-ear headphones", name: "Over-ear, 30 h battery", photo: "assets/img/over.jpg", pic: "headphones", price: 1399, note: "Big sound, a bit heavy" },
@@ -207,6 +202,7 @@ window.DATA = {
     weeks: ["10 Sep", "17 Sep", "24 Sep", "1 Oct", "8 Oct"],
     history: {
       geometry: [-82, -61, -44, -27, -13],
+      physics: [-58, -44, -30, -21, -9],
       emails: [-85, -68, -50, -32, -14],
       spending: [-38, -30, -16, -21, -8],
       messages: [-28, -20, -14, -9, -3]
@@ -228,11 +224,9 @@ window.DATA = {
   personas: {
     laksh: {
       parent: { name: "Rohit Verma", first: "Rohit", relation: "Dad" },
-      child: { name: "Laksh", age: 15, classNo: 10, provider: "Gemini", wallet: 1700, walletMonthly: 2000 },
-      /* Pro in algebra, Master in writing, spending and messages */
-      ratings: { algebra: 720, geometry: 560, emails: 880, spending: 890, messages: 920 },
-      /* for his gift: Riya's into art, and the sketchbook set is his agent's pick */
-      giftTopic: "art", giftPick: "sketch",
+      child: { name: "Laksh", age: 15, classNo: 10, provider: "Gemini", providers: ["Gemini"], wallet: 1700, walletMonthly: 2000 },
+      /* Pro in algebra and physics, Master in writing, spending and messages */
+      ratings: { algebra: 720, geometry: 560, physics: 760, emails: 880, spending: 890, messages: 920 },
       history: [
         { title: "email the science teacher about the project deadline", when: "Mon", thread: [
           { t: "child", text: "email the science teacher about the project deadline" },
@@ -263,11 +257,6 @@ window.DATA = {
    id / go        jump targets. `end: true` stops the flow.
    A flow sent with Faster response (from the home composer) starts at its step with id "fast". */
 DATA.flows = {
-  cab: [
-    { from: "agent", fast: true, text: "Done. Cab booked for 5:00 pm to Riya's place. 🚗", card: "ride" },
-    { action: "chore", end: true }
-  ],
-
   /* Algebra (weight 250). Two steps; each has a right answer and wrong ones. A wrong answer gets a hint and another
      go; a second wrong answer on a step gets the step shown. Result: 1 on your own, 0.5 with hints, 0 if a step was shown. */
   algebra: [
@@ -328,107 +317,130 @@ DATA.flows = {
     { action: "note", text: "Faster responses don't raise your rating.", end: true }
   ],
 
-  /* Apology to Riya (weight 700, carries feelings). He always writes it. Wrong turns: blaming her, a "sorry, but"
-     draft, or asking the agent to write it. Each gets pushed back, and he rewrites. */
-  apology: [
-    { action: "riya" },
-    /* A Master in messages gets one question on tone, then two ready replies to choose from. Below that, he writes it himself. */
-    { action: "byMode", routes: { pro: "tone", confident: "sorry", practising: "sorry", learner: "sorry" } },
-    { id: "sorry", from: "agent",
-      text: "I'll help you say it, but it should come from you. What are you actually sorry about?",
-      chips: [{ label: "I didn't show up on Saturday", also: "saturday show bail bailed came come", go: "write" },
-              { label: "I said something rude", also: "rude said mean", go: "write" },
-              { label: "Nothing, she's overreacting", also: "nothing overreacting her fault not me", go: "blameHer" }] },
-    { id: "blameHer", action: "hint" },
-    { id: "blameHer2", from: "agent",
-      text: "Maybe she is. But \"whatever, forget it\" usually means she cares and feels let down. Was there anything on your side?",
-      chips: [{ label: "I didn't show up on Saturday", also: "saturday show bail bailed came come", go: "write" },
-              { label: "I said something rude", also: "rude said mean", go: "write" },
-              { label: "No, I'll leave it", also: "no leave it skip forget", go: "leave" }] },
-    { id: "write", from: "agent", input: true,
-      text: "Start with that, in your own words. I'll help it sound right.", chips: ctx => ctx.draftChips() },
-    { id: "draftIn", action: "checkDraft" },
-    { id: "feedback", from: "agent", card: "draft",
-      text: "That's honest and chill. Maybe add a plan, like \"can we go this weekend instead?\"",
-      chips: [{ label: "Add the plan", also: "add plan weekend yes", go: "addPlan" }, { label: "Send to Riya", also: "send as is no", go: "send" }] },
-    { id: "addPlan", action: "addPlan" },
-    { from: "agent", card: "draft", text: "Sounds like you. Ready?", chips: [{ label: "Send to Riya", also: "send yes ok", go: "send" }] },
-    { id: "send", action: "send" },
-    { action: "score", result: 0.5, say: "Written by you, with a little help", did: "Wrote his own apology to a friend", end: true },
+  /* Science (physics, weight 560). Aarav is an Explorer (330), so he is a Learner here: taught one step at a time, and
+     he does each step. Three steps; a wrong answer gets a hint and another go, a second wrong answer gets the step shown.
+     Result: 1 on his own, 0.5 with hints, 0 if a step was shown. A Pro (Laksh) gets the answer and the working. */
+  science: [
+    { action: "byMode", routes: { pro: "pro", confident: "q1", practising: "q1", learner: "q1" } },
+    { id: "q1", from: "agent",
+      text: ctx => (ctx.mode.id === "learner"
+        ? "Let's work through it together, one step at a time. The stone starts at rest and only gravity speeds it up."
+        : "Quick check first.") + " Which equation links distance, time and g when something starts from rest?",
+      chips: [{ label: "s = ½ g t²", also: "half g t squared 1/2 gt2 s=", go: "q2" },
+              { label: "v = u + at", also: "v u at velocity", go: "m1" },
+              { label: "speed = distance ÷ time", also: "speed distance time divided", go: "m1" }] },
+    { id: "m1", action: "hint" },
+    { from: "agent", text: ctx => (ctx.answer === "v = u + at"
+        ? "That one gives the speed, not the distance. We know the distance (20 m) and want the time."
+        : "That works for a steady speed, but a falling stone keeps speeding up.") + " Which one has s, g and t in it?",
+      chips: [{ label: "s = ½ g t²", also: "half g t squared 1/2 gt2 s=", go: "q2" },
+              { label: "v = u + at", also: "v u at velocity", go: "s1" },
+              { label: "speed = distance ÷ time", also: "speed distance time divided", go: "s1" }] },
+    { id: "s1", action: "shown" },
+    { from: "agent", text: "It's s = ½ g t²: distance is half of g times the time squared, for anything that starts from rest. Now put in the numbers: 20 = ½ × 10 × t². What's t²?",
+      chips: [{ label: "t² = 4", also: "4 four", go: "q3" }, { label: "t² = 2", also: "2 two", go: "m2" }, { label: "t² = 40", also: "40 forty", go: "m2" }] },
+    { id: "q2", from: "agent", text: "Yes, that's the one. Put in the numbers: 20 = ½ × 10 × t². What's t²?",
+      chips: [{ label: "t² = 4", also: "4 four", go: "q3" }, { label: "t² = 2", also: "2 two", go: "m2" }, { label: "t² = 40", also: "40 forty", go: "m2" }] },
+    { id: "m2", action: "hint" },
+    { from: "agent", text: "Do the right side first: ½ × 10 is 5, so 20 = 5 × t². Now divide both sides by 5. What's t²?",
+      chips: [{ label: "t² = 4", also: "4 four", go: "q3" }, { label: "t² = 2", also: "2 two", go: "s2" }, { label: "t² = 40", also: "40 forty", go: "s2" }] },
+    { id: "s2", action: "shown" },
+    { from: "agent", text: "20 ÷ 5 = 4, so t² = 4. Last step, your turn: what's t?",
+      chips: [{ label: "t = 2 s", also: "2 two seconds", go: "solved" }, { label: "t = 4 s", also: "4 four", go: "m3" }, { label: "t = 16 s", also: "16 sixteen", go: "m3" }] },
+    { id: "q3", from: "agent", text: "Right, t² = 4. So what's t?",
+      chips: [{ label: "t = 2 s", also: "2 two seconds", go: "solved" }, { label: "t = 4 s", also: "4 four", go: "m3" }, { label: "t = 16 s", also: "16 sixteen", go: "m3" }] },
+    { id: "m3", action: "hint" },
+    { from: "agent", text: "t² = 4 means t × t = 4. Which number times itself makes 4?",
+      chips: [{ label: "t = 2 s", also: "2 two seconds", go: "solved" }, { label: "t = 4 s", also: "4 four", go: "s3" }, { label: "t = 16 s", also: "16 sixteen", go: "s3" }] },
+    { id: "s3", action: "shown" },
+    { from: "agent", text: "t = √4 = 2 seconds, because 2 × 2 = 4. Check: ½ × 10 × 2² = 5 × 4 = 20 m ✓. Same three moves next time: pick the equation, put in the numbers, solve for t.", go: "score" },
+    { id: "solved", from: "agent", text: ctx => "Exactly: 2 seconds. Check: ½ × 10 × 2² = 5 × 4 = 20 m ✓ " + (ctx.shown ? "You finished it off." : ctx.hints ? "Nice, you got there." : "That's all you.") },
+    { id: "score", action: "score", did: "Solved a free-fall problem step by step", end: true },
 
-    { id: "blame", from: "agent", input: true,
-      text: "The \"but\" cancels the sorry: it reads like it's her fault. Try owning just your part, nothing about her.",
-      chips: ctx => ctx.draftChips().slice(0, 1), go: "draftIn" },
-    { id: "ghost", from: "agent", input: true,
-      text: "I won't write this one for you, but I'll make it sound right. Try a first line, even a rough one.",
-      chips: ctx => ctx.draftChips().slice(0, 1), go: "draftIn" },
-    { id: "leave", from: "agent", text: "Okay, your call. If you change your mind, just say \"reply to Riya\" and we'll write it together." },
-    { action: "note", undone: true, text: "Nothing was sent, and your rating doesn't change.", end: true },
+    { id: "pro", from: "agent", text: "2 seconds. From s = ½ g t²: t = √(2 × 20 ÷ 10) = √4 = 2 s." },
+    { action: "note", text: "You're past this level, so I just did it. Ratings move when a task stretches you.", end: true },
 
-    /* Master: one question on how it should land, then two replies in that tone */
-    { id: "tone", from: "agent", text: "Quick one, so it sounds like you: how do you want this to land?",
-      chips: [{ label: "Light and chill", also: "light chill casual easy relaxed" }, { label: "Honest and serious", also: "honest serious real proper sincere" }] },
-    { from: "agent", text: "Here are two in that tone. Pick the one that sounds like you, and I'll send it.", chips: ctx => ctx.toneDrafts() },
-    { action: "chooseDraft" },
-    { action: "send" },
-    { action: "score", say: "Your tone, your call", did: "Chose how to apologise to a friend", end: true }
+    { id: "fast", action: "faster" },
+    { from: "agent", text: "2 seconds. (s = ½ g t², so 20 = 5t², t² = 4, t = 2 s.)" },
+    { action: "note", text: "Faster responses don't raise your rating.", end: true }
   ],
 
-  /* Gift for Riya (money, weight 450, Practising: he picks). Wrong turns: asking the agent to choose, or picking an
-     option that arrives after her birthday. The products card shows what each option does to his wallet. */
-  gift: [
-    /* A Master in spending gets one pick straight away, with the other options a tap away. Everyone else chooses. */
-    { action: "byMode", routes: { pro: "one", confident: "into", practising: "into", learner: "into" } },
-    { id: "into", from: "agent", text: "Happy to help you choose. What's Riya into right now?",
-      chips: [{ label: "music", also: "songs music", go: "options" }, { label: "art", also: "drawing paint art", go: "options" },
-              { label: "books", also: "reading books", go: "options" }, { label: "No idea, you pick", also: "idk dunno you pick anything whatever", go: "nudge" }] },
+  /* Mail to the class teacher (writing, weight 300). Aarav is an Achiever in emails (540), so he is a Pro here: the agent
+     writes it in his voice and he sends it, or asks for a shorter one. His rating doesn't move: it wasn't a stretch.
+     Below Pro, he writes it himself and the agent checks it. */
+  mail: [
+    { action: "byMode", routes: { pro: "pro", confident: "own", practising: "own", learner: "own" } },
+    { id: "pro", from: "agent", card: "mail", text: "You're good at these, so here it is. Check it sounds like you, then send.",
+      chips: [{ label: "Send it", also: "send yes ok good", go: "send" }, { label: "Make it shorter", also: "shorter short trim less", go: "shorten" }] },
+    { id: "shorten", action: "shorten" },
+    { from: "agent", card: "mail", text: "Shorter, same ask.", chips: [{ label: "Send it", also: "send yes ok good", go: "send" }] },
+    { id: "send", action: "sendMail" },
+    { action: "note", text: "You're past this level in emails, so I just wrote it. Ratings move when a task stretches you.", end: true },
+
+    { id: "own", from: "agent", input: true, text: "Start it in your own words: who's it to, and what are you asking for? I'll check it.",
+      chips: ["Dear Ma'am, I was sick on Tuesday and missed the maths test. Could I please take a retest? I'll bring my doctor's note."] },
+    { action: "ownMail" },
+    { from: "agent", card: "mail", text: "Clear and polite. I only added a subject line and your name. Ready?",
+      chips: [{ label: "Send it", also: "send yes ok good", go: "sendOwn" }] },
+    { id: "sendOwn", action: "sendMail" },
+    { action: "score", say: "Written by you", did: "Wrote his own mail to his class teacher", end: true },
+
+    { id: "fast", action: "faster" },
+    { from: "agent", card: "mail", text: "Done, and sent." },
+    { action: "sendMail" },
+    { action: "note", text: "Faster responses don't raise your rating.", end: true }
+  ],
+
+  /* A calculator for Monday's exam (money, weight 450, Practising: he picks). Wrong turns: asking the agent to choose,
+     picking the programmable one (not allowed in exams) or the one that arrives after the exam. The card shows what
+     each option does to his wallet, which only appears in money tasks. A Master (Laksh) gets one pick to order. */
+  calc: [
+    { action: "byMode", routes: { pro: "one", confident: "rules", practising: "rules", learner: "rules" } },
+    { id: "rules", from: "agent", text: "Happy to help you choose. Do you know which calculators your school allows in exams?",
+      chips: [{ label: "Only non-programmable ones", also: "non programmable scientific rules allowed only", go: "options" },
+              { label: "No idea, you pick", also: "idk dunno you pick anything whatever no idea", go: "nudge" }] },
     { id: "nudge", action: "hint" },
-    { id: "topic", from: "agent", text: "A gift lands better when it comes from you, and a guess is fine. What does she talk about, or do on weekends?",
-      chips: [{ label: "music", also: "songs music" }, { label: "art", also: "drawing paint art" }, { label: "books", also: "reading books" }] },
-    { id: "options", action: "showProducts" },
+    { from: "agent", text: "It's your exam, so the pick should be yours. Most boards allow scientific calculators, not programmable ones. Here are three; you choose." },
+    { id: "options", action: "showProducts", topic: "calc" },
     { id: "pick", from: "agent", card: "products",
-      text: ctx => "Three " + ctx.topic + " picks under ₹800. Her birthday is Saturday, so check when each arrives, and what it does to your wallet. Then pick." },
+      text: "Three calculators under ₹900. Your exam is Monday, so check when each arrives, whether it's allowed, and what it does to your wallet. Then pick." },
     { action: "checkPick" },
-    { id: "late", from: "agent",
-      text: ctx => "Heads up: the " + ctx.product.say + " arrives Sunday, a day after her birthday. Pick another, or order it anyway?",
-      chips: [{ label: "Pick another", also: "another different other back", go: "repick" }, { label: "Order it anyway", also: "anyway yes order", go: "confirm" }] },
+    { id: "late", from: "agent", text: ctx => "Heads up: " + ctx.product.warn + " Pick another, or buy it anyway?",
+      chips: [{ label: "Pick another", also: "another different other back", go: "repick" }, { label: "Buy it anyway", also: "anyway yes buy order", go: "confirm" }] },
     { id: "repick", action: "hint", go: "pick" },
     { id: "confirm", from: "agent", text: ctx => ctx.product.name + " for " + ctx.rupee(ctx.product.price) + ". Your wallet goes " + ctx.rupee(ctx.wallet) + " → " + ctx.rupee(ctx.wallet - ctx.product.price) + ". Place the order?",
       chips: [{ label: "Place order", also: "yes ok sure place order", go: "order" }, { label: "Pick a different one", also: "no different another back", go: "pick" }] },
     { id: "order", action: "order" },
-    { from: "agent", card: "order", text: ctx => "Ordered. It reaches Riya's on " + ctx.product.day + ", gift-wrapped." + (ctx.product.late ? " Maybe let her know it's on the way." : "") },
-    { action: "score", say: "Your pick, your call", did: "Chose his own gift within budget", end: true },
+    { from: "agent", card: "order", text: ctx => "Ordered. It arrives " + ctx.product.day + (ctx.product.bad ? "." : ", in time for Monday's exam.") },
+    { action: "score", say: "Your pick, your call", did: "Chose his own exam calculator within budget", end: true },
 
-    /* Master: the agent's pick, ordered on one tap; "See other options" shows the rest. */
-    { id: "one", action: "pickForMe" },
+    { id: "one", action: "pickForMe", topic: "calc" },
     { from: "agent", card: "products",
-      text: ctx => "Riya's been sketching a lot lately, so here's my pick: a " + ctx.product.say + ", " + ctx.rupee(ctx.product.price) +
-        ". It arrives " + ctx.product.day + ", before her birthday on Saturday. Tap Order and it's done.",
+      text: ctx => "Here's my pick: the " + ctx.product.say + ", " + ctx.rupee(ctx.product.price) + ". It's allowed in exams and arrives " + ctx.product.day + ", before Monday. Tap Order and it's done.",
       chips: [{ label: "See other options", also: "other options more different another else show", go: "others" }] },
     { id: "chosen", action: "checkMasterPick" },
     { id: "others", action: "showOthers" },
-    { from: "agent", card: "products", text: ctx => "Here are the other " + ctx.products.length + ". Same budget, different vibe.", go: "chosen" },
-    { id: "lateOne", from: "agent",
-      text: ctx => "The " + ctx.product.say + " arrives " + ctx.product.day + ", a day after her birthday. Order it anyway, or look again?",
+    { from: "agent", card: "products", text: ctx => "Here are the other " + ctx.products.length + ". Check the notes on each.", go: "chosen" },
+    { id: "lateOne", from: "agent", text: ctx => "Heads up: " + ctx.product.warn + " Order it anyway, or look again?",
       chips: [{ label: "Order it anyway", also: "anyway yes order", go: "orderNow" }, { label: "See the options again", also: "again other options back", go: "others" }] },
     { id: "orderNow", action: "order" },
-    { from: "agent", card: "order", text: ctx => "Ordered. It reaches Riya's on " + ctx.product.day + ", gift-wrapped." + (ctx.product.late ? " Maybe let her know it's on the way." : "") },
-    { action: "score", say: "Your call, done in one go", did: "Picked and ordered a gift within budget", end: true },
+    { from: "agent", card: "order", text: ctx => "Ordered. It arrives " + ctx.product.day + (ctx.product.bad ? "." : ", in time for Monday's exam.") },
+    { action: "score", say: "Your call, done in one go", did: "Picked and ordered his exam calculator", end: true },
 
     { id: "fast", action: "faster" },
-    { action: "autoOrder" },
-    { from: "agent", card: "order", text: ctx => "Done: " + ctx.product.name + " (" + ctx.rupee(ctx.product.price) + "), the one that arrives in time and leaves you the most." },
+    { action: "autoOrder", topic: "calc" },
+    { from: "agent", card: "order", text: ctx => "Done: " + ctx.product.name + " (" + ctx.rupee(ctx.product.price) + "), the cheapest one that's allowed in exams and arrives before Monday." },
     { action: "note", text: "Faster responses don't raise your rating.", end: true }
   ],
 
   feelings: [
-    { from: "agent", text: "That sounds heavy, and I'm glad you said it. Is this about Riya, or something bigger?",
-      chips: [{ label: "about Riya", also: "riya fight her" }, { label: "just everything", also: "everything all bigger" }] },
-    { from: "agent", text: ctx => ctx.answer === "about Riya"
-        ? "That makes sense. Fights with someone close hit the hardest."
+    { from: "agent", text: "That sounds heavy, and I'm glad you said it. Is this about school, or something bigger?",
+      chips: [{ label: "about school", also: "school exam test class teacher marks" }, { label: "just everything", also: "everything all bigger" }] },
+    { from: "agent", text: ctx => ctx.answer === "about school"
+        ? "That makes sense. Exams and marks can feel like everything when they're close."
         : "That's a lot to carry. Some days everything piles up at once." },
     { from: "agent", text: "Feelings like this are easier with someone who knows you. Would you talk to Didi or a friend tonight? I'm here too, but I shouldn't be the only one.",
-      chips: [{ label: "I'll talk to Didi", also: "didi sister yes ok" }, { label: "Maybe a friend", also: "friend riya" }, { label: "Not tonight", also: "no nah later tomorrow" }] },
+      chips: [{ label: "I'll talk to Didi", also: "didi sister yes ok" }, { label: "Maybe a friend", also: "friend mate" }, { label: "Not tonight", also: "no nah later tomorrow" }] },
     { from: "agent", text: ctx => ctx.answer === "Not tonight"
         ? "That's okay. Maybe tomorrow. I'm here if you want to keep talking tonight."
         : "Good call. You don't need the perfect words; even \"hey, got a minute?\" works. I'm here till then." },

@@ -74,7 +74,8 @@
     frame: '<rect x="4" y="4" width="16" height="16" rx="1"/><path d="m4 16 5-5 4 4 2-2 5 5"/><circle cx="15" cy="9" r="1.5"/>',
     search: '<circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/>',
     mute: '<path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="m16 9.5 5 5M21 9.5l-5 5"/>',
-    bag: '<path d="M5 8h14l-1 12H6z"/><path d="M9 8V6.5a3 3 0 0 1 6 0V8"/>'
+    bag: '<path d="M5 8h14l-1 12H6z"/><path d="M9 8V6.5a3 3 0 0 1 6 0V8"/>',
+    calc: '<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 7h8M8 11h.01M12 11h.01M16 11h.01M8 14.5h.01M12 14.5h.01M16 14.5h.01M8 18h.01M12 18h4"/>'
   };
   const icon = (n, s = 18, cls = "") => `<svg class="ic ${cls}" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[n] || ""}</svg>`;
 
@@ -120,7 +121,9 @@
       setup: {
         done: false, code: null,
         parent: { name: D.parent.name },
-        child: { name: c.name, age: c.age, classNo: c.classNo, uses: c.uses.slice(), provider: c.provider, usedBefore: c.usedBefore },
+        child: { name: c.name, age: c.age, classNo: c.classNo, uses: c.uses.slice(), provider: c.provider, providers: (c.providers || [c.provider]).slice(), usedBefore: c.usedBefore },
+        /* The Bud-e browser extension is installed from its permission card; once installed, its toggle turns monitoring on or off */
+        extInstalled: false,
         perms, walletMonthly: c.walletMonthly
       },
       newSkill: false,
@@ -150,6 +153,9 @@
   }
   let S = load();
   if (!S.blocked) S.blocked = fresh().blocked;
+  /* Older saved state: one agent, and the extension counted as installed if it was on */
+  if (!S.setup.child.providers) S.setup.child.providers = [S.setup.child.provider];
+  if (S.setup.extInstalled == null) S.setup.extInstalled = !!S.setup.perms.extension;
   function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* storage blocked */ } }
   function changed() { save(); refreshLive(); }
   /* Bud-e Parent stays logged in with the code it used. A new setup or a reset changes the code, which logs it out. */
@@ -157,6 +163,10 @@
   const setParentIn = on => { try { if (on) localStorage.setItem(PKEY, JSON.stringify({ code: S.setup.code })); else localStorage.removeItem(PKEY); } catch (e) { /* storage blocked */ } };
 
   const name = () => S.setup.child.name || D.child.name;
+  /* The agents he uses (setup allows several), and how a sentence names them: "Claude", "Claude and ChatGPT" */
+  const agents = () => (S.setup.child.providers && S.setup.child.providers.length ? S.setup.child.providers : [S.setup.child.provider]);
+  const listText = xs => xs.length < 2 ? xs.join("") : xs.slice(0, -1).join(", ") + " and " + xs[xs.length - 1];
+  const agentList = () => listText(agents().map(p => p === "Other agent" ? "another agent" : p));
   const area = id => D.areas.find(a => a.id === id);
   const skillDef = id => { for (const a of D.areas) { const s = a.skills.find(k => k.id === id); if (s) return Object.assign({ area: a }, s); } return null; };
   const taskDef = id => D.tasks.find(t => t.id === id) || D.challenges.find(c => c.id === id);
@@ -288,6 +298,8 @@
   /* Jumping straight in (demo rail, "I'm Aarav") uses the default setup and makes its Bud-e Parent code. */
   function quickSetup() {
     S.setup.done = true; S.setup.perms.consent = true;
+    /* Jumping in skips the permission cards, so the extension counts as installed and monitoring */
+    if (!S.setup.extInstalled) { S.setup.extInstalled = true; S.setup.perms.extension = true; }
     if (!S.setup.code) S.setup.code = makeCode();
   }
 
@@ -376,16 +388,16 @@
   /* ---------- S0 Start ---------- */
   const RAIL = [
     ["S1", "Child details", "child"], ["S2", "Permissions", "permissions"], ["S3", "Code + handover", "handover"], ["S4", "I'm Aarav", "splash"],
-    ["S5", "Home", "chat"], ["S6", "Chore", "task:cab"], ["S7", "New skill + algebra", "task:algebra"],
-    ["S8", "Relationships", "task:apology"], ["S9", "Gift + wallet", "task:gift"], ["S10", "Feelings", "task:feelings"],
+    ["S5", "Home", "chat"], ["S6", "Algebra + level up", "task:algebra"], ["S7", "Learner: science", "task:science"],
+    ["S8", "Pro: mail to teacher", "task:mail"], ["S9", "Calculator + wallet", "task:calc"], ["S10", "Feelings", "task:feelings"],
     ["S11", "Tokens + earn", "earn"], ["S12", "Wallet", "wallet"], ["S13", "My skills", "progress"]
   ];
   /* How Bud-e answers, one example per kind of reply */
   const HOW = [
-    ["Do it", "“book a cab to Riya's at 5” · done instantly"],
-    ["Show how", "“solve 2x + 7 = 10” · one quick check, then it's his"],
-    ["Let him decide", "“a gift for Riya under ₹800” · three options, he picks"],
-    ["Coach", "“reply to Riya, say sorry” · he writes it, Bud-e helps"]
+    ["Do it", "“mail my class teacher about a retest” · good at emails, so it's written for him"],
+    ["Quick check", "“solve 2x + 7 = 10” · one question, then it's his"],
+    ["Let him decide", "“buy a calculator for my exam” · three options, he picks"],
+    ["Teach", "“a stone dropped from 20 m: how long to fall?” · step by step, he does each step"]
   ];
   function viewStart() {
     return `<header class="start-top">${logo(32)}</header>
@@ -455,10 +467,10 @@
         <fieldset class="field"><legend>What does ${esc(c.name)} use AI for?</legend>
           <div class="pills">${D.aiUses.map(u => `<label class="pill"><input type="checkbox" name="uses" value="${u.id}" ${c.uses.includes(u.id) ? "checked" : ""}><span>${esc(u.label)}</span></label>`).join("")}</div>
         </fieldset>
-        <fieldset class="field"><legend>Which AI agent does ${esc(c.name)} use?</legend>
-          <div class="pills">${D.providers.map(p => `<label class="pill"><input type="radio" name="provider" value="${esc(p)}" ${p === c.provider ? "checked" : ""}><span>${D.providerLogos[p] ? `<img class="pill-logo" src="${esc(D.providerLogos[p])}" alt="">` : ""}${esc(p)}</span></label>`).join("")}</div>
+        <fieldset class="field"><legend>Which AI agents does ${esc(c.name)} use? Pick all that apply.</legend>
+          <div class="pills">${D.providers.map(p => `<label class="pill"><input type="checkbox" name="providers" value="${esc(p)}" ${agents().includes(p) ? "checked" : ""}><span>${D.providerLogos[p] ? `<img class="pill-logo" src="${esc(D.providerLogos[p])}" alt="">` : ""}${esc(p)}</span></label>`).join("")}</div>
         </fieldset>
-        <fieldset class="field"><legend>Has ${esc(c.name)} used this agent before?</legend>
+        <fieldset class="field"><legend>Has ${esc(c.name)} used AI agents before?</legend>
           <div class="seg"><label><input type="radio" name="usedBefore" value="yes" ${c.usedBefore ? "checked" : ""}><span>Yes</span></label><label><input type="radio" name="usedBefore" value="no" ${!c.usedBefore ? "checked" : ""}><span>No, first time</span></label></div>
           <em class="hint" id="usedHint">${c.usedBefore ? "With your permission, past use helps estimate starting levels." : "Starting levels will come from class averages and the first few chats."}</em>
         </fieldset>
@@ -473,11 +485,12 @@
     });
     f.addEventListener("submit", e => {
       e.preventDefault();
-      const age = +f.age.value, uses = $$("input[name=uses]:checked", f).map(i => i.value);
-      const msg = !f.name.value.trim() ? "Add your child's name." : !(age >= 5 && age <= 18) ? "Bud-e is for ages 5 to 18." : !uses.length ? "Pick at least one thing they use AI for." : "";
+      const age = +f.age.value, uses = $$("input[name=uses]:checked", f).map(i => i.value), providers = $$("input[name=providers]:checked", f).map(i => i.value);
+      const msg = !f.name.value.trim() ? "Add your child's name." : !(age >= 5 && age <= 18) ? "Bud-e is for ages 5 to 18." : !uses.length ? "Pick at least one thing they use AI for."
+        : !providers.length ? "Pick at least one AI agent they use." : "";
       const err = $(".form-err", f); err.hidden = !msg; err.textContent = msg;
       if (msg) return;
-      Object.assign(S.setup.child, { name: f.name.value.trim(), age, classNo: +f.classNo.value, uses, provider: f.provider.value, usedBefore: f.usedBefore.value === "yes" });
+      Object.assign(S.setup.child, { name: f.name.value.trim(), age, classNo: +f.classNo.value, uses, providers, provider: providers[0], usedBefore: f.usedBefore.value === "yes" });
       save(); go("permissions");
     });
   };
@@ -489,7 +502,9 @@
     const s = S.setup, c = s.child;
     return D.permissions.map(p => {
       const off = p.id === "past" && !c.usedBefore;
-      const on = off ? false : s.perms[p.id];
+      /* The extension is installed first, with its button; its toggle then turns monitoring on or off */
+      const toInstall = p.install && !s.extInstalled;
+      const on = off || toInstall ? false : s.perms[p.id];
       const locked = inParent && p.required;
       /* Written for any child ("your child"), whatever name setup was given */
       return `<div class="perm ${on ? "is-on" : ""} ${off ? "is-off" : ""}" data-perm="${p.id}">
@@ -498,16 +513,20 @@
           <p>${off ? "Not needed: your child hasn't used an AI agent before." : esc(p.why)}</p>
           ${locked ? `<p class="perm-lock">${icon("lock", 13)} Stays on while Bud-e is active. To withdraw it, remove your child's device in Settings.</p>` : ""}
           ${p.detail ? `<details><summary>${esc(p.detailLabel || "What exactly is stored")}</summary><ul>${p.detail.map(d => `<li>${esc(d)}</li>`).join("")}</ul></details>` : ""}
+          ${p.install ? (toInstall
+            ? `<button type="button" class="btn small primary ext-install" data-install-ext>${icon("puzzle", 15)} Install extension</button>`
+            : `<p class="ext-ok">${icon("check", 14)} Installed in Chrome and Edge on ${esc(c.name)}'s device</p>`) : ""}
           ${p.id === "wallet" ? `<label class="amount">Monthly amount <span>₹</span><input type="number" min="0" step="100" id="walletAmt" value="${s.walletMonthly}"></label>` : ""}
         </div>
-        <label class="toggle"><input type="checkbox" ${on ? "checked" : ""} ${off || locked ? "disabled" : ""} aria-label="${esc(p.title)}"><i class="switch"></i></label>
+        ${toInstall ? "" : `<label class="toggle"><input type="checkbox" ${on ? "checked" : ""} ${off || locked ? "disabled" : ""} aria-label="${esc(p.install ? "Monitor other AI agents" : p.title)}"><i class="switch"></i></label>`}
       </div>`;
     }).join("");
   }
   /* Wires the toggles and the wallet amount; `after` runs on every change. */
-  function bindPerms(after) {
+  function bindPerms(after, inParent = false) {
     $$(".perm").forEach(card => {
       const input = $(".toggle input", card);
+      if (!input) return;
       input.addEventListener("change", () => {
         S.setup.perms[card.dataset.perm] = input.checked;
         card.classList.toggle("is-on", input.checked);
@@ -516,6 +535,17 @@
     });
     const amt = $("#walletAmt");
     amt.addEventListener("change", () => { S.setup.walletMonthly = Math.max(0, +amt.value || 0); save(); after("walletAmt"); });
+    /* Install extension: a short install, then the card shows it installed with monitoring on */
+    const inst = $("[data-install-ext]");
+    if (inst) inst.addEventListener("click", async () => {
+      inst.disabled = true;
+      inst.innerHTML = '<span class="spin"></span> Installing in Chrome and Edge…';
+      await sleep(1200);
+      S.setup.extInstalled = true; S.setup.perms.extension = true; save();
+      $(".perms").innerHTML = permCards(inParent);
+      bindPerms(after, inParent);
+      after("extensionInstalled");
+    });
   }
   function viewPermissions() {
     return setupFrame(2, "Permissions", "Each one is explained. Only the first two are required.", `
@@ -552,10 +582,10 @@
   async function provision() {
     const c = S.setup.child, past = S.setup.perms.past && c.usedBefore;
     const items = [
-      "Connecting " + c.name + "'s agent (" + c.provider + ")",
+      "Connecting " + c.name + "'s " + (agents().length > 1 ? "agents (" : "agent (") + agentList() + ")",
       past ? "Estimating starting levels from past use (no chats imported)" : "Setting starting levels from Class " + c.classNo + " averages",
       "Setting up " + D.child.tokensWeekly + " tokens a week",
-      S.setup.perms.extension ? "Adding the Bud-e browser extension" : "Skipping the browser extension",
+      S.setup.extInstalled ? "Linking the Bud-e browser extension" : "Browser extension not installed",
       S.setup.perms.wallet ? "Opening a " + rupee(S.setup.walletMonthly) + " monthly wallet" : "No wallet",
       "Locking these permissions to Bud-e Parent",
       "Making your Bud-e Parent code"
@@ -574,15 +604,15 @@
   /* Setup's last beat: the child's agent and Bud-e slide together and lock, Bud-e in front, then a check.
      The agent's tile shows its own logo and name ("Other agent" gets a chat glyph). A click skips it. */
   async function linkUp() {
-    const p = S.setup.child.provider, agent = p === "Other agent" ? name() + "'s agent" : p, layer = $("#layer");
-    const logo = D.providerLogos[p];
+    const list = agents(), agent = list.length > 1 ? agentList() : list[0] === "Other agent" ? name() + "'s agent" : list[0], layer = $("#layer");
+    const logos = list.slice(0, 3).map(p => D.providerLogos[p] ? `<img src="${esc(D.providerLogos[p])}" alt="">` : icon("chat", 24)).join("");
     layer.innerHTML = `<div class="scrim"></div><div class="modal linkup" role="status">
       <div class="link-stage" aria-hidden="true">
-        <span class="link-tile link-agent">${logo ? `<img src="${esc(logo)}" alt="">` : icon("chat", 24)}<em>${esc(agent)}</em></span>
+        <span class="link-tile link-agent ${list.length > 1 ? "is-many" : ""}"><span class="link-logos">${logos}</span><em>${esc(list.length > 1 ? list.length + " agents" : agent)}</em></span>
         <span class="link-tile link-bude">${mark(60)}</span>
         <i class="link-ring"></i><span class="link-check">${icon("check", 15)}</span>
       </div>
-      <h2>${esc(agent)} is connected</h2>
+      <h2>${esc(agent)} ${list.length > 1 ? "are" : "is"} connected</h2>
       <p>Every request from ${esc(name())} now goes through Bud-e first.</p>
     </div>`;
     let skip;
@@ -699,24 +729,7 @@
     if (!opts.challenge && D.prompts.includes(id) && task.skill && skillDef(task.skill).rating == null) { S.skills[task.skill] = { rating: null }; changed(); }
     const ctx = {
       run, id, task, hints: 0, misses: 0, shown: false, answers: {}, answer: null, rupee, challenge: !!opts.challenge,
-      get wallet() { return S.wallet; },
-      /* Apology draft chips: a good first line, a "sorry, but" line and asking the agent to write it. */
-      draftChips() {
-        const rude = this.answers.sorry === "I said something rude" || this.answers.blameHer2 === "I said something rude";
-        return [rude ? "sorry for what i said, that was rude of me" : "sorry i bailed on saturday, that wasn't cool",
-          "sorry but you're overreacting tbh", "can you just write it for me?"];
-      },
-      /* A Master's two ready replies, in the tone he picked */
-      toneDrafts() {
-        const chill = this.answers.tone !== "Honest and serious";
-        return (chill ? [
-          "hey, really sorry I bailed on saturday. that wasn't cool of me. let me make it up to you, ice cream this weekend?",
-          "my bad about saturday, I should've shown up or at least texted you. free this weekend? my treat"
-        ] : [
-          "Riya, I'm really sorry I didn't come on Saturday. You were counting on me and I let you down. Can we meet this weekend?",
-          "I messed up on Saturday and I'm sorry. I should have told you instead of just not turning up. I'd like to make it up to you."
-        ]).map(label => ({ label, draft: true }));
-      }
+      get wallet() { return S.wallet; }
     };
     if (id === "ch_headphones") ctx.products = D.products.headphones;
     if (task.skill && S.skills[task.skill].rating == null && opts.challenge) { S.skills[task.skill].rating = startRating(task.skill); changed(); }
@@ -840,7 +853,6 @@
 
   /* ---------- Flow actions ---------- */
   const ACTIONS = {
-    chore(st, ctx) { logTokens(0, "Cab to " + D.child.friend + "'s (chore, free)"); changed(); },
 
     async unlock(st, ctx) {
       const id = ctx.task.skill, start = st.start || "start";
@@ -913,33 +925,24 @@
 
     note(st, ctx) { if (st.undone) ctx.undone = true; push({ t: "note", text: st.text, icon: st.icon || "info" }); },
 
-    riya(st, ctx) { push({ t: "riya" }); },
-    checkDraft(st, ctx) {
-      if (/\b(you write|write it|for me|just send|do it|you do|make one|draft it)\b/i.test(ctx.answer)) return "ghost";
-      if (/\bbut\b|overreact|your fault|chill out|calm down/i.test(ctx.answer)) { ctx.hints++; return "blame"; }
-      ctx.draft = ctx.answer;
-    },
-    addPlan(st, ctx) { ctx.draft = ctx.draft.replace(/[.!\s]+$/, "") + ". can we go this weekend instead?"; ctx.answers.plan = true; },
-    chooseDraft(st, ctx) { ctx.draft = ctx.answer; ctx.chosen = true; },
-    send(st, ctx) {
-      push({ t: "sent", text: ctx.draft, chosen: !!ctx.chosen });
-      toast(ctx.chosen ? "Sent to " + D.child.friend + "." : "Sent, in your words.", "ok");
-      const s0 = S;
-      setTimeout(() => { if (S === s0) push({ t: "riya-reply", text: D.riyaReply }); }, 4200);
-    },
+    /* The mail to the class teacher: the agent's version, a shorter one, or his own words with a subject added */
+    shorten(st, ctx) { ctx.short = true; },
+    ownMail(st, ctx) { ctx.own = ctx.answer; },
+    sendMail(st, ctx) { toast("Sent to " + D.mail.to.split(",")[0] + ".", "ok"); },
 
-    showProducts(st, ctx) { ctx.topic = D.products[ctx.answer] ? ctx.answer : "art"; ctx.products = D.products[ctx.topic]; },
-    checkPick(st, ctx) { return ctx.product.late ? "late" : "confirm"; },
-    /* A Master's gift: the agent's own pick (from what Riya's into), with the rest kept for "See other options" */
+    showProducts(st, ctx) { ctx.topic = st.topic; ctx.products = D.products[ctx.topic]; },
+    /* An option with a warning (not allowed in the exam, or arriving after it) gets a heads-up before it's ordered */
+    checkPick(st, ctx) { return ctx.product.bad ? "late" : "confirm"; },
+    /* A Master's pick: the cheapest option without a warning, with the rest kept for "See other options" */
     pickForMe(st, ctx) {
-      ctx.topic = (PER && PER.giftTopic) || "art";
+      ctx.topic = st.topic;
       const all = D.products[ctx.topic];
-      ctx.product = all.find(p => PER && p.id === PER.giftPick) || all.filter(p => !p.late).sort((a, b) => a.price - b.price)[0];
+      ctx.product = all.filter(p => !p.bad).sort((a, b) => a.price - b.price)[0];
       ctx.products = [ctx.product];
       ctx.others = all.filter(p => p !== ctx.product);
     },
     showOthers(st, ctx) { ctx.products = ctx.others; },
-    checkMasterPick(st, ctx) { return ctx.product.late ? "lateOne" : "orderNow"; },
+    checkMasterPick(st, ctx) { return ctx.product.bad ? "lateOne" : "orderNow"; },
     order(st, ctx) {
       S.wallet -= ctx.product.price;
       ctx.orderId = "BDE-40-" + rand(10000, 99999);
@@ -947,8 +950,8 @@
       changed();
     },
     autoOrder(st, ctx) {
-      if (!ctx.products) ctx.products = D.products.art;
-      ctx.product = ctx.products.filter(p => !p.late).sort((a, b) => a.price - b.price)[0];
+      if (!ctx.products) ctx.products = D.products[st.topic];
+      ctx.product = ctx.products.filter(p => !p.bad).sort((a, b) => a.price - b.price)[0];
       ACTIONS.order(st, ctx);
     },
 
@@ -1063,17 +1066,22 @@
         /* a Master's pick orders on one tap; below that he chooses, with a nudge about his wallet */
         verb: master ? "Order" : "Choose", advice: wallet == null || master ? null : walletAdvice(ctx.products, wallet, monthly) };
     }
-    if (card === "draft") return { text: ctx.draft };
-    if (card === "order") return { id: ctx.orderId, name: ctx.product.name, price: ctx.product.price, wallet: S.wallet, photo: ctx.product.photo };
+    if (card === "mail") {
+      const fill = t => t.replace(/\{name\}/g, name()).replace(/\{class\}/g, S.setup.child.classNo);
+      return { to: D.mail.to, subject: D.mail.subject,
+        body: ctx.own ? "Dear Ms Kulkarni,\n\n" + ctx.own.replace(/^dear [^,]*,\s*/i, "") + "\n\nThank you,\n" + name() + ", Class " + S.setup.child.classNo
+          : fill(ctx.short ? D.mail.short : D.mail.body) };
+    }
+    if (card === "order") return { id: ctx.orderId, name: ctx.product.name, price: ctx.product.price, wallet: S.wallet, photo: ctx.product.photo, pic: ctx.product.pic };
     return null;
   }
   /* Once over a third of the month's money is gone, the options end with the one that's easiest on the wallet. */
   function walletAdvice(items, wallet, monthly) {
-    const spent = monthly - wallet, onTime = items.filter(p => !p.late);
+    const spent = monthly - wallet, onTime = items.filter(p => !p.bad);
     if (!onTime.length || spent < monthly / 3) return null;
     const best = onTime.slice().sort((a, b) => a.price - b.price)[0], most = items.every(p => p.price >= best.price);
     return `It's only mid-month and you've already spent ${rupee(spent)} of your ${rupee(monthly)}. The ${best.say || best.name.toLowerCase()} (${rupee(best.price)}) ` +
-      `arrives before her birthday and leaves you ${rupee(wallet - best.price)}${most ? ", the most of these" : ""}, so it's the easiest on your pocket.`;
+      `is allowed, arrives in time and leaves you ${rupee(wallet - best.price)}${most ? ", the most of these" : ""}, so it's the easiest on your pocket.`;
   }
 
   /* ---------- Chat rendering ---------- */
@@ -1092,10 +1100,6 @@
       case "note": return `<div class="note">${icon(m.icon || "info", 15)}<span>${esc(m.text)}</span></div>`;
       case "score": return `<div class="score ${m.up ? "is-up" : ""} ${m.spend ? "is-spend" : ""}">
           <span class="score-ic">${icon(m.spend ? "bolt" : m.up ? "trophy" : "check", 16)}</span><div class="score-t"><b>${esc(m.text)}</b>${m.sub ? `<span>${esc(m.sub)}</span>` : ""}</div></div>`;
-      case "riya": return `<div class="card riya"><div class="riya-h"><span class="r-av">R</span><div><b>${esc(D.child.friend)}</b><span>Messages</span></div></div>
-          ${D.riya.map(x => `<div class="r-msg"><span>${esc(x.text)}</span><em>${esc(x.time)}</em></div>`).join("")}</div>`;
-      case "sent": return `<div class="card sent"><div class="sent-h">${icon("checks", 16)}<span>Sent to ${esc(D.child.friend)}, ${m.chosen ? "the reply you picked" : "in your words"}</span></div><div class="sent-b">${esc(m.text)}</div><em>from ${esc(name())} · ${clock()}</em></div>`;
-      case "riya-reply": return `<div class="card riya riya--reply"><div class="riya-h"><span class="r-av">R</span><div><b>${esc(D.child.friend)}</b><span>replied</span></div></div><div class="r-msg"><span>${esc(m.text)}</span><em>just now</em></div></div>`;
       case "reward": return `<div class="card reward"><div class="reward-n">+${m.n}</div><div><b>Challenge complete</b><span>${esc(m.text)}</span></div>${icon("coin", 30, "reward-ic")}</div>`;
       default: return "";
     }
@@ -1111,19 +1115,15 @@
   function cardHTML(m) {
     const d = m.cardData;
     if (m.card === "skill") return skillCardHTML(d);
-    if (m.card === "ride") { const r = D.ride; return `<div class="card ride"><div class="ride-ic">${icon("car", 22)}</div><div class="ride-b">
-        <b>Cab booked · pickup ${esc(r.pickup)}</b><span>${esc(r.from)} → ${esc(r.to)}</span><span class="muted">${esc(r.car)} · arrives ${esc(r.arrive)}</span></div><span class="free">Free</span></div>`; }
     /* Product cards: photo, delivery badge (late ones flagged before he picks), price, and what's left in the wallet after.
        The line icon sits under the photo and shows if the photo can't load. */
     if (m.card === "products") return `<div class="card products">
         <div class="prod-h">${icon("shield", 15)}<span>No sponsored options</span>${d.wallet == null ? '<em>Practice only, nothing is ordered</em>' : `<em>${icon("wallet", 14)} Wallet now <b>${rupee(d.wallet)}</b></em>`}</div>
         <div class="prod-grid ${d.one ? "prod-grid--one" : ""}">${d.items.map(p => {
           const after = d.wallet == null ? null : d.wallet - p.price;
-          const when = p.day ? (p.late
-            ? `<span class="pc-when is-late">${icon("info", 13)}${esc(p.day)} · after her birthday</span>`
-            : `<span class="pc-when">${icon("check", 13)}${esc(p.day)} · before her birthday</span>`)
+          const when = p.badge ? `<span class="pc-when ${p.bad ? "is-late" : ""}">${icon(p.bad ? "info" : "check", 13)}${esc(p.badge)}</span>`
             : `<span class="pc-note">${esc(p.note)}</span>`;
-          return `<article class="pc ${p.late ? "is-late" : ""}">
+          return `<article class="pc ${p.bad ? "is-late" : ""}">
             <div class="pc-pic" aria-hidden="true">${icon(p.pic || "gift", 46)}${p.photo ? `<img src="${esc(p.photo)}" alt="" onerror="this.remove()">` : ""}</div>
             <div class="pc-b">
               <b class="pc-name">${esc(p.name)}</b>
@@ -1135,8 +1135,9 @@
           </article>`;
         }).join("")}</div>
         ${d.advice ? `<p class="prod-advice">${icon("wallet", 16)}<span>${esc(d.advice)}</span></p>` : ""}</div>`;
-    if (m.card === "draft") return `<div class="card draft"><div class="draft-h">${icon("pen", 14)}<span>Your draft to ${esc(D.child.friend)}</span></div><p>${esc(d.text)}</p></div>`;
-    if (m.card === "order") return `<div class="card order"><div class="ride-ic">${icon("gift", 22)}${d.photo ? `<img src="${esc(d.photo)}" alt="" onerror="this.remove()">` : ""}</div><div class="ride-b"><b>${esc(d.name)}</b><span>Order ${esc(d.id)} · ${rupee(d.price)}</span><span class="muted">Wallet now ${rupee(d.wallet)}</span></div>${icon("check", 18, "ok")}</div>`;
+    if (m.card === "mail") return `<div class="card letter"><div class="letter-h">${icon("mail", 15)}<span><b>To:</b> ${esc(d.to)}</span></div>
+        <div class="letter-s">${esc(d.subject)}</div><p>${esc(d.body).replace(/\n/g, "<br>")}</p></div>`;
+    if (m.card === "order") return `<div class="card order"><div class="ride-ic">${icon(d.pic || "gift", 22)}${d.photo ? `<img src="${esc(d.photo)}" alt="" onerror="this.remove()">` : ""}</div><div class="ride-b"><b>${esc(d.name)}</b><span>Order ${esc(d.id)} · ${rupee(d.price)}</span><span class="muted">Wallet now ${rupee(d.wallet)}</span></div>${icon("check", 18, "ok")}</div>`;
     return "";
   }
   function syncWaitButtons() {
@@ -1218,7 +1219,7 @@
   function viewChat(main) {
     const home = !S.thread.length;
     main.innerHTML = `<section class="chat ${home ? "chat--home" : ""}">
-      <div class="chat-h"><div class="agent-id"><span class="agent-av">${mark(30, true)}</span><div><b>My agent</b><span>${esc(S.setup.child.provider)} · through Bud-e</span></div></div>
+      <div class="chat-h"><div class="agent-id"><span class="agent-av">${mark(30, true)}</span><div><b>${agents().length > 1 ? "My agents" : "My agent"}</b><span>${esc(agentList())} · through Bud-e</span></div></div>
         <div class="chat-h-r"><span class="chat-wallet" id="chatSide" hidden></span><button class="btn ghost small" data-newchat aria-label="New chat">${icon("plus", 15)}<span>New chat</span></button></div></div>
       <div class="scroll" id="scroll"><div class="thread" id="thread" role="log" aria-live="polite" aria-label="Chat"></div></div>
       <div class="dock">
@@ -1241,7 +1242,7 @@
     if (home) {
       t.innerHTML = `<div class="thread-empty">
         <div class="hero-mark">${mark(118, true)}</div>
-        <p class="badge-pill"><b>New</b>Your agent is ${esc(S.setup.child.provider)}, through Bud-e</p>
+        <p class="badge-pill"><b>New</b>Your ${agents().length > 1 ? "agents are" : "agent is"} ${esc(agentList())}, through Bud-e</p>
         <h1><span>${greeting()}, ${esc(name())}.</span><br>What are we doing <em>today?</em></h1>
         <p class="home-hint">Start typing to pick a prompt. Then press <b>Send</b>, or <b>Faster response</b> if you're in a hurry.</p>
       </div>`;
@@ -1467,7 +1468,7 @@
   function viewParent(main) {
     main.innerHTML = `<div class="page page--report">
       <header class="page-h"><div><p class="eyebrow">Weekly report · ${D.today.week}</p><h1>${esc(name())}'s week</h1>
-        <p class="sub">${esc(name())}, ${S.setup.child.age} · Class ${S.setup.child.classNo} · ${esc(S.setup.child.provider)} through Bud-e</p></div>
+        <p class="sub">${esc(name())}, ${S.setup.child.age} · Class ${S.setup.child.classNo} · ${esc(agentList())} through Bud-e</p></div>
         <button class="btn ghost" data-off>Download PDF</button></header>
       ${reportHTML()}
     </div>`;
@@ -1480,8 +1481,10 @@
     main.innerHTML = `<div class="page page--report">
       <header class="page-h"><div><p class="eyebrow">Extension report · ${D.today.week}</p><h1>Other AI agents</h1>
         <p class="sub">What the browser extension noticed on ${n}'s device. Names and counts only, never the sites he visited or what he typed.</p></div></header>
-      ${!S.setup.perms.extension ? `<section class="rsec"><p>The Bud-e browser extension isn't added, so other AI agents on ${n}'s device aren't monitored.</p>
-        <p class="muted"><button class="link" data-go="pperms">Add it in Permissions</button></p></section>` : `
+      ${!S.setup.extInstalled || !S.setup.perms.extension ? `<section class="rsec"><p>${!S.setup.extInstalled
+          ? `The Bud-e browser extension isn't installed, so other AI agents on ${n}'s device aren't monitored.`
+          : `Monitoring is paused, so other AI agents on ${n}'s device aren't being counted.`}</p>
+        <p class="muted"><button class="link" data-go="pperms">${!S.setup.extInstalled ? "Install it in Permissions" : "Turn it on in Permissions"}</button></p></section>` : `
       <div class="kpis kpis--2">
         <div class="kpi"><span>Uses this week</span><b>${uses}</b><em>across all agents</em></div>
         <div class="kpi"><span>Blocked</span><b>${blocked}</b><em>${blocked === 1 ? "agent" : "agents"} can't open</em></div>
@@ -1555,13 +1558,14 @@
       <div class="perms">${permCards(true)}</div>
     </div>`;
     bindPerms(id => {
+      if (id === "extensionInstalled") { toast("Bud-e extension installed on " + name() + "'s device. Other AI agents now show in the Extension report.", "ok"); return; }
       if (id === "walletAmt") S.wallet = walletLeft();
       const p = D.permissions.find(x => x.id === id);
       save();
       toast(id === "walletAmt" ? "Monthly wallet set to " + rupee(S.setup.walletMonthly) + "."
-        : id === "extension" ? (S.setup.perms.extension ? "Bud-e extension added to " + name() + "'s browsers. Other AI agents now show in the Extension report." : "Bud-e extension removed. Other AI agents on " + name() + "'s device are no longer monitored.")
+        : id === "extension" ? (S.setup.perms.extension ? "Monitoring is on. Other AI agents on " + name() + "'s device show in the Extension report." : "Monitoring is paused. The extension stays installed, but other AI agents aren't monitored.")
         : p.title + (S.setup.perms[id] ? " turned on." : " turned off.") + " " + name() + "'s device updates now.", "ok");
-    });
+    }, true);
   }
 
   /* ---------- Global events ---------- */
