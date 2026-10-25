@@ -19,3 +19,8 @@ agents/chatgpt.svg  "ChatGPT logo" (OpenAI), Public domain, https://commons.wiki
 agents/claude.svg   "Claude AI symbol" (Anthropic), CC0, https://commons.wikimedia.org/wiki/File:Claude_AI_symbol.svg
 agents/gemini.svg   "Google Gemini icon 2025" (Google), Public domain, https://commons.wikimedia.org/wiki/File:Google_Gemini_icon_2025.svg
 agents/copilot.svg  "Microsoft 365 Copilot Icon one-color" (Microsoft), Public domain, https://commons.wikimedia.org/wiki/File:Microsoft_365_Copilot_Icon_one-color.svg
+
+Calculator photos, from Openverse (openverse.org); cropped and resized.
+calc-sci.jpg  "Free calculator working desk image" by unknown, Public domain, https://www.rawpixel.com/image/5912338/image-background-public-domain-note
+calc-graph.jpg  "1985- Graphing Calculator" by meganqualls, Public domain, https://www.flickr.com/photos/151282803@N06/36255921466
+calc-basic.jpg  "That's not a calculator. THIS is a calculator." by Thad Zajdowicz, CC BY 2.0, https://www.flickr.com/photos/40632439@N00/15312612938

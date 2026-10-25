@@ -445,7 +445,7 @@ input:focus-visible + .switch { outline: 2px solid var(--accent); outline-offset
 .chat-list { display: grid; grid-template-columns: minmax(0, 1fr); gap: 2px; }
 .chat-item { display: flex; align-items: center; gap: 8px; width: 100%; text-align: left; border: 0; background: none; padding: 8px 10px; border-radius: var(--r2); font-size: 13px; color: var(--ink-btn); }
 .chat-item span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.chat-item em { font-style: normal; font-size: 12px; color: var(--ink-4); flex: none; }
+.chat-item em { font-style: normal; font-size: 12px; color: var(--ink-3); flex: none; }
 .chat-item .ic { color: var(--ink-4); }
 button.chat-item:hover { background: var(--paper-2); color: var(--ink); }
 .chat-item.is-on { background: var(--accent-soft); color: var(--accent-ink); font-weight: 600; }
@@ -608,7 +608,7 @@ button.chat-item:hover { background: var(--paper-2); color: var(--ink); }
 .composer { background: var(--card); border: 1px solid var(--line-2); border-radius: var(--r3); padding: 14px 14px 12px 16px; display: flex; flex-direction: column; gap: 12px; transition: border-color .15s, box-shadow .15s; }
 .composer:focus-within { border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); }
 .composer input { width: 100%; border: 0; outline: 0; background: none; font-size: 17px; padding: 2px 0; color: var(--ink); }
-.composer input::placeholder { color: var(--ink-4); }
+.composer input::placeholder { color: var(--ink-3); }
 .composer-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
 .composer-tools, .composer-go { display: flex; gap: 6px; align-items: flex-start; }
 .faster-wrap { display: flex; flex-direction: column; align-items: center; gap: 4px; }
@@ -902,14 +902,15 @@ h1 em, h2 em { font-style: italic; font-weight: 500; }
 
 /* The frame: daylight for working screens; the full sky for the chat home */
 .frame { background: var(--wash); }
-.frame:has(.chat--home) { background: var(--stars), var(--sky-home); background-size: 100% 70%, 100% 100%; background-repeat: no-repeat; }
+/* The home sky is stretched so the greeting and hint sit on its darker part and its glow falls behind the message box */
+.frame:has(.chat--home) { background: var(--stars), var(--sky-home); background-size: 100% 70%, 100% 136%; background-repeat: no-repeat; }
 .frame:has(.chat--home) .top-date { color: rgba(255, 255, 255, .7); }
 .frame:has(.chat--home) .chatbar { background: rgba(255, 255, 255, .9); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); border-right-color: rgba(255, 255, 255, .4); }
 .frame:has(.chat--home) .side .panel { background: rgba(255, 255, 255, .9); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); border-color: rgba(255, 255, 255, .5); }
 .chat--home .thread-empty { align-items: center; text-align: center; gap: 12px; }
 .chat--home .thread-empty h1 { color: #fff; font-size: clamp(34px, 6vh, 56px); line-height: 1.08; letter-spacing: -.03em; text-shadow: 0 2px 30px rgba(0, 20, 90, .35); }
 .chat--home .thread-empty h1 span { color: rgba(255, 255, 255, .8); }
-.chat--home .home-hint { color: rgba(255, 255, 255, .82); margin: 0 auto; }
+.chat--home .home-hint { color: #fff; text-shadow: 0 1px 12px rgba(0, 0, 0, .28); margin: 0 auto; }
 .chat--home .home-hint b { color: #fff; }
 .chat--home .home-foot { justify-content: center; }
 .hero-mark { filter: drop-shadow(0 10px 40px rgba(var(--glow-rgb), .55)); margin-bottom: 2px; }
@@ -921,20 +922,28 @@ h1 em, h2 em { font-style: italic; font-weight: 500; }
 /* Full-sky screens: start, the splash, the handover code, the parent login */
 .canvas { background: var(--wash); }
 .canvas--start, .canvas--splash, .canvas--handover, .canvas--plogin { background: var(--stars), var(--sky); background-size: 100% 620px, 100% 100%; background-repeat: no-repeat; }
-.canvas--start { background-size: 100% 520px, 100% max(100vh, 1040px); }
+/* The start page is long, so its sky scrolls with it and stretches over the whole page: the hero stays on the night
+   and the screen list and footnote reach the daylight at the bottom, at any window size */
+.canvas--start { background-size: 100% 520px, 100% max(100%, 1040px); }
+.canvas.canvas--start { background-attachment: scroll; }
+/* The splash centres its wordmark, greeting and privacy note, so its sky is stretched: they sit on the dark part, where
+   white text and the coloured e of Bud-e stay readable in every theme */
+.canvas--splash { background-size: 100% 620px, 100% 175%; }
 .canvas--start .start-top { background: transparent; border-bottom: 1px solid rgba(255, 255, 255, .1); }
 .canvas--start .start-top .wordmark, .canvas--splash .wordmark { color: #fff; }
 .canvas--start .start-top .wordmark i, .canvas--splash .wordmark i { background: #fff; }
 .canvas--start .start-top .wordmark b, .canvas--splash .wordmark b { color: var(--wm-accent); }
 .canvas--start .start-hero h1 { color: #fff; font-size: 76px; letter-spacing: -.035em; text-shadow: 0 2px 30px rgba(0, 20, 90, .35); }
-.canvas--start .lede { color: rgba(255, 255, 255, .84); }
+.canvas--start .lede { color: rgba(255, 255, 255, .94); text-shadow: 0 1px 12px rgba(0, 10, 50, .3); }
 .canvas--start .start-btns .btn.primary { background: #fff; color: var(--ink); border-color: #fff; box-shadow: 0 10px 30px -8px rgba(0, 10, 60, .5); }
 .canvas--start .start-btns .btn.primary:hover { background: #EEF3FF; }
 .canvas--start .start-btns .btn.ghost { background: rgba(5, 14, 50, .55); color: #fff; border-color: rgba(255, 255, 255, .22); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
 .canvas--start .start-btns .btn.ghost:hover { background: rgba(5, 14, 50, .75); }
 .canvas--start .how { background: var(--glass-2); border-color: rgba(255, 255, 255, .6); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); }
 .canvas--start .how-f { background: rgba(244, 247, 254, .7); }
-.canvas--start .rail { border-top-color: var(--line-2); }
+/* The screen list is frosted glass like the card above it, so its dark text reads over any part of the sky */
+.canvas--start .rail { background: rgba(255, 255, 255, .72); border: 1px solid rgba(255, 255, 255, .6); border-radius: var(--r3); padding: 14px 16px 12px;
+  -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); box-shadow: 0 14px 40px -18px rgba(var(--tint), .32); }
 .canvas--splash .splash-hi { color: #fff; }
 .canvas--splash .splash-note { background: rgba(255, 255, 255, .12); color: #fff; border-color: rgba(255, 255, 255, .25); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
 .canvas--splash .splash-mark, .canvas--plogin .pl-brand .mark, .canvas--handover .hand-ic { filter: drop-shadow(0 10px 40px rgba(var(--glow-rgb), .55)); }
@@ -999,11 +1008,14 @@ button.chat-item:hover { background: rgba(255, 255, 255, .5); }
 .tab:hover { background: rgba(255, 255, 255, .12); }
 .frame:has(.chat--home) .side .panel, .frame:has(.chat--home) .chatbar { background: rgba(255, 255, 255, .62); }
 .canvas--start .start-btns .btn.primary { background: #fff; }
-.canvas--start .start-btns .btn.ghost { background: rgba(255, 255, 255, .12); border-color: rgba(255, 255, 255, .3); color: #fff; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .25); }
+.canvas--start .start-btns .btn.ghost { background: rgba(255, 255, 255, .12); border-color: rgba(255, 255, 255, .3); color: #fff; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .25); text-shadow: 0 1px 8px rgba(0, 10, 50, .35); }
 .canvas--start .start-btns .btn.ghost:hover { background: rgba(255, 255, 255, .2); }
 .canvas--start .how { background: rgba(255, 255, 255, .58); }
 .canvas--start .rail-list button:hover { background: rgba(255, 255, 255, .55); }
 .frame:has(.chat--home) .side .panel { background: rgba(255, 255, 255, .8); }
+/* The home's message box sits on the bright band of the sky, so it is less see-through than elsewhere to keep its
+   placeholder readable in every theme */
+.frame:has(.chat--home) .composer { background: rgba(255, 255, 255, .86); }
 /* On the chat home the Chats sidebar is dark glass over the night sky */
 .frame:has(.chat--home) .chatbar { background: var(--night-glass); border-right-color: rgba(255, 255, 255, .12); }
 .frame:has(.chat--home) .chatbar-h b, .frame:has(.chat--home) .chat-item { color: #fff; }
@@ -1119,7 +1131,7 @@ html[data-theme="electric"] {
   --btn-grad: linear-gradient(180deg, #4576FF, #1746EA); --btn-grad-hover: linear-gradient(180deg, #2F63FF, #00219B); --btn-edge: #1746EA; --focus-edge: #8FA9FF;
   --nav-bg: linear-gradient(180deg, #000C28 0%, #00134F 50%, #00219B 100%); --nav-bg-m: linear-gradient(180deg, #00219B, #000C28);
   --night-glass: linear-gradient(180deg, rgba(0, 12, 40, .5) 0%, rgba(0, 33, 155, .6) 100%);
-  --wm-accent: #6F95FF; --badge-grad: linear-gradient(160deg, #4576FF, #1746EA 55%, #00219B);
+  --wm-accent: #9DB4FF; --badge-grad: linear-gradient(160deg, #4576FF, #1746EA 55%, #00219B);
   --sky: radial-gradient(70% 34% at 50% 50%, rgba(69, 118, 255, .7) 0%, rgba(69, 118, 255, 0) 100%),
     linear-gradient(180deg, #000C28 0%, #00134F 16%, #00219B 30%, #1746EA 43%, #4576FF 54%, #BCCDFF 67%, #EEF2FF 82%, #F8FAFF 100%);
   --sky-home: radial-gradient(70% 30% at 50% 62%, rgba(69, 118, 255, .7) 0%, rgba(69, 118, 255, 0) 100%),

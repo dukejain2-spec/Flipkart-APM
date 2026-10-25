@@ -177,10 +177,10 @@ window.DATA = {
     /* His maths exam is Monday. `badge` is the line on each card; `bad` options carry a `warn` (not allowed in the exam
        hall, or arriving after it): picking one is the "wrong" branch. `pic` is the line icon; `say` is how a sentence names it. */
     calc: [
-      { id: "sci", say: "scientific calculator", name: "Scientific, 240 functions", pic: "calc", price: 650, day: "Friday", badge: "Friday · allowed in exams" },
-      { id: "graph", say: "graphing calculator", name: "Graphing, programmable", pic: "calc", price: 890, day: "Friday", badge: "Not allowed in exams", bad: true,
+      { id: "sci", say: "scientific calculator", name: "Scientific, 240 functions", photo: "assets/img/calc-sci.jpg", pic: "calc", price: 650, day: "Friday", badge: "Friday · allowed in exams" },
+      { id: "graph", say: "graphing calculator", name: "Graphing, programmable", photo: "assets/img/calc-graph.jpg", pic: "calc", price: 890, day: "Friday", badge: "Not allowed in exams", bad: true,
         warn: "the graphing calculator is programmable, and programmable calculators aren't allowed in board exams." },
-      { id: "basic", say: "basic scientific calculator", name: "Scientific, basic", pic: "calc", price: 420, day: "Tuesday", badge: "Tuesday · after your exam", bad: true,
+      { id: "basic", say: "basic scientific calculator", name: "Scientific, basic", photo: "assets/img/calc-basic.jpg", pic: "calc", price: 420, day: "Tuesday", badge: "Tuesday · after your exam", bad: true,
         warn: "the basic one arrives Tuesday, the day after your exam." }
     ],
     headphones: [

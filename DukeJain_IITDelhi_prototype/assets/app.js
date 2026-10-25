@@ -857,9 +857,11 @@
       const { chip, score } = closestChip(text, w.chips);
       const other = promptTask(text);
       if (!score && other && other.id !== chat.flow) return startFlow(other.id, other.prompt);
-      if (w.products) return answer({ product: w.ctx.products[0], label: w.ctx.products[0].name });
-      const c = chip || chipObj(w.chips[0]);
-      return answer({ label: c.label, go: c.go });
+      if (chip && score) return answer({ label: chip.label, go: chip.go });
+      /* Nothing matched: never guess an option. Keep the text and say what this prototype can take. */
+      toast(w.products ? "For now, pick one of the options above, or use one of the pre-fed prompts."
+        : "For now, you can only use the options shown, or one of the pre-fed prompts.");
+      return false;
     }
     if (chat.ctx) { chat.queued = text; return; }
     const t = promptTask(text);
@@ -1311,7 +1313,7 @@
     $("#composer").addEventListener("submit", e => {
       e.preventDefault();
       const v = input.value; input.value = ""; closePrompts();
-      if (typed(v) === false && !chat.ctx) { input.value = v; openPrompts(); }
+      if (typed(v) === false) { input.value = v; if (!chat.ctx) openPrompts(); }
       renderComposer();
     });
     input.addEventListener("input", () => { renderComposer(); openPrompts(); });
