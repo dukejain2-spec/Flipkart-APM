@@ -422,7 +422,9 @@
     }
     if (to === "handover" || to === "splash") quickSetup();
     save();
-    go(to);
+    /* jumping to the code screen still shows setup's last beat: the agent and Bud-e locking together */
+    if (to === "handover") linkUp().then(() => go(to));
+    else go(to);
   }
 
   /* ---------- S1–S3 Setting up the child's device (filled in by the parent) ---------- */
@@ -563,7 +565,6 @@
     S.wallet = walletLeft();
     S.setup.done = true; save();
     await linkUp();
-    $("#layer").classList.remove("open"); $("#layer").innerHTML = "";
     go("handover");
   }
   /* Setup's last beat: the child's agent and Bud-e slide together and lock, Bud-e in front, then a check.
@@ -582,8 +583,10 @@
     </div>`;
     let skip;
     const skipped = new Promise(r => { skip = r; layer.addEventListener("click", skip); });
+    layer.classList.add("open");
     await Promise.race([sleep(3200), skipped]);
     layer.removeEventListener("click", skip);
+    layer.classList.remove("open"); layer.innerHTML = "";
   }
 
   /* S3: the code for Bud-e Parent, then the handover. */
@@ -1163,17 +1166,12 @@
     input.value = taskDef(id).prompt;
     closePrompts(); renderComposer(); input.focus();
   }
-  /* The chat header shows the child's own agent (its logo), with a small Bud-e badge: every reply comes through Bud-e */
-  const agentAvatar = () => {
-    const logo = D.providerLogos[S.setup.child.provider];
-    return logo ? `<img src="${esc(logo)}" alt=""><i class="agent-via">${mark(14)}</i>` : mark(30, true);
-  };
   const greeting = () => { const h = storyNow().getHours(); return h < 12 ? "Morning" : h < 17 ? "Afternoon" : "Evening"; };
 
   function viewChat(main) {
     const home = !S.thread.length;
     main.innerHTML = `<section class="chat ${home ? "chat--home" : ""}">
-      <div class="chat-h"><div class="agent-id"><span class="agent-av">${agentAvatar()}</span><div><b>My agent</b><span>${esc(S.setup.child.provider)} · through Bud-e</span></div></div>
+      <div class="chat-h"><div class="agent-id"><span class="agent-av">${mark(30, true)}</span><div><b>My agent</b><span>${esc(S.setup.child.provider)} · through Bud-e</span></div></div>
         <div class="chat-h-r"><span class="chat-wallet" id="chatSide" hidden></span><button class="btn ghost small" data-newchat aria-label="New chat">${icon("plus", 15)}<span>New chat</span></button></div></div>
       <div class="scroll" id="scroll"><div class="thread" id="thread" role="log" aria-live="polite" aria-label="Chat"></div></div>
       <div class="dock">
