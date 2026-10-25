@@ -425,7 +425,7 @@ input:focus-visible + .switch { outline: 2px solid var(--accent); outline-offset
 .chat-h-r { display: flex; align-items: center; gap: 10px; }
 
 /* Chats: a sidebar beside the nav rail, like a chat app's: New chat, then recent chats, newest first */
-.chatbar { width: 264px; flex: none; display: flex; flex-direction: column; gap: 10px; padding: 18px 12px; background: var(--paper); border-right: 1px solid var(--line); overflow: auto; scrollbar-width: thin; scrollbar-color: transparent transparent; }
+.chatbar { width: 208px; flex: none; display: flex; flex-direction: column; gap: 10px; padding: 18px 10px; background: var(--paper); border-right: 1px solid var(--line); overflow: auto; scrollbar-width: thin; scrollbar-color: transparent transparent; }
 .chatbar:hover { scrollbar-color: var(--line-2) transparent; }
 .chatbar-h { padding: 2px 8px 4px; }
 .chatbar-h b { font: 600 20px var(--display); }
@@ -770,7 +770,7 @@ button.chat-item:hover { background: var(--paper-2); color: var(--ink); }
   .drawer-open .drawer-scrim, .chats-open .drawer-scrim { display: block; position: fixed; inset: 0; background: rgba(16, 24, 40, .3); z-index: 35; }
   .areas-pill { display: inline-flex; }
   /* Chats slides in from the left, over the page */
-  .chatbar { position: fixed; top: 0; bottom: 0; left: 88px; z-index: 40; width: min(300px, 82vw); background: var(--card); box-shadow: var(--shadow-lg); transform: translateX(calc(-100% - 100px)); transition: transform .25s; }
+  .chatbar { position: fixed; top: 0; bottom: 0; left: 88px; z-index: 40; width: min(260px, 82vw); background: var(--card); box-shadow: var(--shadow-lg); transform: translateX(calc(-100% - 100px)); transition: transform .25s; }
   .chats-open .chatbar { transform: none; }
   .chats-pill { display: inline-flex; }
   .chats-pill:hover { background: var(--paper); }
