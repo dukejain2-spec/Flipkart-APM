@@ -392,7 +392,8 @@
     <div class="start">
       <div class="start-main">
         <div class="start-hero">
-          <h1>${D.product.tagline.split(", ").map((t, i) => esc(t) + (i ? "." : ",")).join("<br>")}</h1>
+          <p class="badge-pill"><b>2040</b>For children and their AI agents</p>
+          <h1>${D.product.tagline.split(", ").map((t, i) => i ? `<em>${esc(t)}.</em>` : esc(t) + ",").join("<br>")}</h1>
           <p class="lede">${esc(D.product.pitch)}</p>
           <div class="start-btns">
             <button class="btn primary lg" data-go="child">${icon("user", 18)} Set up this device</button>
@@ -616,7 +617,7 @@
       <div class="splash-glow"></div>
       <div class="splash-mark">${mark(170, true)}</div>
       <h1 class="splash-word">${wordmark()}</h1>
-      <p class="splash-hi">Hey ${esc(name())}</p>
+      <p class="splash-hi">Hey ${esc(name())} 👋</p>
       <p class="splash-note">${icon("lock", 15)} Your chats are private. Your parents see your progress, not your conversations.</p>
     </div>`;
   }
@@ -846,7 +847,7 @@
       if (S.skills[id].rating != null) return start;
       const sk = ctx.skill, from = levelFor(startRating(id), S.setup.child.age);
       /* The icon pops in with a burst of confetti in the area colours, then the track fills up to where he starts. */
-      const colours = ["#CC785C", "#2F6F9F", "#9A6A1C", "#2E7D4F", "#A8456B", "#2F8577", "#E8A55A"]; // taste-skill-ignore: DESIGN.md coral
+      const colours = ["#4F46E5", "#2E6BE6", "#7A5AF8", "#DC6803", "#DD2590", "#0E9384", "#FDB022"];
       const confetti = Array.from({ length: 24 }, (_, k) =>
         `<i style="--a:${Math.round(k * 360 / 24)}deg;--d:${rand(70, 150)}px;--c:${colours[k % colours.length]};--t:${(k % 4) * 0.04}s"></i>`).join("");
       const yes = await modal({ cls: "unlock", html: `<div class="unlock-h" data-area="${sk.area.id}"><span class="unlock-ic">${icon(areaIcon(sk.area.id), 22)}<span class="confetti" aria-hidden="true">${confetti}</span></span>
@@ -980,7 +981,7 @@
   /* Level up: the old level gives way to the new one, the next segment of the track fills with a shine, the rating
      counts up, confetti bursts from the badge and the Bud-e mark giggles. Closing it bumps the My skills tab. */
   async function levelUp(sk, before, after, from, to) {
-    const colours = ["#CC785C", "#2F6F9F", "#9A6A1C", "#2E7D4F", "#A8456B", "#2F8577", "#E8A55A"]; // taste-skill-ignore: DESIGN.md coral
+    const colours = ["#2F6BFF", "#7A5AF8", "#DD2590", "#F2A65E", "#0E9384", "#FDB022", "#4E88F5"];
     const confetti = Array.from({ length: 32 }, (_, k) =>
       `<i style="--a:${Math.round(k * 360 / 32)}deg;--d:${rand(90, 190)}px;--c:${colours[k % colours.length]};--t:${(k % 4) * 0.05 + .45}s"></i>`).join("");
     const next = after.next;
@@ -1240,9 +1241,9 @@
     if (home) {
       t.innerHTML = `<div class="thread-empty">
         <div class="hero-mark">${mark(118, true)}</div>
-        <h1><span>${greeting()}, ${esc(name())}.</span><br>What are we doing today?</h1>
+        <p class="badge-pill"><b>New</b>Your agent is ${esc(S.setup.child.provider)}, through Bud-e</p>
+        <h1><span>${greeting()}, ${esc(name())}.</span><br>What are we doing <em>today?</em></h1>
         <p class="home-hint">Start typing to pick a prompt. Then press <b>Send</b>, or <b>Faster response</b> if you're in a hurry.</p>
-        <p class="home-agent">Your agent is <b>${esc(S.setup.child.provider)}</b>, through Bud-e</p>
       </div>`;
     } else {
       t.innerHTML = S.thread.map((m, i) => msgHTML(m, S.thread[i - 1])).join("");
@@ -1324,12 +1325,12 @@
   /* ---------- Wallet (S12): pocket money and orders ---------- */
   function viewWallet(main) {
     const on = S.setup.perms.wallet, monthly = S.setup.walletMonthly;
-    main.innerHTML = `<div class="page page--wallet">
+    main.innerHTML = `<div class="page">
       <header class="page-h"><div><h1>Wallet</h1><p class="sub">Pocket money from ${esc(S.setup.parent.name.split(" ")[0])}. When you shop through your agent, you see what each option does to it before you choose.</p></div></header>
       ${on ? balanceCard("bal--wallet", "Left this month", `<b class="wallet-count">${rupee(S.wallet)}</b>`, `of ${rupee(monthly)}`,
           monthly ? (S.wallet / monthly) * 100 : 0, `Spent ${rupee(monthly - S.wallet)} this month · no sponsored options, ever`)
         : `<section class="panel"><p>The wallet is turned off. Ask ${esc(S.setup.parent.name.split(" ")[0])} to switch it on in Bud-e's settings.</p></section>`}
-      <section class="panel"><div class="panel-h"><b>Orders</b><span class="muted">${S.orders.length} this month</span></div>
+      <section class="panel"><div class="panel-h"><b>Orders</b></div>
         ${S.orders.length ? `<ul class="log">${S.orders.map(o => `<li><span>${esc(o.name)}</span><em>${esc(o.id)}</em><b class="neg">−${rupee(o.price)}</b></li>`).join("")}</ul>` : `<p class="muted">No orders yet this month.</p>`}</section>
     </div>`;
   }

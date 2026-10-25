@@ -1,36 +1,41 @@
-/* Bud-e prototype styles, after DESIGN.md: a warm cream canvas, ink in a warm near-black, serif display headlines over a
-   humanist sans, flat surfaces one cream step apart (no glass, no gradients, no shadows at rest), coral kept for the
-   one primary action and the one data mark, and a warm near-black surface for the few dark moments. Laid out as the
-   taste skill's "editorial greeting" app style (seed 445663181). The Bud-e mark keeps its own gradient: it is the
-   brand asset. Area colours mark areas, status colours mark status. System fonts only (README §7). */
+/* Bud-e prototype styles, after design-concept.png: a deep-space sky that falls from near-black navy through electric
+   blue to a pale daylight, white type with an italic second line, frosted-glass composer and chips, pill buttons, and one
+   electric-blue accent. The start, splash, handover, parent login and the chat home sit in the full sky; working screens
+   (a chat under way, Tokens, Wallet, My skills, the parent pages, setup) sit in its pale lower band, so text stays dark
+   on light. Area colours mark areas, status colours mark status. System fonts only (README §7). */
 :root {
-  --page: #FAF9F5; --surface: #FDFCF9; --card: #FDFCF9; --glass: #FDFCF9; --glass-2: #FDFCF9; /* taste-skill-ignore: DESIGN.md canvas */
-  /* Cream steps: a panel one step off the canvas, a stronger step for selected and inner bands */
-  --panel: #F5F0E8; --paper: #F5F0E8; --paper-2: #EFE9DE; --cream-strong: #E8E0D2;
-  --ink: #141413; --ink-2: #3D3D3A; --ink-3: #65635D; --ink-4: #6E6B64; --ink-btn: #252523;
-  --line: #E6DFD8; --line-2: #D8D0C4; --line-ink: #D8D0C4;
-  /* Coral: DESIGN.md's coral is kept for marks and data; fills that carry white text and links use the
-     deeper steps so they read at 4.5:1 */
-  --coral: #CC785C; --accent: #B85A3A; --accent-ink: #A9583E; --accent-soft: #F6E7E0; /* taste-skill-ignore: DESIGN.md coral */
-  --dark: #181715; --dark-2: #252320; --on-dark: #FAF9F5; --on-dark-soft: #A09D96; /* taste-skill-ignore */
-  --spark: #CC785C; --spark-2: #B85A3A; /* taste-skill-ignore */
-  --together: #8A6500; --together-soft: #FBF3DC; --coin: #B9822E;
-  --study: #2F6F9F; --writing: #9A6A1C; --money: #2E7D4F; --relationships: #A8456B; --feelings: #2F8577;
-  --ok: #276B43; --ok-soft: #E7F2EA; --ok-line: #C3DFCB;
-  --warn: #8A6500; --warn-soft: #FBF3DC; --warn-line: #ECD9A0;
-  --danger: #B23A3A; --danger-soft: #FBECEB; --danger-line: #F0C9C6;
-  --care: #2F8577;
-  --r1: 6px; --r2: 8px; --r3: 12px; --r4: 16px;
-  --shadow: none;
-  --shadow-lg: 0 24px 48px -16px rgba(20, 20, 19, .22), 0 2px 6px rgba(20, 20, 19, .06);
-  /* DESIGN.md's faces (StyreneB / Inter, Copernicus / Tiempos) are licensed or not installed, and the prototype loads no web
-     fonts, so the stacks start with the closest system faces: Segoe UI Variable for the humanist sans, Sitka for the serif. */
-  --sans: "Segoe UI Variable Text", "Segoe UI", Inter, system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
-  /* The serif is for titles only (h1, h2 and a few set pieces); every label, figure and control uses the sans */
-  --serif: "Sitka Heading", "Sitka Display", Georgia, Cambria, "Times New Roman", serif;
-  --display: var(--sans);
-  --mono: var(--sans);
-  --wash: var(--page);
+  --page: #EEF3FF; --surface: #FFFFFF; --card: #FFFFFF; --glass: rgba(255, 255, 255, .72); --glass-2: rgba(255, 255, 255, .86);
+  --paper: #F4F7FE; --paper-2: #E9EFFC;
+  --ink: #0A1033; --ink-2: #3B4566; --ink-3: #66708F; --ink-4: #A0AAC6; --ink-btn: #232C55;
+  --line: #E2E8F6; --line-2: #CDD7EE; --line-ink: #CDD7EE;
+  --accent: #2F6BFF; --accent-ink: #1A4FDB; --accent-soft: #E9F0FF;
+  --spark: #F4775F; --spark-2: #DD2590;
+  --together: #B54708; --together-soft: #FFFAEB; --coin: #DC6803;
+  --study: #2E6BE6; --writing: #7A5AF8; --money: #DC6803; --relationships: #DD2590; --feelings: #0E9384;
+  --ok: #067647; --ok-soft: #ECFDF3; --ok-line: #ABEFC6;
+  --warn: #B54708; --warn-soft: #FFFAEB; --warn-line: #FEDF89;
+  --danger: #C01048; --danger-soft: #FFF1F3; --danger-line: #FECDD6;
+  --care: #0E9384;
+  --r1: 8px; --r2: 12px; --r3: 18px; --r4: 24px;
+  --shadow: 0 1px 2px rgba(10, 16, 51, .04), 0 10px 30px -12px rgba(31, 75, 200, .14);
+  --shadow-lg: 0 30px 60px -18px rgba(10, 16, 51, .35);
+  --sans: "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  --display: "Segoe UI Variable Display", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  --mono: "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif;
+  /* The full sky: night at the top, an electric-blue band where the horizon glows, then daylight. */
+  --sky: radial-gradient(70% 34% at 50% 50%, rgba(140, 185, 255, .85) 0%, rgba(140, 185, 255, 0) 100%),
+    linear-gradient(180deg, #02061C 0%, #061646 16%, #0D35B8 32%, #2563FF 44%, #7EAAFF 56%, #CFE0FF 68%, #EEF4FF 82%, #F8FAFF 100%);
+  /* The chat home keeps more night above the composer, so the greeting stays on deep blue */
+  --sky-home: radial-gradient(70% 30% at 50% 62%, rgba(140, 185, 255, .8) 0%, rgba(140, 185, 255, 0) 100%),
+    linear-gradient(180deg, #02061C 0%, #061646 22%, #0D35B8 42%, #2563FF 56%, #7EAAFF 67%, #CFE0FF 76%, #EEF4FF 88%, #F8FAFF 100%);
+  /* Faint stars, only in the dark part of the sky */
+  --stars: radial-gradient(1.2px 1.2px at 12% 18%, #fff 50%, transparent 51%), radial-gradient(1px 1px at 28% 8%, #fff 50%, transparent 51%),
+    radial-gradient(1.4px 1.4px at 44% 26%, #fff 50%, transparent 51%), radial-gradient(1px 1px at 63% 12%, #fff 50%, transparent 51%),
+    radial-gradient(1.2px 1.2px at 78% 30%, #fff 50%, transparent 51%), radial-gradient(1px 1px at 90% 9%, #fff 50%, transparent 51%),
+    radial-gradient(1px 1px at 6% 40%, #fff 50%, transparent 51%), radial-gradient(1.3px 1.3px at 54% 4%, #fff 50%, transparent 51%),
+    radial-gradient(1px 1px at 36% 42%, #fff 50%, transparent 51%), radial-gradient(1px 1px at 86% 44%, #fff 50%, transparent 51%);
+  /* Daylight: the sky's pale lower band, for working screens */
+  --wash: radial-gradient(90% 55% at 50% -12%, rgba(47, 107, 255, .26) 0%, rgba(47, 107, 255, 0) 70%), linear-gradient(180deg, #E4EDFF 0%, #F2F6FF 38%, #FAFBFF 100%);
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; }
@@ -862,11 +867,157 @@ button.chat-item:hover { background: var(--paper-2); color: var(--ink); }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
 
+/* ---------- Theme: the design concept (sky, glass, pills) ---------- */
+h1, h2, h3 { font-weight: 600; letter-spacing: -.02em; }
+h1 em, h2 em { font-style: italic; font-weight: 500; }
+.btn, .send, .faster, .chip, .tool, .pill-stat, .chat-wallet, .pill span, .seg, .seg span, .note { border-radius: 999px; }
+.btn.primary, .send, .chip--go { background: linear-gradient(180deg, #4C82FF, #2259F5); border-color: #2259F5; box-shadow: 0 6px 18px -6px rgba(37, 99, 255, .6), inset 0 1px 0 rgba(255, 255, 255, .25); }
+.btn.primary:hover, .send:hover, .chip--go:hover { background: linear-gradient(180deg, #3A73FF, #1A4FDB); border-color: #1A4FDB; }
+.send { position: relative; width: 40px; height: 40px; padding: 0; justify-content: center; border-radius: 50%; }
+.send span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.card, .panel, .rsec, .kpis, .bal, .perm, .pc { box-shadow: var(--shadow); }
+.msg--me .bubble { background: linear-gradient(180deg, #4C82FF, #2259F5); border-radius: 20px 20px 6px 20px; }
+.msg--agent .bubble { border-radius: 6px 20px 20px 20px; box-shadow: var(--shadow); }
+.composer { border-radius: 22px; border-color: rgba(255, 255, 255, .8); background: var(--glass-2); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); box-shadow: 0 20px 50px -20px rgba(10, 30, 110, .35); }
+.composer:focus-within { border-color: #9DBBFF; box-shadow: 0 0 0 4px rgba(47, 107, 255, .14), 0 20px 50px -20px rgba(10, 30, 110, .35); }
+.tool { border: 1px solid var(--line); background: rgba(255, 255, 255, .6); }
+
+/* The nav rail: a strip of night sky on every app screen */
+.nav { background: linear-gradient(180deg, #030922 0%, #071A57 55%, #0E2C8A 100%); border-right: 0; }
+.nav::before { content: ""; position: absolute; inset: 0; background: var(--stars); background-size: 100% 260px; opacity: .55; pointer-events: none; }
+.nav > * { position: relative; }
+.tab { color: rgba(255, 255, 255, .72); }
+.tab:hover { color: #fff; background: rgba(255, 255, 255, .1); }
+.tab.is-on { color: var(--ink); background: #fff; box-shadow: 0 6px 18px -6px rgba(0, 0, 0, .5); }
+.tab-val { color: #fff; }
+.tab.is-on .tab-val { color: var(--accent-ink); }
+.avatar--child, .avatar--parent { background: #fff; color: var(--ink); }
+.menu { color: var(--ink); }
+
+/* The frame: daylight for working screens; the full sky for the chat home */
+.frame { background: var(--wash); }
+.frame:has(.chat--home) { background: var(--stars), var(--sky-home); background-size: 100% 70%, 100% 100%; background-repeat: no-repeat; }
+.frame:has(.chat--home) .top-date { color: rgba(255, 255, 255, .7); }
+.frame:has(.chat--home) .chatbar { background: rgba(255, 255, 255, .9); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); border-right-color: rgba(255, 255, 255, .4); }
+.frame:has(.chat--home) .side .panel { background: rgba(255, 255, 255, .9); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); border-color: rgba(255, 255, 255, .5); }
+.chat--home .thread-empty { align-items: center; text-align: center; gap: 12px; }
+.chat--home .thread-empty h1 { color: #fff; font-size: clamp(34px, 6vh, 56px); line-height: 1.08; letter-spacing: -.03em; text-shadow: 0 2px 30px rgba(0, 20, 90, .35); }
+.chat--home .thread-empty h1 span { color: rgba(255, 255, 255, .8); }
+.chat--home .home-hint { color: rgba(255, 255, 255, .82); margin: 0 auto; }
+.chat--home .home-hint b { color: #fff; }
+.chat--home .home-foot { justify-content: center; }
+.hero-mark { filter: drop-shadow(0 10px 40px rgba(120, 170, 255, .55)); margin-bottom: 2px; }
+
+/* The pill above a headline, like the concept's "NEW · Try the new model" */
+.badge-pill { display: inline-flex; align-items: center; gap: 8px; padding: 4px 12px 4px 4px; border-radius: 999px; font-size: 13px; color: rgba(255, 255, 255, .88); background: rgba(255, 255, 255, .1); border: 1px solid rgba(255, 255, 255, .22); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+.badge-pill b { font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--accent-ink); background: #fff; padding: 2px 8px; border-radius: 999px; }
+
+/* Full-sky screens: start, the splash, the handover code, the parent login */
+.canvas { background: var(--wash); }
+.canvas--start, .canvas--splash, .canvas--handover, .canvas--plogin { background: var(--stars), var(--sky); background-size: 100% 620px, 100% 100%; background-repeat: no-repeat; }
+.canvas--start { background-size: 100% 520px, 100% max(100vh, 1040px); }
+.canvas--start .start-top { background: transparent; border-bottom: 1px solid rgba(255, 255, 255, .1); }
+.canvas--start .start-top .wordmark, .canvas--splash .wordmark { color: #fff; }
+.canvas--start .start-top .wordmark i, .canvas--splash .wordmark i { background: #fff; }
+.canvas--start .start-top .wordmark b, .canvas--splash .wordmark b { color: #8FB4FF; }
+.canvas--start .start-hero h1 { color: #fff; font-size: 76px; letter-spacing: -.035em; text-shadow: 0 2px 30px rgba(0, 20, 90, .35); }
+.canvas--start .lede { color: rgba(255, 255, 255, .84); }
+.canvas--start .start-btns .btn.primary { background: #fff; color: var(--ink); border-color: #fff; box-shadow: 0 10px 30px -8px rgba(0, 10, 60, .5); }
+.canvas--start .start-btns .btn.primary:hover { background: #EEF3FF; }
+.canvas--start .start-btns .btn.ghost { background: rgba(5, 14, 50, .55); color: #fff; border-color: rgba(255, 255, 255, .22); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+.canvas--start .start-btns .btn.ghost:hover { background: rgba(5, 14, 50, .75); }
+.canvas--start .how { background: var(--glass-2); border-color: rgba(255, 255, 255, .6); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); }
+.canvas--start .how-f { background: rgba(244, 247, 254, .7); }
+.canvas--start .rail { border-top-color: var(--line-2); }
+.canvas--splash .splash-hi { color: #fff; }
+.canvas--splash .splash-note { background: rgba(255, 255, 255, .12); color: #fff; border-color: rgba(255, 255, 255, .25); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+.canvas--splash .splash-mark, .canvas--plogin .pl-brand .mark, .canvas--handover .hand-ic { filter: drop-shadow(0 10px 40px rgba(120, 170, 255, .55)); }
+.canvas--handover .code-card, .canvas--plogin .pl-card { background: var(--glass-2); border-color: rgba(255, 255, 255, .6); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); }
+.canvas--handover .hand-card > .eyebrow { color: #7EE2B0; }
+@media (max-width: 760px) { .canvas--start .start-hero h1 { font-size: 52px; } .nav { background: linear-gradient(180deg, #071A57, #030922); } }
+
+/* ---------- Glass: frosted, see-through surfaces over the sky, as in the design concept ----------
+   Every surface is translucent white with a blur behind it, a bright hairline edge and a soft blue shadow. The daylight
+   behind working screens carries a few blue glows, so the blur has something to show through. */
+:root {
+  --glass-bg: rgba(255, 255, 255, .52);
+  --glass-bg-2: rgba(255, 255, 255, .68);
+  --glass-edge: rgba(255, 255, 255, .78);
+  --glass-blur: blur(22px) saturate(170%);
+  --glass-shadow: inset 0 1px 0 rgba(255, 255, 255, .9), inset 0 0 0 1px rgba(255, 255, 255, .25), 0 14px 40px -18px rgba(24, 60, 170, .32);
+  --wash: radial-gradient(38% 42% at 18% 30%, rgba(110, 150, 255, .34) 0%, rgba(110, 150, 255, 0) 100%),
+    radial-gradient(34% 40% at 86% 70%, rgba(130, 120, 255, .26) 0%, rgba(130, 120, 255, 0) 100%),
+    radial-gradient(30% 34% at 60% 105%, rgba(90, 170, 255, .26) 0%, rgba(90, 170, 255, 0) 100%),
+    radial-gradient(90% 55% at 50% -12%, rgba(47, 107, 255, .34) 0%, rgba(47, 107, 255, 0) 70%),
+    linear-gradient(180deg, #DCE7FF 0%, #EDF2FF 40%, #F6F8FF 100%);
+}
+.frame, .canvas { background-attachment: fixed; }
+
+.card, .panel, .rsec, .kpis, .bal, .perm, .pc, .gcard, .composer, .chatbar, .modal, .menu, .prompts, .how,
+.code-card, .pl-card, .msg--agent .bubble, .note, .score, .skillcard {
+  background: var(--glass-bg);
+  border-color: var(--glass-edge);
+  -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur);
+  box-shadow: var(--glass-shadow);
+}
+.composer, .modal, .menu, .prompts { background: var(--glass-bg-2); }
+.chatbar { border-right: 1px solid var(--glass-edge); box-shadow: none; }
+.kpis { gap: 0; }
+.kpi { background: transparent; }
+.kpi + .kpi { border-left: 1px solid rgba(255, 255, 255, .8); }
+.gwide, .rel-sum, .never, .lock-note, .how-f, .rel-key, .unlock-track, .code, .code-in { background: rgba(255, 255, 255, .42); border-color: var(--glass-edge); }
+.gcard--empty { background: rgba(255, 255, 255, .35); }
+
+/* Glass controls: pills you can see the sky through */
+.btn, .btn.ghost, .chip, .tool, .faster, .pill span, .pill-stat, .chat-wallet, .lvl, .seg, .opt-card {
+  background: rgba(255, 255, 255, .5);
+  border-color: rgba(255, 255, 255, .85);
+  -webkit-backdrop-filter: blur(14px) saturate(160%); backdrop-filter: blur(14px) saturate(160%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .9), 0 4px 14px -8px rgba(24, 60, 170, .3);
+}
+.btn:hover, .btn.ghost:hover, .chip:hover, .tool:hover, .faster:hover, .opt-card:hover { background: rgba(255, 255, 255, .8); border-color: #fff; }
+.btn.primary, .btn.danger { -webkit-backdrop-filter: none; backdrop-filter: none; }
+.btn.danger { background: rgba(255, 255, 255, .55); }
+.pill input:checked + span, .opt-card.is-primary { background: rgba(233, 240, 255, .85); border-color: var(--accent); }
+.seg input:checked + span { background: rgba(255, 255, 255, .9); }
+.field input, .field select, .amount input { background: rgba(255, 255, 255, .6); border-color: rgba(255, 255, 255, .9); box-shadow: inset 0 1px 2px rgba(24, 60, 170, .08); }
+.field input:focus, .field select:focus { background: rgba(255, 255, 255, .85); }
+.chat-item.is-on { background: rgba(255, 255, 255, .7); box-shadow: inset 0 1px 0 #fff, 0 4px 14px -8px rgba(24, 60, 170, .3); }
+button.chat-item:hover { background: rgba(255, 255, 255, .5); }
+.prompt:hover, .prompt.is-hl { background: rgba(255, 255, 255, .7); }
+.scrim { background: rgba(6, 18, 60, .35); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+.toast { background: rgba(10, 16, 51, .78); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); border: 1px solid rgba(255, 255, 255, .15); }
+
+/* On the night sky (chat home, start): the nav tabs and the home's side panels are glass too */
+.tab.is-on { background: rgba(255, 255, 255, .88); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+.tab:hover { background: rgba(255, 255, 255, .12); }
+.frame:has(.chat--home) .side .panel, .frame:has(.chat--home) .chatbar { background: rgba(255, 255, 255, .62); }
+.canvas--start .start-btns .btn.primary { background: #fff; }
+.canvas--start .start-btns .btn.ghost { background: rgba(255, 255, 255, .12); border-color: rgba(255, 255, 255, .3); color: #fff; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .25); }
+.canvas--start .start-btns .btn.ghost:hover { background: rgba(255, 255, 255, .2); }
+.canvas--start .how { background: rgba(255, 255, 255, .58); }
+.canvas--start .rail-list button:hover { background: rgba(255, 255, 255, .55); }
+.frame:has(.chat--home) .side .panel { background: rgba(255, 255, 255, .8); }
+/* On the chat home the Chats sidebar is dark glass over the night sky */
+.frame:has(.chat--home) .chatbar { background: linear-gradient(180deg, rgba(3, 9, 34, .45) 0%, rgba(7, 26, 87, .55) 55%, rgba(14, 44, 138, .72) 100%); border-right-color: rgba(255, 255, 255, .12); }
+.frame:has(.chat--home) .chatbar-h b, .frame:has(.chat--home) .chat-item { color: #fff; }
+.frame:has(.chat--home) .chatbar-l, .frame:has(.chat--home) .chat-item em, .frame:has(.chat--home) .chat-item .ic { color: rgba(255, 255, 255, .55); }
+.frame:has(.chat--home) button.chat-item:hover { background: rgba(255, 255, 255, .1); }
+.frame:has(.chat--home) .chatbar-new { background: rgba(255, 255, 255, .12); border-color: rgba(255, 255, 255, .28); color: #fff; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .2); }
+.frame:has(.chat--home) .chatbar-new .ic { color: #fff; }
+.frame:has(.chat--home) .chatbar-new:hover { background: rgba(255, 255, 255, .2); }
+.canvas--start .how { background: rgba(255, 255, 255, .7); }
+
 /* ---------- Level up ---------- */
 .modal.levelup { width: min(440px, 100%); padding: 26px 28px 24px; overflow: visible; }
 .lu-stage { position: relative; height: 128px; display: grid; place-items: center; margin-bottom: 6px; }
+.lu-rays { position: absolute; left: 50%; top: 50%; width: 220px; height: 220px; margin: -110px 0 0 -110px; border-radius: 50%;
+  background: repeating-conic-gradient(from 0deg, rgba(47, 107, 255, .16) 0deg 10deg, transparent 10deg 30deg);
+  -webkit-mask: radial-gradient(closest-side, #000 30%, transparent 100%); mask: radial-gradient(closest-side, #000 30%, transparent 100%);
+  animation: luRays 8s linear infinite, fade .6s .3s both; }
+@keyframes luRays { to { transform: rotate(360deg); } }
 .lu-badge { position: relative; width: 84px; height: 84px; border-radius: 26px; display: grid; place-items: center; color: #fff;
-  background: var(--accent);
+  background: linear-gradient(160deg, #6E9BFF, #2F6BFF 55%, #5B3FE6); box-shadow: 0 16px 36px -10px rgba(47, 107, 255, .7), inset 0 1px 0 rgba(255, 255, 255, .5);
   animation: luBadge .9s cubic-bezier(.2, .9, .3, 1.45) .15s both; }
 @keyframes luBadge { 0% { opacity: 0; transform: scale(.2) rotate(-30deg); } 60% { opacity: 1; transform: scale(1.18) rotate(8deg); } 100% { transform: none; } }
 .lu-badge::after { content: ""; position: absolute; inset: 0; border-radius: inherit; border: 2px solid var(--accent); animation: ringOut .9s .7s ease-out both; }
@@ -884,230 +1035,9 @@ button.chat-item:hover { background: var(--paper-2); color: var(--ink); }
 .lu-track { text-align: left; margin-top: 16px; }
 .lu-track .track i.is-done { background: var(--accent); }
 .lu-track .track i.is-new { position: relative; overflow: hidden; background: var(--line); }
-.lu-track .track i.is-new::before { content: ""; position: absolute; inset: 0; background: var(--coral); transform-origin: left; animation: fillIn .7s 1.3s cubic-bezier(.3, .8, .3, 1) both; }
+.lu-track .track i.is-new::before { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, #6E9BFF, var(--accent)); transform-origin: left; animation: fillIn .7s 1.3s cubic-bezier(.3, .8, .3, 1) both; }
+.lu-track .track i.is-new::after { content: ""; position: absolute; top: 0; bottom: 0; width: 40%; background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .9), transparent); animation: luShine 1s 2s ease-in-out both; }
+@keyframes luShine { from { transform: translateX(-120%); } to { transform: translateX(320%); } }
 .lu-track .track-names em { animation-delay: 1.9s; }
 .score.is-up { animation: msgIn .25s ease-out, luGlow 1.6s .3s ease-out; }
 @keyframes luGlow { 0% { box-shadow: 0 0 0 0 rgba(47, 107, 255, .45); } 100% { box-shadow: 0 0 0 14px rgba(47, 107, 255, 0); } }
-
-/* ---------- DESIGN.md layer ----------
-   Type: serif display for titles at weight 400 with negative tracking, the sans for everything else; tabular figures.
-   Surfaces: cream panels one step off the canvas, no border on panels, a 1px warm hairline on controls; shadows only on
-   what floats (menus, dialogs, the prompt list, toasts). Radius 8 on controls, 12 on panels. */
-body { font-variant-numeric: tabular-nums; font-size: 15px; }
-h1, h2 { font-family: var(--serif); font-weight: 400; letter-spacing: -.02em; }
-h3 { font-family: var(--sans); font-weight: 600; letter-spacing: 0; }
-h1 em, h2 em { font-style: normal; }
-.wordmark { font-family: var(--sans); font-weight: 600; letter-spacing: -.02em; }
-.wordmark b { color: var(--accent); }
-a { color: var(--accent-ink); }
-:focus-visible { outline-color: var(--accent); }
-::selection { background: var(--accent-soft); }
-/* Small labels: sentence case, never tracked caps */
-.eyebrow, .rail-h, .chatbar-l, .kpi span, .prompts-h, .req, .opt, .me-fast, .tag b, .pl-brand em { text-transform: none; letter-spacing: 0; }
-.eyebrow { font-size: 13px; font-weight: 500; color: var(--ink-3); }
-.eyebrow--accent { color: var(--accent-ink); }
-
-/* Buttons: one coral fill for the primary action, cream with a hairline for the rest, radius 8, flat */
-.btn, .send, .faster, .chip, .tool, .pill span, .pill-stat, .chat-wallet, .note, .seg { border-radius: var(--r2); box-shadow: none; }
-.btn { background: var(--card); border-color: var(--line-2); color: var(--ink); font-weight: 500; }
-.btn:hover, .btn.ghost:hover { background: var(--panel); border-color: var(--line-2); color: var(--ink); }
-.btn.ghost { background: var(--card); border-color: var(--line-2); }
-.btn.primary, .send, .chip--go { background: var(--accent); border-color: var(--accent); color: #fff; box-shadow: none; }
-.btn.primary:hover, .send:hover, .chip--go:hover { background: var(--accent-ink); border-color: var(--accent-ink); color: #fff; }
-.btn.primary:active, .send:active { background: #8F4732; }
-.btn.danger { background: var(--card); color: var(--danger); border-color: var(--danger-line); }
-.btn.danger:hover { background: var(--danger-soft); color: var(--danger); border-color: var(--danger); }
-.send { position: relative; width: 36px; height: 36px; padding: 0; justify-content: center; border-radius: 50%; }
-.send span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
-.link { color: var(--accent-ink); }
-.chip { background: var(--card); border-color: var(--line-2); color: var(--ink); }
-.chip:hover { background: var(--panel); border-color: var(--ink-4); }
-.tool { border: 1px solid transparent; background: none; color: var(--ink-3); }
-.tool:hover { background: var(--panel); color: var(--ink-2); }
-.faster { background: var(--card); border-color: var(--line-2); color: var(--ink-btn); }
-.faster:hover { background: var(--panel); }
-.pill input:checked + span { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-ink); }
-.switch { background: var(--line-2); }
-input:checked + .switch { background: var(--accent); }
-.field input, .field select, .amount input, .code-in { background: var(--card); border-color: var(--line-2); box-shadow: none; }
-.field input:focus, .field select:focus, .code-in:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(204, 120, 92, .15); background: var(--card); }
-
-/* Surfaces: cream panels, one step off the canvas, no border, no shadow */
-.card, .panel, .rsec, .bal, .perm, .pc, .gcard, .how, .code-card, .pl-card, .skillcard, .opt-card, .unlock-track, .gwide {
-  background: var(--panel); border-color: transparent; box-shadow: none; }
-.kpis { background: var(--line); border-color: var(--line); box-shadow: none; gap: 1px; }
-.kpi { background: var(--panel); }
-.kpi + .kpi { border-left: 0; }
-.kpi span { font-size: 13px; font-weight: 500; color: var(--ink-3); }
-.kpi b { font-family: var(--sans); font-weight: 500; font-size: 26px; letter-spacing: -.01em; }
-.panel-h b, .how-h b, .chatbar-h b { font-family: var(--sans); font-weight: 600; }
-.perm.is-on { border-color: transparent; background: var(--panel); }
-.perm-ic, .oc-ic, .sc-ic, .pa-ic, .ag-ic, .ride-ic { background: var(--paper-2); color: var(--ink-2); }
-.perm.is-on .perm-ic { background: var(--paper-2); color: var(--ink); }
-.opt-card { border: 1px solid transparent; }
-.opt-card:hover { background: var(--paper-2); }
-.opt-card.is-primary { background: var(--card); border-color: var(--accent); }
-.opt-card.is-primary .oc-ic { background: var(--accent); color: #fff; }
-.gcard--empty { background: var(--page); border: 1px dashed var(--line-2); }
-.gwide { background: var(--card); }
-.lvl { background: var(--card); border-color: var(--line-2); color: var(--ink); font-family: var(--sans); font-weight: 600; }
-.lvl--new { background: var(--paper-2); border-color: transparent; color: var(--ink-3); }
-
-/* The privacy notes are the one dark surface on a parent's screen */
-.never { background: var(--dark); color: var(--on-dark-soft); border-color: var(--dark); }
-.never .ic, .never b { color: var(--on-dark); }
-.lock-note { background: var(--panel); border-color: transparent; }
-.rel-sum, .how-f, .rel-key { background: var(--paper-2); border-color: transparent; }
-
-/* What floats keeps a shadow: menus, dialogs, the prompt list, toasts */
-.modal { background: var(--page); border: 1px solid var(--line); box-shadow: var(--shadow-lg); }
-.menu, .prompts { background: var(--page); border-color: var(--line); box-shadow: var(--shadow-lg); }
-.prompt:hover, .prompt.is-hl { background: var(--panel); }
-.scrim { background: rgba(20, 20, 19, .4); }
-.toast { background: var(--dark); color: var(--on-dark); border: 0; }
-.toast.ok .ic { color: #8FD3A6; }
-
-/* ---------- Shell: an open plane. The rail and the chats sidebar sit on the canvas; a hairline separates them ---------- */
-.frame, .canvas { background: var(--page); }
-.nav { background: var(--page); border-right: 1px solid var(--line); }
-.nav::before { display: none; }
-.tab { color: var(--ink-3); }
-.tab .ic { color: var(--ink-3); }
-.tab:hover { color: var(--ink); background: var(--panel); }
-.tab.is-on { color: var(--ink); background: var(--cream-strong); box-shadow: none; font-weight: 600; }
-.tab.is-on .ic { color: var(--ink); }
-.tab-val { color: var(--ink); font-weight: 600; }
-.tab.is-on .tab-val { color: var(--ink); }
-.tab-dot { background: var(--coral); box-shadow: 0 0 0 2px var(--page); }
-.tab.is-bump { background: var(--accent-soft); color: var(--accent-ink); }
-.avatar--child, .avatar--parent { background: var(--dark); color: var(--on-dark); }
-.chatbar { background: var(--page); border-right: 1px solid var(--line); box-shadow: none; }
-.chatbar-new { background: var(--card); }
-.chat-item { color: var(--ink-2); }
-button.chat-item:hover { background: var(--panel); }
-.chat-item.is-on { background: var(--cream-strong); color: var(--ink); box-shadow: none; }
-.chat-item.is-on .ic { color: var(--ink); }
-.pill-stat { background: var(--card); border-color: var(--line); color: var(--ink-2); }
-.role-dot { background: var(--ok); }
-.side .panel { background: var(--panel); }
-
-/* ---------- Chat: the agent writes on the canvas, his own messages sit in a cream bubble ---------- */
-.msg--agent .bubble { background: none; border: 0; box-shadow: none; padding: 2px 0; font-size: 16px; color: var(--ink); }
-.msg--me .bubble { background: var(--paper-2); color: var(--ink); border-radius: var(--r3); }
-.agent-av { background: var(--panel); border: 0; }
-.composer { background: var(--card); border: 1px solid var(--line-2); border-radius: 16px; box-shadow: 0 1px 3px rgba(20, 20, 19, .08); }
-.composer:focus-within { border-color: var(--ink-4); box-shadow: 0 1px 3px rgba(20, 20, 19, .08); }
-.note { background: var(--panel); border-color: transparent; color: var(--ink-2); }
-.score { border-radius: var(--r3); }
-.score.is-up { background: var(--accent-soft); border-color: transparent; color: var(--accent-ink); }
-.score.is-up .score-ic { background: var(--accent); }
-.tag { color: var(--ink-3); }
-.tag b { color: var(--ink-2); font-weight: 600; }
-
-/* Home: the greeting is the h1, set in the serif, with the agent's line under it */
-.chat--home .thread-empty { align-items: center; text-align: center; gap: 10px; }
-.chat--home .thread-empty h1 { color: var(--ink); font-size: clamp(32px, 5vh, 44px); line-height: 1.12; letter-spacing: -.02em; text-shadow: none; }
-.chat--home .thread-empty h1 span { color: var(--ink-3); }
-.chat--home .home-hint { color: var(--ink-2); margin: 0 auto; }
-.chat--home .home-hint b { color: var(--ink); }
-.home-agent { font-size: 14px; color: var(--ink-3); }
-.home-agent b { color: var(--ink-2); font-weight: 600; }
-.chat--home .home-foot { justify-content: center; }
-.hero-mark { filter: none; margin-bottom: 4px; }
-
-/* ---------- Start: a cream editorial page; how Bud-e answers sits on the one dark card ---------- */
-.start-top { background: var(--page); border-bottom: 1px solid var(--line); }
-.start-hero h1 { font-size: clamp(44px, 5.4vw, 72px); line-height: 1.04; letter-spacing: -.025em; max-width: 9em; }
-.start-hero .lede { color: var(--ink-2); }
-.start-kicker { font-size: 15px; color: var(--ink-3); }
-.how { background: var(--dark); color: var(--on-dark); }
-.how-h { border-bottom-color: var(--dark-2); }
-.how-h b { color: var(--on-dark); }
-.how-h span, .how-row span { color: var(--on-dark-soft); }
-.how-row { border-bottom-color: var(--dark-2); }
-.how-row b { color: var(--on-dark); font-family: var(--serif); font-weight: 400; font-size: 18px; }
-.how-f { background: var(--dark-2); color: var(--on-dark-soft); }
-.rail { border-top-color: var(--line); }
-.rail-h { font-size: 13px; }
-.rail-list button:hover { background: var(--panel); box-shadow: none; }
-.rail-list em { font-family: var(--sans); }
-.splash-hi { font-family: var(--serif); font-weight: 400; }
-.splash-note { background: var(--panel); border-color: transparent; }
-.code { background: var(--card); border-color: var(--line-2); font-family: var(--sans); }
-.hand-card .eyebrow { color: var(--ok); }
-.hand-ic { background: var(--panel); border-color: transparent; color: var(--accent-ink); }
-.pl-brand em { background: var(--dark); color: var(--on-dark); }
-
-/* ---------- Data: one coral mark per chart, the rest in warm greys ---------- */
-.gc-line { stroke: var(--coral); }
-.gc-pt circle:not(.gc-hit) { stroke: var(--coral); fill: var(--page); }
-.gc-pt.is-now circle:not(.gc-hit), .gc-pt:hover circle:not(.gc-hit) { fill: var(--coral); stroke: var(--page); }
-.gc-bar path { fill: var(--cream-strong); }
-.gc-bar.is-now path, .gc-bar:hover path { fill: var(--coral); }
-.gc-grid { stroke: var(--line); }
-.gc-lvl { stroke: var(--ink-4); }
-.bar i, .sk-bar i, .ladder i, .track i.is-on { background: var(--coral); }
-.bar, .sk-bar { background: var(--paper-2); }
-.sk-bar i { background: var(--c, var(--coral)); }
-.rel-track { background: var(--paper-2); }
-
-/* ---------- Phone ---------- */
-@media (max-width: 760px) {
-  .nav { background: var(--page); border-right: 0; border-top: 1px solid var(--line); box-shadow: none; }
-  .start-hero h1 { font-size: 44px; }
-}
-
-/* ---------- Level up: the badge in coral, the new level set in the serif ---------- */
-.lu-badge::after { border-color: var(--coral); }
-.lu-swap { font-family: var(--serif); font-weight: 400; }
-.lu-new { font-style: normal; }
-.lu-track .track i.is-done { background: var(--coral); }
-.score.is-up { animation: msgIn .25s ease-out; }
-
-/* ---------- Inspector round 1 ---------- */
-.page-h .eyebrow, .eyebrow--accent { color: var(--accent-ink); }
-.page-h h1 { font-size: 32px; letter-spacing: -.015em; }
-/* The rail is wide enough that its longest label keeps 16px from the window edge */
-.nav { width: 100px; }
-.tab { width: 84px; font-size: 11.5px; }
-@media (max-width: 760px) {
-  .chat--home .thread-empty h1 { font-size: 28px; }
-  /* On the phone the top-bar buttons are plain icons, and the active tab is marked by ink and weight, not a tinted box */
-  .top .pill-stat { background: none; border-color: transparent; }
-  .tab.is-on { background: none; }
-  .tab.is-on .ic { background: var(--cream-strong); }
-}
-
-/* ---------- Inspector round 2 ---------- */
-/* No tracked caps anywhere: every small label in sentence case */
-.bal-l, .ch-area, .chip--reply .reply-n { text-transform: none; letter-spacing: 0; font-size: 13px; }
-/* Icons stand on their own, never in a tinted square */
-.perm-ic, .oc-ic, .sc-ic, .pa-ic, .ag-ic, .ride-ic, .score-ic, .unlock-ic, .confirm-ic, .hand-ic { background: none !important; border: 0; }
-.opt-card.is-primary .oc-ic { color: var(--accent-ink); }
-.score-ic { color: currentColor; }
-.ag-ic img { width: 22px; height: 22px; }
-/* Figures stay at app size */
-.bal-n b { font: 500 40px/1 var(--sans); letter-spacing: -.02em; }
-.bal-n span { font: 500 16px var(--sans); }
-/* Cards in a row keep their own height */
-.pgrid { align-items: start; }
-/* The wallet: the balance and this month's orders side by side */
-.page--wallet { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 16px; align-items: start; }
-.page--wallet > .page-h { grid-column: 1 / -1; }
-.page--wallet > .bal { max-width: none; margin: 0; }
-.page--wallet > .panel { margin: 0; }
-/* The rail: labels wrap inside a 76px tab, so the longest keeps clear of the window edge */
-.tab { width: 76px; }
-@media (max-width: 1180px) {
-  .side { box-shadow: none; }
-  .drawer-open .side { box-shadow: var(--shadow-lg); }
-}
-@media (max-width: 760px) {
-  .nav { padding-left: 14px; padding-right: 14px; }
-  .page-h h1 { font-size: 26px; }
-  .page--wallet { grid-template-columns: minmax(0, 1fr); }
-}
-.tab > span { max-width: 64px; }
-@media (max-width: 760px) { .nav { padding-left: 18px; padding-right: 18px; } .tab > span { max-width: none; } }
-@media (max-width: 760px) { .nav { width: auto; } .tab { width: auto; flex: 1; font-size: 10.5px; } }
-.perm summary, .link, .panel-h a { color: var(--accent-ink); }
