@@ -273,7 +273,7 @@
       app.innerHTML = parentShell(r);
       ROUTES[r]($("#main"));
     } else {
-      app.innerHTML = `<div class="bare"><div class="canvas">${ROUTES[r]()}</div></div>`;
+      app.innerHTML = `<div class="bare"><div class="canvas canvas--${r}">${ROUTES[r]()}</div></div>`;
       const after = AFTER[r]; if (after) after();
     }
     /* Bud-e Parent saves only when the parent changes something, so it never writes back an old copy of Bud-e's state. */
@@ -390,8 +390,8 @@
     <div class="start">
       <div class="start-main">
         <div class="start-hero">
-          <p class="eyebrow eyebrow--accent">For children and their AI agents</p>
-          <h1>${esc(D.product.tagline)}.</h1>
+          <p class="badge-pill"><b>2040</b>For children and their AI agents</p>
+          <h1>${D.product.tagline.split(", ").map((t, i) => i ? `<em>${esc(t)}.</em>` : esc(t) + ",").join("<br>")}</h1>
           <p class="lede">${esc(D.product.pitch)}</p>
           <div class="start-btns">
             <button class="btn primary lg" data-go="child">${icon("user", 18)} Set up this device</button>
@@ -1195,8 +1195,9 @@
     const t = $("#thread");
     if (home) {
       t.innerHTML = `<div class="thread-empty">
-        <p class="eyebrow eyebrow--accent">New chat</p>
-        <h1><span>${greeting()}, ${esc(name())}.</span><br>What are we doing today?</h1>
+        <div class="hero-mark">${mark(118, true)}</div>
+        <p class="badge-pill"><b>New</b>Your agent is ${esc(S.setup.child.provider)}, through Bud-e</p>
+        <h1><span>${greeting()}, ${esc(name())}.</span><br>What are we doing <em>today?</em></h1>
         <p class="home-hint">Start typing to pick a prompt. Then press <b>Send</b>, or <b>Faster response</b> if you're in a hurry.</p>
       </div>`;
     } else {

@@ -1,12 +1,14 @@
-/* Bud-e prototype styles. Clean, DIN type: Bahnschrift (DIN, ships with Windows) for headings and numbers, the system
-   sans for text, a cool grey ground, white surfaces with 1px borders, and one indigo accent. The gradient lives only in the
-   logo. Area colours mark areas, status colours (green, amber, red) mark status. System fonts only (README §7). */
+/* Bud-e prototype styles, after design-concept.png: a deep-space sky that falls from near-black navy through electric
+   blue to a pale daylight, white type with an italic second line, frosted-glass composer and chips, pill buttons, and one
+   electric-blue accent. The start, splash, handover, parent login and the chat home sit in the full sky; working screens
+   (a chat under way, Tokens, Wallet, My skills, the parent pages, setup) sit in its pale lower band, so text stays dark
+   on light. Area colours mark areas, status colours mark status. System fonts only (README §7). */
 :root {
-  --page: #F4F5F7; --surface: #FFFFFF; --card: #FFFFFF; --glass: #FFFFFF; --glass-2: #FFFFFF;
-  --paper: #F9FAFB; --paper-2: #F2F4F7;
-  --ink: #101828; --ink-2: #475467; --ink-3: #667085; --ink-4: #98A2B3; --ink-btn: #344054;
-  --line: #E4E7EC; --line-2: #D0D5DD; --line-ink: #D0D5DD;
-  --accent: #4F46E5; --accent-ink: #3730A3; --accent-soft: #EEF0FF;
+  --page: #EEF3FF; --surface: #FFFFFF; --card: #FFFFFF; --glass: rgba(255, 255, 255, .72); --glass-2: rgba(255, 255, 255, .86);
+  --paper: #F4F7FE; --paper-2: #E9EFFC;
+  --ink: #0A1033; --ink-2: #3B4566; --ink-3: #66708F; --ink-4: #A0AAC6; --ink-btn: #232C55;
+  --line: #E2E8F6; --line-2: #CDD7EE; --line-ink: #CDD7EE;
+  --accent: #2F6BFF; --accent-ink: #1A4FDB; --accent-soft: #E9F0FF;
   --spark: #F4775F; --spark-2: #DD2590;
   --together: #B54708; --together-soft: #FFFAEB; --coin: #DC6803;
   --study: #2E6BE6; --writing: #7A5AF8; --money: #DC6803; --relationships: #DD2590; --feelings: #0E9384;
@@ -14,14 +16,26 @@
   --warn: #B54708; --warn-soft: #FFFAEB; --warn-line: #FEDF89;
   --danger: #C01048; --danger-soft: #FFF1F3; --danger-line: #FECDD6;
   --care: #0E9384;
-  --r1: 6px; --r2: 8px; --r3: 12px; --r4: 12px;
-  --shadow: 0 1px 2px rgba(16, 24, 40, .04);
-  --shadow-lg: 0 24px 48px -12px rgba(16, 24, 40, .22);
-  --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --display: Bahnschrift, "DIN Alternate", "DIN Next", Barlow, "Segoe UI", system-ui, sans-serif;
-  --mono: Bahnschrift, "DIN Alternate", Barlow, "Segoe UI", system-ui, sans-serif;
-  /* The app background in the logo's colours: blue, violet, orange, pink at the edges, light in the middle where text sits. */
-  --wash: radial-gradient(55% 60% at 0% 0%, rgba(47, 149, 255, .42) 0%, rgba(47, 149, 255, 0) 70%), radial-gradient(50% 60% at 100% 0%, rgba(129, 82, 253, .38) 0%, rgba(129, 82, 253, 0) 70%), radial-gradient(55% 60% at 100% 100%, rgba(255, 138, 98, .38) 0%, rgba(255, 138, 98, 0) 70%), radial-gradient(50% 60% at 0% 100%, rgba(240, 105, 155, .34) 0%, rgba(240, 105, 155, 0) 70%), #F4F5F7;
+  --r1: 8px; --r2: 12px; --r3: 18px; --r4: 24px;
+  --shadow: 0 1px 2px rgba(10, 16, 51, .04), 0 10px 30px -12px rgba(31, 75, 200, .14);
+  --shadow-lg: 0 30px 60px -18px rgba(10, 16, 51, .35);
+  --sans: "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  --display: "Segoe UI Variable Display", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  --mono: "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif;
+  /* The full sky: night at the top, an electric-blue band where the horizon glows, then daylight. */
+  --sky: radial-gradient(70% 34% at 50% 50%, rgba(140, 185, 255, .85) 0%, rgba(140, 185, 255, 0) 100%),
+    linear-gradient(180deg, #02061C 0%, #061646 16%, #0D35B8 32%, #2563FF 44%, #7EAAFF 56%, #CFE0FF 68%, #EEF4FF 82%, #F8FAFF 100%);
+  /* The chat home keeps more night above the composer, so the greeting stays on deep blue */
+  --sky-home: radial-gradient(70% 30% at 50% 62%, rgba(140, 185, 255, .8) 0%, rgba(140, 185, 255, 0) 100%),
+    linear-gradient(180deg, #02061C 0%, #061646 22%, #0D35B8 42%, #2563FF 56%, #7EAAFF 67%, #CFE0FF 76%, #EEF4FF 88%, #F8FAFF 100%);
+  /* Faint stars, only in the dark part of the sky */
+  --stars: radial-gradient(1.2px 1.2px at 12% 18%, #fff 50%, transparent 51%), radial-gradient(1px 1px at 28% 8%, #fff 50%, transparent 51%),
+    radial-gradient(1.4px 1.4px at 44% 26%, #fff 50%, transparent 51%), radial-gradient(1px 1px at 63% 12%, #fff 50%, transparent 51%),
+    radial-gradient(1.2px 1.2px at 78% 30%, #fff 50%, transparent 51%), radial-gradient(1px 1px at 90% 9%, #fff 50%, transparent 51%),
+    radial-gradient(1px 1px at 6% 40%, #fff 50%, transparent 51%), radial-gradient(1.3px 1.3px at 54% 4%, #fff 50%, transparent 51%),
+    radial-gradient(1px 1px at 36% 42%, #fff 50%, transparent 51%), radial-gradient(1px 1px at 86% 44%, #fff 50%, transparent 51%);
+  /* Daylight: the sky's pale lower band, for working screens */
+  --wash: radial-gradient(90% 55% at 50% -12%, rgba(47, 107, 255, .26) 0%, rgba(47, 107, 255, 0) 70%), linear-gradient(180deg, #E4EDFF 0%, #F2F6FF 38%, #FAFBFF 100%);
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; }
@@ -852,3 +866,72 @@ button.chat-item:hover { background: var(--paper-2); color: var(--ink); }
   .modal.preview { padding: 18px; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+
+/* ---------- Theme: the design concept (sky, glass, pills) ---------- */
+h1, h2, h3 { font-weight: 600; letter-spacing: -.02em; }
+h1 em, h2 em { font-style: italic; font-weight: 500; }
+.btn, .send, .faster, .chip, .tool, .pill-stat, .chat-wallet, .pill span, .seg, .seg span, .note { border-radius: 999px; }
+.btn.primary, .send, .chip--go { background: linear-gradient(180deg, #4C82FF, #2259F5); border-color: #2259F5; box-shadow: 0 6px 18px -6px rgba(37, 99, 255, .6), inset 0 1px 0 rgba(255, 255, 255, .25); }
+.btn.primary:hover, .send:hover, .chip--go:hover { background: linear-gradient(180deg, #3A73FF, #1A4FDB); border-color: #1A4FDB; }
+.send { position: relative; width: 40px; height: 40px; padding: 0; justify-content: center; border-radius: 50%; }
+.send span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.card, .panel, .rsec, .kpis, .bal, .perm, .pc { box-shadow: var(--shadow); }
+.msg--me .bubble { background: linear-gradient(180deg, #4C82FF, #2259F5); border-radius: 20px 20px 6px 20px; }
+.msg--agent .bubble { border-radius: 6px 20px 20px 20px; box-shadow: var(--shadow); }
+.composer { border-radius: 22px; border-color: rgba(255, 255, 255, .8); background: var(--glass-2); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); box-shadow: 0 20px 50px -20px rgba(10, 30, 110, .35); }
+.composer:focus-within { border-color: #9DBBFF; box-shadow: 0 0 0 4px rgba(47, 107, 255, .14), 0 20px 50px -20px rgba(10, 30, 110, .35); }
+.tool { border: 1px solid var(--line); background: rgba(255, 255, 255, .6); }
+
+/* The nav rail: a strip of night sky on every app screen */
+.nav { background: linear-gradient(180deg, #030922 0%, #071A57 55%, #0E2C8A 100%); border-right: 0; }
+.nav::before { content: ""; position: absolute; inset: 0; background: var(--stars); background-size: 100% 260px; opacity: .55; pointer-events: none; }
+.nav > * { position: relative; }
+.tab { color: rgba(255, 255, 255, .72); }
+.tab:hover { color: #fff; background: rgba(255, 255, 255, .1); }
+.tab.is-on { color: var(--ink); background: #fff; box-shadow: 0 6px 18px -6px rgba(0, 0, 0, .5); }
+.tab-val { color: #fff; }
+.tab.is-on .tab-val { color: var(--accent-ink); }
+.avatar--child, .avatar--parent { background: #fff; color: var(--ink); }
+.menu { color: var(--ink); }
+
+/* The frame: daylight for working screens; the full sky for the chat home */
+.frame { background: var(--wash); }
+.frame:has(.chat--home) { background: var(--stars), var(--sky-home); background-size: 100% 70%, 100% 100%; background-repeat: no-repeat; }
+.frame:has(.chat--home) .top-date { color: rgba(255, 255, 255, .7); }
+.frame:has(.chat--home) .chatbar { background: rgba(255, 255, 255, .9); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); border-right-color: rgba(255, 255, 255, .4); }
+.frame:has(.chat--home) .side .panel { background: rgba(255, 255, 255, .9); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); border-color: rgba(255, 255, 255, .5); }
+.chat--home .thread-empty { align-items: center; text-align: center; gap: 12px; }
+.chat--home .thread-empty h1 { color: #fff; font-size: clamp(34px, 6vh, 56px); line-height: 1.08; letter-spacing: -.03em; text-shadow: 0 2px 30px rgba(0, 20, 90, .35); }
+.chat--home .thread-empty h1 span { color: rgba(255, 255, 255, .8); }
+.chat--home .home-hint { color: rgba(255, 255, 255, .82); margin: 0 auto; }
+.chat--home .home-hint b { color: #fff; }
+.chat--home .home-foot { justify-content: center; }
+.hero-mark { filter: drop-shadow(0 10px 40px rgba(120, 170, 255, .55)); margin-bottom: 2px; }
+
+/* The pill above a headline, like the concept's "NEW · Try the new model" */
+.badge-pill { display: inline-flex; align-items: center; gap: 8px; padding: 4px 12px 4px 4px; border-radius: 999px; font-size: 13px; color: rgba(255, 255, 255, .88); background: rgba(255, 255, 255, .1); border: 1px solid rgba(255, 255, 255, .22); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+.badge-pill b { font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--accent-ink); background: #fff; padding: 2px 8px; border-radius: 999px; }
+
+/* Full-sky screens: start, the splash, the handover code, the parent login */
+.canvas { background: var(--wash); }
+.canvas--start, .canvas--splash, .canvas--handover, .canvas--plogin { background: var(--stars), var(--sky); background-size: 100% 620px, 100% 100%; background-repeat: no-repeat; }
+.canvas--start { background-size: 100% 520px, 100% max(100vh, 1040px); }
+.canvas--start .start-top { background: transparent; border-bottom: 1px solid rgba(255, 255, 255, .1); }
+.canvas--start .start-top .wordmark, .canvas--splash .wordmark { color: #fff; }
+.canvas--start .start-top .wordmark i, .canvas--splash .wordmark i { background: #fff; }
+.canvas--start .start-top .wordmark b, .canvas--splash .wordmark b { color: #8FB4FF; }
+.canvas--start .start-hero h1 { color: #fff; font-size: 76px; letter-spacing: -.035em; text-shadow: 0 2px 30px rgba(0, 20, 90, .35); }
+.canvas--start .lede { color: rgba(255, 255, 255, .84); }
+.canvas--start .start-btns .btn.primary { background: #fff; color: var(--ink); border-color: #fff; box-shadow: 0 10px 30px -8px rgba(0, 10, 60, .5); }
+.canvas--start .start-btns .btn.primary:hover { background: #EEF3FF; }
+.canvas--start .start-btns .btn.ghost { background: rgba(5, 14, 50, .55); color: #fff; border-color: rgba(255, 255, 255, .22); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+.canvas--start .start-btns .btn.ghost:hover { background: rgba(5, 14, 50, .75); }
+.canvas--start .how { background: var(--glass-2); border-color: rgba(255, 255, 255, .6); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); }
+.canvas--start .how-f { background: rgba(244, 247, 254, .7); }
+.canvas--start .rail { border-top-color: var(--line-2); }
+.canvas--splash .splash-hi { color: #fff; }
+.canvas--splash .splash-note { background: rgba(255, 255, 255, .12); color: #fff; border-color: rgba(255, 255, 255, .25); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+.canvas--splash .splash-mark, .canvas--plogin .pl-brand .mark, .canvas--handover .hand-ic { filter: drop-shadow(0 10px 40px rgba(120, 170, 255, .55)); }
+.canvas--handover .code-card, .canvas--plogin .pl-card { background: var(--glass-2); border-color: rgba(255, 255, 255, .6); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); }
+.canvas--handover .hand-card > .eyebrow { color: #7EE2B0; }
+@media (max-width: 760px) { .canvas--start .start-hero h1 { font-size: 52px; } .nav { background: linear-gradient(180deg, #071A57, #030922); } }
