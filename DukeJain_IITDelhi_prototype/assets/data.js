@@ -30,8 +30,10 @@ window.DATA = {
     { id: "fun", label: "Entertainment" },
     { id: "other", label: "Other" }
   ],
-  /* Plain text only, never logos. */
+  /* Names in setup. Each agent's own logo (assets/img/agents) shows only in the "connected" step after setup. */
   providers: ["Claude", "Gemini", "ChatGPT", "Copilot", "Other agent"],
+  providerLogos: { Claude: "assets/img/agents/claude.svg", Gemini: "assets/img/agents/gemini.svg",
+    ChatGPT: "assets/img/agents/chatgpt.svg", Copilot: "assets/img/agents/copilot.svg" },
 
   permissions: [
     { id: "consent", title: "Parental consent", required: true, on: false,

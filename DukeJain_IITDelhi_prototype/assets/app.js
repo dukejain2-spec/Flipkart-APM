@@ -562,12 +562,13 @@
     go("handover");
   }
   /* Setup's last beat: the child's agent and Bud-e slide together and lock, Bud-e in front, then a check.
-     The agent is a plain tile with its name, never the provider's logo. A click skips it. */
+     The agent's tile shows its own logo and name ("Other agent" gets a chat glyph). A click skips it. */
   async function linkUp() {
     const p = S.setup.child.provider, agent = p === "Other agent" ? name() + "'s agent" : p, layer = $("#layer");
+    const logo = D.providerLogos[p];
     layer.innerHTML = `<div class="scrim"></div><div class="modal linkup" role="status">
       <div class="link-stage" aria-hidden="true">
-        <span class="link-tile link-agent">${icon("chat", 24)}<em>${esc(agent)}</em></span>
+        <span class="link-tile link-agent">${logo ? `<img src="${esc(logo)}" alt="">` : icon("chat", 24)}<em>${esc(agent)}</em></span>
         <span class="link-tile link-bude">${mark(60)}</span>
         <i class="link-ring"></i><span class="link-check">${icon("check", 15)}</span>
       </div>

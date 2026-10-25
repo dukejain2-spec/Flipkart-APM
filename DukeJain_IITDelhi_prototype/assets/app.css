@@ -166,6 +166,7 @@ input:focus-visible + .switch { outline: 2px solid var(--accent); outline-offset
 .link-stage { position: relative; height: 132px; margin-bottom: 14px; }
 .link-tile { position: absolute; top: 50%; left: 50%; width: 92px; height: 92px; border-radius: 22px; background: var(--card); border: 1px solid var(--line-2); box-shadow: 0 10px 24px -10px rgba(16, 24, 40, .25); display: grid; place-items: center; align-content: center; }
 .link-agent { z-index: 1; gap: 4px; color: var(--ink-2); transform: translate(calc(-50% - 46px), -50%) scale(.88); animation: agentIn 1.15s cubic-bezier(.3, .8, .3, 1) both; }
+.link-agent img { width: 40px; height: 40px; object-fit: contain; }
 .link-agent em { font-style: normal; font-size: 11px; font-weight: 600; color: var(--ink); max-width: 80px; text-align: center; line-height: 1.15; }
 .link-bude { z-index: 2; transform: translate(calc(-50% + 36px), -50%); animation: budeIn 1.15s cubic-bezier(.3, .8, .3, 1) both; }
 @keyframes agentIn {
