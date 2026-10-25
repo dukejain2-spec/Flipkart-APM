@@ -935,3 +935,75 @@ h1 em, h2 em { font-style: italic; font-weight: 500; }
 .canvas--handover .code-card, .canvas--plogin .pl-card { background: var(--glass-2); border-color: rgba(255, 255, 255, .6); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); }
 .canvas--handover .hand-card > .eyebrow { color: #7EE2B0; }
 @media (max-width: 760px) { .canvas--start .start-hero h1 { font-size: 52px; } .nav { background: linear-gradient(180deg, #071A57, #030922); } }
+
+/* ---------- Glass: frosted, see-through surfaces over the sky, as in the design concept ----------
+   Every surface is translucent white with a blur behind it, a bright hairline edge and a soft blue shadow. The daylight
+   behind working screens carries a few blue glows, so the blur has something to show through. */
+:root {
+  --glass-bg: rgba(255, 255, 255, .52);
+  --glass-bg-2: rgba(255, 255, 255, .68);
+  --glass-edge: rgba(255, 255, 255, .78);
+  --glass-blur: blur(22px) saturate(170%);
+  --glass-shadow: inset 0 1px 0 rgba(255, 255, 255, .9), inset 0 0 0 1px rgba(255, 255, 255, .25), 0 14px 40px -18px rgba(24, 60, 170, .32);
+  --wash: radial-gradient(38% 42% at 18% 30%, rgba(110, 150, 255, .34) 0%, rgba(110, 150, 255, 0) 100%),
+    radial-gradient(34% 40% at 86% 70%, rgba(130, 120, 255, .26) 0%, rgba(130, 120, 255, 0) 100%),
+    radial-gradient(30% 34% at 60% 105%, rgba(90, 170, 255, .26) 0%, rgba(90, 170, 255, 0) 100%),
+    radial-gradient(90% 55% at 50% -12%, rgba(47, 107, 255, .34) 0%, rgba(47, 107, 255, 0) 70%),
+    linear-gradient(180deg, #DCE7FF 0%, #EDF2FF 40%, #F6F8FF 100%);
+}
+.frame, .canvas { background-attachment: fixed; }
+
+.card, .panel, .rsec, .kpis, .bal, .perm, .pc, .gcard, .composer, .chatbar, .modal, .menu, .prompts, .how,
+.code-card, .pl-card, .msg--agent .bubble, .note, .score, .skillcard {
+  background: var(--glass-bg);
+  border-color: var(--glass-edge);
+  -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur);
+  box-shadow: var(--glass-shadow);
+}
+.composer, .modal, .menu, .prompts { background: var(--glass-bg-2); }
+.chatbar { border-right: 1px solid var(--glass-edge); box-shadow: none; }
+.kpis { gap: 0; }
+.kpi { background: transparent; }
+.kpi + .kpi { border-left: 1px solid rgba(255, 255, 255, .8); }
+.gwide, .rel-sum, .never, .lock-note, .how-f, .rel-key, .unlock-track, .code, .code-in { background: rgba(255, 255, 255, .42); border-color: var(--glass-edge); }
+.gcard--empty { background: rgba(255, 255, 255, .35); }
+
+/* Glass controls: pills you can see the sky through */
+.btn, .btn.ghost, .chip, .tool, .faster, .pill span, .pill-stat, .chat-wallet, .lvl, .seg, .opt-card {
+  background: rgba(255, 255, 255, .5);
+  border-color: rgba(255, 255, 255, .85);
+  -webkit-backdrop-filter: blur(14px) saturate(160%); backdrop-filter: blur(14px) saturate(160%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .9), 0 4px 14px -8px rgba(24, 60, 170, .3);
+}
+.btn:hover, .btn.ghost:hover, .chip:hover, .tool:hover, .faster:hover, .opt-card:hover { background: rgba(255, 255, 255, .8); border-color: #fff; }
+.btn.primary, .btn.danger { -webkit-backdrop-filter: none; backdrop-filter: none; }
+.btn.danger { background: rgba(255, 255, 255, .55); }
+.pill input:checked + span, .opt-card.is-primary { background: rgba(233, 240, 255, .85); border-color: var(--accent); }
+.seg input:checked + span { background: rgba(255, 255, 255, .9); }
+.field input, .field select, .amount input { background: rgba(255, 255, 255, .6); border-color: rgba(255, 255, 255, .9); box-shadow: inset 0 1px 2px rgba(24, 60, 170, .08); }
+.field input:focus, .field select:focus { background: rgba(255, 255, 255, .85); }
+.chat-item.is-on { background: rgba(255, 255, 255, .7); box-shadow: inset 0 1px 0 #fff, 0 4px 14px -8px rgba(24, 60, 170, .3); }
+button.chat-item:hover { background: rgba(255, 255, 255, .5); }
+.prompt:hover, .prompt.is-hl { background: rgba(255, 255, 255, .7); }
+.scrim { background: rgba(6, 18, 60, .35); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+.toast { background: rgba(10, 16, 51, .78); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); border: 1px solid rgba(255, 255, 255, .15); }
+
+/* On the night sky (chat home, start): the nav tabs and the home's side panels are glass too */
+.tab.is-on { background: rgba(255, 255, 255, .88); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+.tab:hover { background: rgba(255, 255, 255, .12); }
+.frame:has(.chat--home) .side .panel, .frame:has(.chat--home) .chatbar { background: rgba(255, 255, 255, .62); }
+.canvas--start .start-btns .btn.primary { background: #fff; }
+.canvas--start .start-btns .btn.ghost { background: rgba(255, 255, 255, .12); border-color: rgba(255, 255, 255, .3); color: #fff; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .25); }
+.canvas--start .start-btns .btn.ghost:hover { background: rgba(255, 255, 255, .2); }
+.canvas--start .how { background: rgba(255, 255, 255, .58); }
+.canvas--start .rail-list button:hover { background: rgba(255, 255, 255, .55); }
+.frame:has(.chat--home) .side .panel { background: rgba(255, 255, 255, .8); }
+/* On the chat home the Chats sidebar is dark glass over the night sky */
+.frame:has(.chat--home) .chatbar { background: linear-gradient(180deg, rgba(3, 9, 34, .45) 0%, rgba(7, 26, 87, .55) 55%, rgba(14, 44, 138, .72) 100%); border-right-color: rgba(255, 255, 255, .12); }
+.frame:has(.chat--home) .chatbar-h b, .frame:has(.chat--home) .chat-item { color: #fff; }
+.frame:has(.chat--home) .chatbar-l, .frame:has(.chat--home) .chat-item em, .frame:has(.chat--home) .chat-item .ic { color: rgba(255, 255, 255, .55); }
+.frame:has(.chat--home) button.chat-item:hover { background: rgba(255, 255, 255, .1); }
+.frame:has(.chat--home) .chatbar-new { background: rgba(255, 255, 255, .12); border-color: rgba(255, 255, 255, .28); color: #fff; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .2); }
+.frame:has(.chat--home) .chatbar-new .ic { color: #fff; }
+.frame:has(.chat--home) .chatbar-new:hover { background: rgba(255, 255, 255, .2); }
+.canvas--start .how { background: rgba(255, 255, 255, .7); }
