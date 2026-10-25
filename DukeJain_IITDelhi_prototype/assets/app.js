@@ -2,6 +2,15 @@
    Content (persona, flows, products, report numbers) lives in data.js. */
 (function () {
   const D = window.DATA;
+  /* laksh.html shows a second child: on that page his details, levels and earlier chats replace Aarav's. */
+  const PERSONA = document.body.dataset.persona || "";
+  const PER = PERSONA ? D.personas[PERSONA] : null;
+  if (PER) {
+    Object.assign(D.parent, PER.parent);
+    Object.assign(D.child, PER.child);
+    D.areas.forEach(a => a.skills.forEach(s => { if (s.id in PER.ratings) s.rating = PER.ratings[s.id]; }));
+    D.history = PER.history;
+  }
   const $ = (s, r = document) => r.querySelector(s);
   const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
   const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -10,7 +19,11 @@
   const rand = (a, b) => Math.round(a + Math.random() * (b - a));
   const clone = o => JSON.parse(JSON.stringify(o));
   const signed = n => (n > 0 ? "+" : n < 0 ? "−" : "") + Math.abs(Math.round(n));
-  const clock = () => new Date().toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit" }).toLowerCase();
+  /* A story clock: the demo always starts at 4:40 pm on its 2040 Wednesday and runs on in real minutes, so times
+     match the scripted day (the 4:42 pm cab) whatever the time where it's shown. */
+  const storyStart = Date.now();
+  const storyNow = () => new Date(2040, 9, 17, 16, 40 + Math.floor((Date.now() - storyStart) / 60000));
+  const clock = () => storyNow().toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit" }).toLowerCase();
 
   /* ---------- Icons and brand ---------- */
   const P = {
@@ -52,14 +65,23 @@
     data: '<ellipse cx="12" cy="6" rx="7" ry="2.5"/><path d="M5 6v12c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5V6M5 12c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5"/>',
     plug: '<path d="M9 3.5v4M15 3.5v4M6.5 7.5h11v3a5.5 5.5 0 0 1-11 0zM12 16v4.5"/>',
     mic: '<rect x="9" y="3.5" width="6" height="11" rx="3"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v2.5"/>',
-    clip: '<path d="m19 11.5-6.8 6.8a4.5 4.5 0 0 1-6.4-6.4l7.4-7.4a3 3 0 0 1 4.2 4.2l-7.3 7.3a1.5 1.5 0 0 1-2.1-2.1l6.5-6.5"/>'
+    clip: '<path d="m19 11.5-6.8 6.8a4.5 4.5 0 0 1-6.4-6.4l7.4-7.4a3 3 0 0 1 4.2 4.2l-7.3 7.3a1.5 1.5 0 0 1-2.1-2.1l6.5-6.5"/>',
+    /* Product pictures (gift and challenge cards) */
+    headphones: '<path d="M4 15v-3a8 8 0 0 1 16 0v3"/><rect x="3.5" y="14" width="4" height="6.5" rx="1.5"/><rect x="16.5" y="14" width="4" height="6.5" rx="1.5"/>',
+    speaker: '<rect x="6" y="3.5" width="12" height="17" rx="2"/><circle cx="12" cy="14.5" r="3"/><circle cx="12" cy="8" r="1.2"/>',
+    music: '<path d="M9 18V5.5l10-2V16"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/>',
+    palette: '<path d="M12 3.5a8.5 8.5 0 1 0 0 17c1.4 0 2-1 1.6-2.1-.5-1.3.4-2.4 1.8-2.4H17a3.5 3.5 0 0 0 3.5-3.5c0-5-3.8-9-8.5-9z"/><circle cx="8" cy="11" r="1.2"/><circle cx="11" cy="7.5" r="1.2"/><circle cx="15.5" cy="8.5" r="1.2"/>',
+    frame: '<rect x="4" y="4" width="16" height="16" rx="1"/><path d="m4 16 5-5 4 4 2-2 5 5"/><circle cx="15" cy="9" r="1.5"/>',
+    search: '<circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/>',
+    mute: '<path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="m16 9.5 5 5M21 9.5l-5 5"/>',
+    bag: '<path d="M5 8h14l-1 12H6z"/><path d="M9 8V6.5a3 3 0 0 1 6 0V8"/>'
   };
   const icon = (n, s = 18, cls = "") => `<svg class="ic ${cls}" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[n] || ""}</svg>`;
 
-  /* The Bud-e character mark ("Winking Buddy" from color-theme-logo.jpeg): a "B" built from three solid layers with
-     hard edges between them (blue-to-violet stem, magenta-to-coral upper bowl, orange lower bowl), a white visor face
-     (one eye open, one winking) and two sparks. Live marks follow the mouse with their eyes and giggle when clicked
-     (see the bottom of this file). The viewBox includes the sparks, so nothing is clipped. */
+  /* The Bud-e character mark (logo.jpeg): a "B" built from three solid layers with hard edges between them
+     (blue-to-violet stem, magenta-to-coral upper bowl, orange lower bowl), a white visor face with two open eyes, and
+     two sparks. Live marks follow the mouse with their eyes and giggle when clicked (see the bottom of this file).
+     The viewBox includes the sparks, so nothing is clipped. */
   let markId = 0;
   const mark = (s = 28, live = false) => {
     const id = "bd" + (++markId), small = s < 24;
@@ -71,10 +93,9 @@
         <path d="M80 18H140a54 54 0 0 1 0 108H80z" fill="url(#${id}u)"/>
         <path d="M80 104H147a59 59 0 0 1 0 118H80z" fill="url(#${id}l)"/>
         <path d="M70 18H108C126 42 140 80 144 116C149 156 147 194 158 222H70a50 50 0 0 1-50-50V68a50 50 0 0 1 50-50z" fill="url(#${id}s)"/>
-        ${small ? "" : '<path d="M56 120 65 94 90 120z" fill="#3A27D6" opacity=".3"/>'}
         <rect x="56" y="116" width="121" height="70" rx="35" fill="#fff"/>
-        <g class="m-eyes"><g class="m-open"><circle class="m-eye" cx="92" cy="151" r="10.5" fill="#0B0A46"/><path d="M133 155 154 143" stroke="#0B0A46" stroke-width="10" stroke-linecap="round"/></g>
-          ${live ? '<path class="m-happy" d="M81 156Q92 139 103 156M132 156Q143 139 154 156" fill="none" stroke="#0B0A46" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>' : ""}</g>
+        <g class="m-eyes"><g class="m-open"><ellipse class="m-eye" cx="92" cy="151" rx="10" ry="12.5" fill="#0B0A46"/><ellipse class="m-eye" cx="141" cy="151" rx="10" ry="12.5" fill="#0B0A46"/></g>
+          ${live ? '<path class="m-happy" d="M81 156Q92 139 103 156M130 156Q141 139 152 156" fill="none" stroke="#0B0A46" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>' : ""}</g>
       </g>
       ${small ? "" : '<g class="m-sparks" stroke-width="9.5" stroke-linecap="round"><path class="m-sp1" d="M206 96 226 80" stroke="#F4775F"/><path class="m-sp2" d="M213 120H237" stroke="#E04BCB"/></g>'}
     </svg>`;
@@ -83,7 +104,10 @@
   const logo = (s = 28) => `<span class="logo">${mark(s, true)}${wordmark()}</span>`;
 
   /* ---------- Saved state ---------- */
-  const KEY = "bude.prototype.v3";
+  /* Bud-e (index.html) and Bud-e Parent (parent.html) are separate pages that share this browser's saved state. */
+  const APP = document.body.dataset.app === "parent" ? "parent" : "child";
+  const KEY = "bude.prototype.v3" + (PERSONA ? "." + PERSONA : "");
+  const PKEY = "bude.parent.v1";
   function fresh() {
     const c = D.child, skills = {};
     D.areas.forEach(a => a.skills.forEach(s => { skills[s.id] = { rating: s.rating }; }));
@@ -97,24 +121,38 @@
         child: { name: c.name, age: c.age, classNo: c.classNo, uses: c.uses.slice(), provider: c.provider, usedBefore: c.usedBefore },
         perms, walletMonthly: c.walletMonthly
       },
-      parentIn: false, newSkill: false,
+      newSkill: false,
       tokens: c.tokens, spent: 0, earned: 0, tokenLog: [],
       wallet: c.wallet, orders: [],
       skills, ratingLog: [],
       done: {}, didIt: [], fasterOn: [],
       reliance: {},
       blocked: Object.fromEntries(D.report.agents.filter(a => a.blocked).map(a => [a.id, true])),
-      thread: []
+      /* Chats, newest first. `thread` is the open chat's messages (the same array as its entry in `chats`);
+         `chatId` is null for a new chat until its first message. */
+      chats: D.history.map((h, i) => ({ id: "h" + i, title: h.title, at: h.when, thread: clone(h.thread) })),
+      chatId: null, thread: []
     };
   }
   function load() {
-    try { const s = JSON.parse(localStorage.getItem(KEY)); if (s && s.v === 3) return s; } catch (e) { /* storage blocked */ }
+    try {
+      const s = JSON.parse(localStorage.getItem(KEY));
+      if (s && s.v === 3) {
+        if (!s.chats) { s.chats = fresh().chats; s.chatId = null; s.thread = []; }
+        const open = s.chatId && s.chats.find(c => c.id === s.chatId);
+        if (open) s.thread = open.thread; else { s.chatId = null; s.thread = []; }
+        return s;
+      }
+    } catch (e) { /* storage blocked */ }
     return fresh();
   }
   let S = load();
   if (!S.blocked) S.blocked = fresh().blocked;
   function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* storage blocked */ } }
   function changed() { save(); refreshLive(); }
+  /* Bud-e Parent stays logged in with the code it used. A new setup or a reset changes the code, which logs it out. */
+  const parentIn = () => { try { const p = JSON.parse(localStorage.getItem(PKEY)); return !!(p && S.setup.done && p.code === S.setup.code); } catch (e) { return false; } };
+  const setParentIn = on => { try { if (on) localStorage.setItem(PKEY, JSON.stringify({ code: S.setup.code })); else localStorage.removeItem(PKEY); } catch (e) { /* storage blocked */ } };
 
   const name = () => S.setup.child.name || D.child.name;
   const area = id => D.areas.find(a => a.id === id);
@@ -162,18 +200,23 @@
   }
   const offPath = () => toast("Not part of this prototype.");
 
+  /* An action with `sub` renders as a choice card (title, what it does, optional icon) instead of a plain button. */
   function modal({ cls = "", html, actions }) {
     return new Promise(resolve => {
       const layer = $("#layer");
+      const cards = actions.some(a => a.sub);
+      const button = (a, i) => a.sub
+        ? `<button class="opt-card ${a.primary ? "is-primary" : ""}" data-i="${i}">${a.icon ? `<span class="oc-ic">${icon(a.icon, 20)}</span>` : ""}<span class="oc-t"><b>${esc(a.label)}</b><span>${esc(a.sub)}</span></span>${icon("arrow", 16, "oc-go")}</button>`
+        : `<button class="btn ${a.primary ? "primary" : "ghost"}" data-i="${i}">${esc(a.label)}</button>`;
       layer.innerHTML = `<div class="scrim"></div><div class="modal ${cls}" role="dialog" aria-modal="true">${html}
-        <div class="modal-actions">${actions.map((a, i) => `<button class="btn ${a.primary ? "primary" : "ghost"}" data-i="${i}">${esc(a.label)}</button>`).join("")}</div></div>`;
+        <div class="modal-actions ${cards ? "modal-actions--cards" : ""}">${actions.map(button).join("")}</div></div>`;
       layer.classList.add("open");
       const close = v => { layer.classList.remove("open"); layer.innerHTML = ""; document.removeEventListener("keydown", onKey); resolve(v); };
       const onKey = e => { if (e.key === "Escape") close(actions[0].cancel ? actions[0].value : null); };
       document.addEventListener("keydown", onKey);
       $$("[data-i]", layer).forEach(b => b.addEventListener("click", () => close(actions[+b.dataset.i].value)));
       $(".scrim", layer).addEventListener("click", () => close(null));
-      const p = $(".btn.primary", layer); if (p) p.focus();
+      const p = $(".btn.primary, .opt-card.is-primary", layer); if (p) p.focus();
     });
   }
 
@@ -192,22 +235,32 @@
   }
 
   /* ---------- Router ---------- */
-  const ROUTES = {
-    start: viewStart, child: viewChildProfile, permissions: viewPermissions, handover: viewHandover, splash: viewSplash,
-    chat: viewChat, earn: viewEarn, wallet: viewWallet, progress: viewProgress, plogin: viewParentLogin, parent: viewParent, pagents: viewParentAgents, pperms: viewParentPerms
-  };
+  /* Each page has only its own app's screens. Laksh's device is already set up, so his page opens on "I'm Laksh". */
+  const ROUTES = APP === "parent"
+    ? { plogin: viewParentLogin, parent: viewParent, pagents: viewParentAgents, pperms: viewParentPerms }
+    : PERSONA
+      ? { splash: viewSplash, chat: viewChat, earn: viewEarn, wallet: viewWallet, progress: viewProgress }
+      : { start: viewStart, child: viewChildProfile, permissions: viewPermissions, handover: viewHandover, splash: viewSplash,
+          chat: viewChat, earn: viewEarn, wallet: viewWallet, progress: viewProgress };
+  const HOME = APP === "parent" ? "plogin" : PERSONA ? "splash" : "start";
+  const TITLES = { child: "Set up", permissions: "Permissions", handover: "Your Bud-e Parent code", chat: "Home", earn: "Tokens",
+    wallet: "Wallet", progress: "My skills", plogin: "Log in", parent: "Weekly report", pagents: "Extension report", pperms: "Permissions" };
   const CHILD = ["chat", "earn", "wallet", "progress"];
   const PARENT = ["parent", "pagents", "pperms"];
-  const route = () => (location.hash.replace(/^#\/?/, "").split("?")[0] || "start");
+  const route = () => (location.hash.replace(/^#\/?/, "").split("?")[0] || HOME);
   function go(r) { if (route() === r) render(); else location.hash = "#/" + r; }
 
   function render() {
     let r = route();
-    if (!ROUTES[r]) r = "start";
-    /* Bud-e Parent opens only after the code login. */
-    if (PARENT.includes(r) && !S.parentIn) { location.replace("#/plogin"); return; }
+    if (!ROUTES[r]) r = HOME;
+    /* Bud-e Parent opens only after the code login, and skips the login while it's still valid. */
+    if (PARENT.includes(r) && !parentIn()) { location.replace("#/plogin"); return; }
+    if (r === "plogin" && parentIn()) { location.replace("#/parent"); return; }
     const app = $("#app");
     document.body.dataset.route = r;
+    /* the browser tab names the screen and the app */
+    const title = TITLES[r], appName = APP === "parent" ? "Bud-e Parent" : PERSONA ? "Bud-e · " + name() : "Bud-e";
+    document.title = title ? title + " · " + appName : appName;
     if (CHILD.includes(r)) {
       if (!S.setup.done) quickSetup();
       S.role = "child";
@@ -223,25 +276,27 @@
       app.innerHTML = `<div class="bare"><div class="canvas">${ROUTES[r]()}</div></div>`;
       const after = AFTER[r]; if (after) after();
     }
-    save();
+    /* Bud-e Parent saves only when the parent changes something, so it never writes back an old copy of Bud-e's state. */
+    if (APP === "child") save();
     window.scrollTo(0, 0);
     queueAim();
   }
   const AFTER = {};
 
-  /* Jumping straight into either app (demo rail, "I'm Aarav") uses the default setup and its code. */
+  /* Jumping straight in (demo rail, "I'm Aarav") uses the default setup and makes its Bud-e Parent code. */
   function quickSetup() {
     S.setup.done = true; S.setup.perms.consent = true;
     if (!S.setup.code) S.setup.code = makeCode();
   }
 
   /* ---------- Shells ---------- */
-  /* Both apps share one frame: a soft colour-washed canvas, a nav rail on the left, a top bar of status pills. */
+  /* Both apps share one frame: a white nav rail on the left, the grey ground, a top bar of status labels. */
   const tab = (href, label, ic, on, val = "") => `<a href="#/${href}" class="tab ${on ? "is-on" : ""}" ${on ? 'aria-current="page"' : ""}>${icon(ic, 20)}<span>${label}</span>${val}</a>`;
   const weekday = () => D.today.long.split(",")[0];
-  function frame(cls, nav, top, body) {
+  function frame(cls, nav, top, body, bar = "") {
     return `<div class="shell ${cls}"><div class="frame">
       <nav class="nav" aria-label="Main"><span class="nav-mark">${mark(38, true)}</span>${nav}</nav>
+      ${bar}
       <div class="body">
         <header class="top"><span class="top-mark">${mark(30, true)}</span><span class="top-date">${weekday()}, ${clock()}</span><div class="top-right">${top}</div></header>
         ${body}
@@ -254,9 +309,19 @@
        ${tab("earn", "Tokens", "coin", r === "earn", `<em class="tab-val token-count">${S.tokens}</em>`)}
        ${S.setup.perms.wallet ? tab("wallet", "Wallet", "wallet", r === "wallet", `<em class="tab-val wallet-count">${rupee(S.wallet)}</em>`) : ""}
        <span class="nav-fill"></span><button class="tab tab--settings" data-off>${icon("cog", 20)}<span>Settings</span></button>${profileButton(name()[0], "child")}`,
-      `<button class="pill-stat areas-pill" data-drawer aria-label="My areas">${icon("chart", 16)}<span>My areas</span></button>`,
+      `<button class="pill-stat chats-pill" data-chatbar aria-label="Chats">${icon("chat", 16)}<span>Chats</span></button>
+       <button class="pill-stat areas-pill" data-drawer aria-label="My areas">${icon("chart", 16)}<span>My areas</span></button>`,
       `<div class="cols"><main id="main" class="main"></main><aside class="side" id="side" aria-label="Your areas and tokens"></aside></div>
-       <div class="drawer-scrim" data-drawer></div>`);
+       <div class="drawer-scrim" data-drawer></div>`,
+      `<aside class="chatbar" id="chatbar" aria-label="Chats"></aside>`);
+  }
+  /* Chats, like a chat app's sidebar: New chat on top, then recent chats, newest first. Beside the nav on wide screens;
+     on narrower ones it slides in from the left. Re-rendered on every change. */
+  function chatbarHTML() {
+    return `<div class="chatbar-h"><b>Chats</b></div>
+      <button class="btn block chatbar-new" data-newchat>${icon("plus", 16)} New chat</button>
+      <p class="chatbar-l">Recents</p>
+      <div class="chat-list">${S.chats.slice(0, 12).map(c => `<button class="chat-item ${c.id === S.chatId ? "is-on" : ""}" data-chat="${c.id}"><span>${esc(c.title)}</span><em>${esc(c.at)}</em></button>`).join("")}</div>`;
   }
   function parentShell(r) {
     return frame("shell--parent",
@@ -269,14 +334,12 @@
     return `<div class="profile"><button class="avatar avatar--${role}" data-menu aria-label="Profile menu">${esc(initial)}</button>
       <div class="menu" hidden>
         <div class="menu-h">${role === "child" ? esc(name()) + ", " + S.setup.child.age : esc(S.setup.parent.name) + " · " + D.parent.relation}</div>
-        ${role === "child" ? `<button data-switch="parent">${icon("swap", 16)} Open Bud-e Parent</button>`
+        ${role === "child" ? `${PERSONA ? "" : `<button data-go="start">${icon("home", 16)} Start screen</button>`}<button data-reset>${icon("refresh", 16)} Reset prototype</button>`
                            : `<button data-logout>${icon("back", 16)} Log out</button>`}
-        ${role === "child" ? `<button data-go="start">${icon("home", 16)} Start screen</button>
-        <button data-reset>${icon("refresh", 16)} Reset prototype</button>` : ""}
       </div></div>`;
   }
 
-  /* Side panel: areas and levels. Balances live in the nav (Tokens, Wallet). Re-rendered on every change. */
+  /* Side panel: areas and levels. Balances live in the nav (Tokens, Wallet), chats in the chat sidebar. Re-rendered on every change. */
   function sideHTML() {
     const age = S.setup.child.age;
     const areas = D.areas.map(a => {
@@ -289,7 +352,7 @@
           return `<div class="sk"><span class="sk-name">${esc(s.name)}</span><span class="lvl lvl--${l.i}">${l.name}</span>
             <span class="sk-bar"><i style="width:${l.pct}%"></i></span></div>`;
         }).join("");
-      return `<div class="area"><div class="area-h">${icon(areaIcon(a.id), 15)}<b>${esc(a.name)}</b></div>${rows}</div>`;
+      return `<div class="area" data-area="${a.id}"><div class="area-h">${icon(areaIcon(a.id), 15)}<b>${esc(a.name)}</b></div>${rows}</div>`;
     }).join("");
     return `<section class="panel areas">
         <div class="panel-h"><b>My areas</b><a href="#/progress">My skills</a></div>
@@ -301,6 +364,7 @@
 
   function refreshLive() {
     const side = $("#side"); if (side) side.innerHTML = sideHTML();
+    const bar = $("#chatbar"); if (bar) bar.innerHTML = chatbarHTML();
     $$(".token-count").forEach(el => { el.textContent = S.tokens; });
     $$(".wallet-count").forEach(el => { el.textContent = rupee(S.wallet); });
     if (route() === "chat") renderComposer();
@@ -312,21 +376,33 @@
     ["S1", "Child details", "child"], ["S2", "Permissions", "permissions"], ["S3", "Code + handover", "handover"], ["S4", "I'm Aarav", "splash"],
     ["S5", "Home", "chat"], ["S6", "Chore", "task:cab"], ["S7", "New skill + algebra", "task:algebra"],
     ["S8", "Relationships", "task:apology"], ["S9", "Gift + wallet", "task:gift"], ["S10", "Feelings", "task:feelings"],
-    ["S11", "Tokens + earn", "earn"], ["S12", "Wallet", "wallet"], ["S13", "My skills", "progress"], ["S14", "Parent code login", "plogin"],
-    ["S15", "Parent report", "parent"], ["S16", "Extension report", "pagents"], ["S17", "Edit permissions", "pperms"]
+    ["S11", "Tokens + earn", "earn"], ["S12", "Wallet", "wallet"], ["S13", "My skills", "progress"]
+  ];
+  /* How Bud-e answers, one example per kind of reply */
+  const HOW = [
+    ["Do it", "“book a cab to Riya's at 5” · done instantly"],
+    ["Show how", "“solve 2x + 7 = 10” · one quick check, then it's his"],
+    ["Let him decide", "“a gift for Riya under ₹800” · three options, he picks"],
+    ["Coach", "“reply to Riya, say sorry” · he writes it, Bud-e helps"]
   ];
   function viewStart() {
-    return `<div class="start">
-      <div class="start-hero">
-        <div class="hero-mark">${mark(150, true)}</div>
-        <h1>${wordmark()}</h1>
-        <p class="tagline">${esc(D.product.tagline)}</p>
-        <p class="lede">Bud-e sits between a child and their personal AI agent. Chores happen instantly. For the moments that build a person, the AI does less as the child gets better.</p>
-        <div class="start-btns">
-          <button class="btn primary lg" data-go="child">${icon("user", 18)} Set up ${esc(name())}'s device</button>
-          <button class="btn ghost lg" data-go="splash">I'm ${esc(name())}</button>
-          <button class="btn ghost lg" data-go="plogin">${icon("shield", 18)} Bud-e Parent</button>
+    return `<header class="start-top">${logo(32)}</header>
+    <div class="start">
+      <div class="start-main">
+        <div class="start-hero">
+          <p class="eyebrow eyebrow--accent">For children and their AI agents</p>
+          <h1>${esc(D.product.tagline)}.</h1>
+          <p class="lede">${esc(D.product.pitch)}</p>
+          <div class="start-btns">
+            <button class="btn primary lg" data-go="child">${icon("user", 18)} Set up this device</button>
+            <button class="btn ghost lg" data-go="splash">I'm ${esc(name())}</button>
+          </div>
         </div>
+        <section class="card how" aria-label="How Bud-e answers">
+          <div class="how-h"><b>How Bud-e answers</b><span>by ${esc(name())}'s level in each skill</span></div>
+          ${HOW.map(([t, ex]) => `<div class="how-row"><b>${t}</b><span>${esc(ex)}</span></div>`).join("")}
+          <p class="how-f">${icon("lock", 14)} Parents see progress in Bud-e Parent. Never the chats.</p>
+        </section>
       </div>
       <nav class="rail" aria-label="Jump to a screen">
         <div class="rail-h"><span>Jump to a screen</span><button class="link" data-reset>Reset prototype</button></div>
@@ -337,17 +413,20 @@
   }
   function jump(to) {
     if (to.startsWith("task:")) {
-      const id = to.slice(5);
+      const id = to.slice(5), skill = taskDef(id).skill;
       quickSetup();
+      /* A skill that starts out new (algebra) is reset, so jumping to it always shows the "New skill unlocked" moment. */
+      if (skill && skillDef(skill).rating == null) S.skills[skill] = { rating: null };
+      newChat();
       pendingPrefill = taskDef(id).prompt;
       go("chat");
       return;
     }
-    if (to === "handover" || to === "splash" || to === "plogin") quickSetup();
-    if (to === "plogin") S.parentIn = false;
-    if (PARENT.includes(to)) { quickSetup(); S.parentIn = true; }
+    if (to === "handover" || to === "splash") quickSetup();
     save();
-    go(to);
+    /* jumping to the code screen still shows setup's last beat: the agent and Bud-e locking together */
+    if (to === "handover") linkUp().then(() => go(to));
+    else go(to);
   }
 
   /* ---------- S1–S3 Setting up the child's device (filled in by the parent) ---------- */
@@ -375,7 +454,7 @@
           <div class="pills">${D.aiUses.map(u => `<label class="pill"><input type="checkbox" name="uses" value="${u.id}" ${c.uses.includes(u.id) ? "checked" : ""}><span>${esc(u.label)}</span></label>`).join("")}</div>
         </fieldset>
         <fieldset class="field"><legend>Which AI agent does ${esc(c.name)} use?</legend>
-          <div class="pills">${D.providers.map(p => `<label class="pill"><input type="radio" name="provider" value="${esc(p)}" ${p === c.provider ? "checked" : ""}><span>${esc(p)}</span></label>`).join("")}</div>
+          <div class="pills">${D.providers.map(p => `<label class="pill"><input type="radio" name="provider" value="${esc(p)}" ${p === c.provider ? "checked" : ""}><span>${D.providerLogos[p] ? `<img class="pill-logo" src="${esc(D.providerLogos[p])}" alt="">` : ""}${esc(p)}</span></label>`).join("")}</div>
         </fieldset>
         <fieldset class="field"><legend>Has ${esc(c.name)} used this agent before?</legend>
           <div class="seg"><label><input type="radio" name="usedBefore" value="yes" ${c.usedBefore ? "checked" : ""}><span>Yes</span></label><label><input type="radio" name="usedBefore" value="no" ${!c.usedBefore ? "checked" : ""}><span>No, first time</span></label></div>
@@ -410,12 +489,12 @@
       const off = p.id === "past" && !c.usedBefore;
       const on = off ? false : s.perms[p.id];
       const locked = inParent && p.required;
-      const why = p.why.replace(/Aarav/g, esc(c.name));
+      /* Written for any child ("your child"), whatever name setup was given */
       return `<div class="perm ${on ? "is-on" : ""} ${off ? "is-off" : ""}" data-perm="${p.id}">
         <span class="perm-ic">${icon(permIcon[p.id], 20)}</span>
         <div class="perm-txt"><b>${esc(p.title)}${p.required ? '<em class="req">Required</em>' : ""}${p.optional ? '<em class="opt">Optional</em>' : ""}</b>
-          <p>${off ? "Not needed: " + esc(c.name) + " hasn't used an agent before." : why}</p>
-          ${locked ? `<p class="perm-lock">${icon("lock", 13)} Stays on while Bud-e is active. To withdraw it, remove ${esc(c.name)}'s device in Settings.</p>` : ""}
+          <p>${off ? "Not needed: your child hasn't used an AI agent before." : esc(p.why)}</p>
+          ${locked ? `<p class="perm-lock">${icon("lock", 13)} Stays on while Bud-e is active. To withdraw it, remove your child's device in Settings.</p>` : ""}
           ${p.detail ? `<details><summary>What exactly is stored</summary><ul>${p.detail.map(d => `<li>${esc(d)}</li>`).join("")}</ul></details>` : ""}
           ${p.id === "wallet" ? `<label class="amount">Monthly amount <span>₹</span><input type="number" min="0" step="100" id="walletAmt" value="${s.walletMonthly}"></label>` : ""}
         </div>
@@ -438,7 +517,7 @@
   }
   function viewPermissions() {
     return setupFrame(2, "Permissions", "Each one is explained. Only the first two are required.", `
-      <div class="lock-note">${icon("lock", 18)}<p><b>These permissions can't be changed on this device.</b> After setup, only you can change them, from Bud-e Parent on your phone.</p></div>
+      <div class="lock-note">${icon("lock", 18)}<p><b>These permissions can't be changed on this device.</b> After setup, only you can change them, from Bud-e Parent on your phone. This makes sure your child isn't exposed to unrestricted AI agents that do everything for them and hold back their growth and learning.</p></div>
       <div class="perms">${permCards(false)}</div>
       <div class="seebox card">
         <div><h3>${icon("eye", 18)} You will see</h3><ul>${D.willSee.map(x => `<li>${icon("check", 15)}${esc(x)}</li>`).join("")}</ul></div>
@@ -484,11 +563,32 @@
     const lis = $$(".provision li");
     for (const li of lis) { li.classList.add("is-now"); await sleep(rand(380, 620)); li.classList.remove("is-now"); li.classList.add("is-done"); $(".spin", li).outerHTML = icon("check", 15); }
     await sleep(300);
-    $("#layer").classList.remove("open"); $("#layer").innerHTML = "";
     S.setup.code = makeCode();
     S.wallet = walletLeft();
-    S.setup.done = true; S.parentIn = false; save();
+    S.setup.done = true; save();
+    await linkUp();
     go("handover");
+  }
+  /* Setup's last beat: the child's agent and Bud-e slide together and lock, Bud-e in front, then a check.
+     The agent's tile shows its own logo and name ("Other agent" gets a chat glyph). A click skips it. */
+  async function linkUp() {
+    const p = S.setup.child.provider, agent = p === "Other agent" ? name() + "'s agent" : p, layer = $("#layer");
+    const logo = D.providerLogos[p];
+    layer.innerHTML = `<div class="scrim"></div><div class="modal linkup" role="status">
+      <div class="link-stage" aria-hidden="true">
+        <span class="link-tile link-agent">${logo ? `<img src="${esc(logo)}" alt="">` : icon("chat", 24)}<em>${esc(agent)}</em></span>
+        <span class="link-tile link-bude">${mark(60)}</span>
+        <i class="link-ring"></i><span class="link-check">${icon("check", 15)}</span>
+      </div>
+      <h2>${esc(agent)} is connected</h2>
+      <p>Every request from ${esc(name())} now goes through Bud-e first.</p>
+    </div>`;
+    let skip;
+    const skipped = new Promise(r => { skip = r; layer.addEventListener("click", skip); });
+    layer.classList.add("open");
+    await Promise.race([sleep(3200), skipped]);
+    layer.removeEventListener("click", skip);
+    layer.classList.remove("open"); layer.innerHTML = "";
   }
 
   /* S3: the code for Bud-e Parent, then the handover. */
@@ -505,7 +605,6 @@
         <div class="hand-ic">${icon("swap", 28)}</div>
         <h2>Now hand the device to ${n}.</h2>
         <button class="btn primary lg" data-go="splash">I'm ${n} ${icon("arrow", 18)}</button>
-        <button class="link" data-go="plogin">Open Bud-e Parent instead</button>
       </div>
     </div>`;
   }
@@ -522,7 +621,8 @@
   }
   AFTER.splash = () => {
     quickSetup(); save();
-    const done = () => { if (route() === "splash") go("chat"); };
+    /* Opening the app as the child always starts a new chat; earlier ones stay under Chats. */
+    const done = () => { if (route() === "splash") { newChat(); go("chat"); } };
     $(".splash").addEventListener("click", done);
     setTimeout(done, window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 900 : 3000);
   };
@@ -533,6 +633,12 @@
   let pendingPrefill = "";
 
   function push(m) {
+    if (!S.chatId) {
+      /* A new chat's first message files it under Chats, titled by what was asked. */
+      S.chatId = "c" + Date.now();
+      S.chats.unshift({ id: S.chatId, title: (m.text || "New chat").slice(0, 60), at: clock(), thread: S.thread });
+      const bar = $("#chatbar"); if (bar) bar.innerHTML = chatbarHTML();
+    }
     S.thread.push(m); save();
     const t = $("#thread");
     if (t) {
@@ -545,6 +651,15 @@
   }
   function scrollDown() { const sc = $("#scroll"); if (sc) sc.scrollTop = sc.scrollHeight; }
   function alive(ctx) { if (ctx.run !== chat.run) throw CANCEL; }
+
+  /* New chat: an empty home screen; the old chat stays under Chats. Opening a chat shows its messages again. */
+  function newChat() { cancelFlow(); S.thread = []; S.chatId = null; save(); }
+  function openChat(id) {
+    const c = S.chats.find(x => x.id === id);
+    if (!c) return;
+    cancelFlow(); S.thread = c.thread; S.chatId = id; save();
+    go("chat");
+  }
 
   function numbers(ctx) {
     const t = ctx.task;
@@ -562,11 +677,13 @@
   function tagFor(ctx, st) {
     const t = ctx.task;
     if (st && st.tag === "check") return { text: `${ctx.area.tag} · ${ctx.skill.name} · New skill check`, tone: "check" };
-    if (ctx.fast) return { text: `${ctx.area.tag}${ctx.area.id === "study" ? " · " + ctx.skill.name : ""} · Faster response: done for you`, tone: "fast" };
+    if (ctx.fast) return { text: `${ctx.area.tag} · ${ctx.skill.name} · Faster response: done for you`, tone: "fast" };
     if (ctx.challenge) return { text: `Challenge · ${ctx.area.name} · +${t.reward} tokens`, tone: "challenge" };
-    if (t.tag) return { text: t.tag, tone: t.area === "chore" ? "chore" : t.area === "feelings" ? "care" : "care" };
-    const line = (D.modeLines[ctx.area.id] || {})[ctx.mode.id] || ctx.mode.line;
-    return { text: `${ctx.area.tag}${ctx.area.id === "study" ? " · " + ctx.skill.name : ""} · ${ctx.mode.name}: ${line}`, tone: ctx.mode.id };
+    /* Messages that carry feelings keep their fixed label, except for a Master, whose agent drafts two for him to choose from */
+    if (t.tag && !(t.carriesFeelings && ctx.mode.id === "pro")) return { text: t.tag, tone: t.area === "chore" ? "chore" : t.area === "feelings" ? "care" : "care" };
+    /* The label names the child's level in the skill (the same names as My skills), then what the agent will do */
+    const line = (D.modeLines[ctx.area.id] || {})[ctx.mode.id] || ctx.mode.line, l = level(t.skill);
+    return { text: `${ctx.area.tag} · ${ctx.skill.name} · ${l ? l.name : ctx.mode.name}: ${line}`, tone: ctx.mode.id };
   }
 
   /* The flow interpreter: runs DATA.flows[id] step by step. With `fast` (Faster response, chosen when sending)
@@ -583,6 +700,17 @@
         const rude = this.answers.sorry === "I said something rude" || this.answers.blameHer2 === "I said something rude";
         return [rude ? "sorry for what i said, that was rude of me" : "sorry i bailed on saturday, that wasn't cool",
           "sorry but you're overreacting tbh", "can you just write it for me?"];
+      },
+      /* A Master's two ready replies, in the tone he picked */
+      toneDrafts() {
+        const chill = this.answers.tone !== "Honest and serious";
+        return (chill ? [
+          "hey, really sorry I bailed on saturday. that wasn't cool of me. let me make it up to you, ice cream this weekend?",
+          "my bad about saturday, I should've shown up or at least texted you. free this weekend? my treat"
+        ] : [
+          "Riya, I'm really sorry I didn't come on Saturday. You were counting on me and I let you down. Can we meet this weekend?",
+          "I messed up on Saturday and I'm sorry. I should have told you instead of just not turning up. I'd like to make it up to you."
+        ]).map(label => ({ label, draft: true }));
       }
     };
     if (id === "ch_headphones") ctx.products = D.products.headphones;
@@ -712,11 +840,25 @@
     async unlock(st, ctx) {
       const id = ctx.task.skill, start = st.start || "start";
       if (S.skills[id].rating != null) return start;
-      const sk = ctx.skill;
-      const yes = await modal({ cls: "unlock", html: `<div class="unlock-badge">${icon("spark", 30)}</div>
-          <p class="eyebrow">New skill unlocked</p><h2>${esc(sk.name)}</h2>
-          <p>First time with ${esc(sk.name.toLowerCase())} here. We'll start you at a level that fits, and it grows as you do.</p>`,
-        actions: [{ label: "No, I'm not new to this skill", value: "no" }, { label: "Yes, let's go", value: "yes", primary: true }] });
+      const sk = ctx.skill, from = levelFor(startRating(id), S.setup.child.age);
+      /* The icon pops in with a burst of confetti in the area colours, then the track fills up to where he starts. */
+      const colours = ["#4F46E5", "#2E6BE6", "#7A5AF8", "#DC6803", "#DD2590", "#0E9384", "#FDB022"];
+      const confetti = Array.from({ length: 24 }, (_, k) =>
+        `<i style="--a:${Math.round(k * 360 / 24)}deg;--d:${rand(70, 150)}px;--c:${colours[k % colours.length]};--t:${(k % 4) * 0.04}s"></i>`).join("");
+      const yes = await modal({ cls: "unlock", html: `<div class="unlock-h" data-area="${sk.area.id}"><span class="unlock-ic">${icon(areaIcon(sk.area.id), 22)}<span class="confetti" aria-hidden="true">${confetti}</span></span>
+            <p class="eyebrow eyebrow--accent">New skill unlocked</p></div>
+          <h2>${esc(sk.name)}</h2>
+          <p class="unlock-sub"><i class="dot dot--${sk.area.id}"></i>${esc(sk.area.name)}${sk.chapter ? " · " + esc(sk.chapter) : ""}</p>
+          <div class="unlock-track" aria-label="Levels, starting at ${from.name}">
+            <div class="track">${D.levels.bands.map((b, i) => `<i class="${i <= from.i ? "is-on" : ""}" style="--k:${i}"></i>`).join("")}</div>
+            <div class="track-names">${D.levels.bands.map((b, i) =>
+              `<span class="${i === from.i ? "is-start" : ""}">${b.name}${i === from.i ? "<em>You start here</em>" : ""}</span>`).join("")}</div>
+            <p class="unlock-note">Every time you do it yourself, you move up.</p>
+          </div>`,
+        actions: [
+          { label: "Yes, let's go", sub: `Start as ${article(from.name)}, based on your class`, icon: "arrow", value: "yes", primary: true },
+          { label: "No, I'm not new to this skill", sub: st.noCheck ? "Start higher: this problem is the check" : "Answer 3 quick questions to start higher", icon: "check", value: "no" }
+        ] });
       alive(ctx);
       if (yes === "no") {
         push({ t: "child", text: "No, I'm not new to this skill" });
@@ -773,15 +915,26 @@
       ctx.draft = ctx.answer;
     },
     addPlan(st, ctx) { ctx.draft = ctx.draft.replace(/[.!\s]+$/, "") + ". can we go this weekend instead?"; ctx.answers.plan = true; },
+    chooseDraft(st, ctx) { ctx.draft = ctx.answer; ctx.chosen = true; },
     send(st, ctx) {
-      push({ t: "sent", text: ctx.draft });
-      toast("Sent, in your words.", "ok");
+      push({ t: "sent", text: ctx.draft, chosen: !!ctx.chosen });
+      toast(ctx.chosen ? "Sent to " + D.child.friend + "." : "Sent, in your words.", "ok");
       const s0 = S;
       setTimeout(() => { if (S === s0) push({ t: "riya-reply", text: D.riyaReply }); }, 4200);
     },
 
     showProducts(st, ctx) { ctx.topic = D.products[ctx.answer] ? ctx.answer : "art"; ctx.products = D.products[ctx.topic]; },
     checkPick(st, ctx) { return ctx.product.late ? "late" : "confirm"; },
+    /* A Master's gift: the agent's own pick (from what Riya's into), with the rest kept for "See other options" */
+    pickForMe(st, ctx) {
+      ctx.topic = (PER && PER.giftTopic) || "art";
+      const all = D.products[ctx.topic];
+      ctx.product = all.find(p => PER && p.id === PER.giftPick) || all.filter(p => !p.late).sort((a, b) => a.price - b.price)[0];
+      ctx.products = [ctx.product];
+      ctx.others = all.filter(p => p !== ctx.product);
+    },
+    showOthers(st, ctx) { ctx.products = ctx.others; },
+    checkMasterPick(st, ctx) { return ctx.product.late ? "lateOne" : "orderNow"; },
     order(st, ctx) {
       S.wallet -= ctx.product.price;
       ctx.orderId = "BDE-40-" + rand(10000, 99999);
@@ -808,7 +961,7 @@
   };
   function setStart(ctx, rating, how) {
     const id = ctx.task.skill;
-    S.skills[id].rating = rating; changed();
+    S.skills[id].rating = rating; S.skills[id].start = rating; changed();
     numbers(ctx);
     const l = levelFor(rating, S.setup.child.age), sk = skillDef(id);
     const right = 3 - Math.min(3, ctx.misses);
@@ -859,10 +1012,23 @@
       const r = S.skills[ctx.task.skill].rating, l = levelFor(r, S.setup.child.age);
       return { name: ctx.skill.name, area: ctx.area.name, areaId: ctx.area.id, level: l.name, i: l.i };
     }
-    if (card === "products") return { items: ctx.products.map(p => Object.assign({}, p)), wallet: ctx.challenge ? null : S.wallet };
+    if (card === "products") {
+      const wallet = ctx.challenge ? null : S.wallet, monthly = S.setup.walletMonthly, master = !ctx.challenge && ctx.mode.id === "pro";
+      return { items: ctx.products.map(p => Object.assign({}, p)), wallet, monthly, one: ctx.products.length === 1,
+        /* a Master's pick orders on one tap; below that he chooses, with a nudge about his wallet */
+        verb: master ? "Order" : "Choose", advice: wallet == null || master ? null : walletAdvice(ctx.products, wallet, monthly) };
+    }
     if (card === "draft") return { text: ctx.draft };
-    if (card === "order") return { id: ctx.orderId, name: ctx.product.name, price: ctx.product.price, wallet: S.wallet };
+    if (card === "order") return { id: ctx.orderId, name: ctx.product.name, price: ctx.product.price, wallet: S.wallet, photo: ctx.product.photo };
     return null;
+  }
+  /* Once over a third of the month's money is gone, the options end with the one that's easiest on the wallet. */
+  function walletAdvice(items, wallet, monthly) {
+    const spent = monthly - wallet, onTime = items.filter(p => !p.late);
+    if (!onTime.length || spent < monthly / 3) return null;
+    const best = onTime.slice().sort((a, b) => a.price - b.price)[0], most = items.every(p => p.price >= best.price);
+    return `It's only mid-month and you've already spent ${rupee(spent)} of your ${rupee(monthly)}. The ${best.say || best.name.toLowerCase()} (${rupee(best.price)}) ` +
+      `arrives before her birthday and leaves you ${rupee(wallet - best.price)}${most ? ", the most of these" : ""}, so it's the easiest on your pocket.`;
   }
 
   /* ---------- Chat rendering ---------- */
@@ -871,8 +1037,8 @@
       case "child": return `<div class="msg msg--me">${m.fast ? `<span class="me-fast">${icon("bolt", 13)} Faster response</span>` : ""}<div class="bubble">${esc(m.text)}</div></div>`;
       case "agent": {
         const showTag = !(prev && prev.t === "agent" && prev.tag && prev.tag.text === m.tag.text);
-        return `<div class="msg msg--agent ${showTag ? "" : "is-cont"}">
-          ${showTag ? `<div class="tag tag--${m.tag.tone}">${mark(16)}<span>${esc(m.tag.text)}</span></div>` : ""}
+        return `<div class="msg msg--agent ${showTag ? "" : "is-cont"} ${m.card === "products" ? "msg--wide" : ""}">
+          ${showTag ? tagHTML(m.tag) : ""}
           <div class="bubble">${esc(m.text).replace(/\n/g, "<br>")}</div>
           ${m.card ? cardHTML(m) : ""}
         </div>`;
@@ -883,13 +1049,18 @@
           <span class="score-ic">${icon(m.spend ? "bolt" : m.up ? "trophy" : "check", 16)}</span><div class="score-t"><b>${esc(m.text)}</b>${m.sub ? `<span>${esc(m.sub)}</span>` : ""}</div></div>`;
       case "riya": return `<div class="card riya"><div class="riya-h"><span class="r-av">R</span><div><b>${esc(D.child.friend)}</b><span>Messages</span></div></div>
           ${D.riya.map(x => `<div class="r-msg"><span>${esc(x.text)}</span><em>${esc(x.time)}</em></div>`).join("")}</div>`;
-      case "sent": return `<div class="card sent"><div class="sent-h">${icon("checks", 16)}<span>Sent to ${esc(D.child.friend)}, in your words</span></div><div class="sent-b">${esc(m.text)}</div><em>from ${esc(name())} · ${clock()}</em></div>`;
+      case "sent": return `<div class="card sent"><div class="sent-h">${icon("checks", 16)}<span>Sent to ${esc(D.child.friend)}, ${m.chosen ? "the reply you picked" : "in your words"}</span></div><div class="sent-b">${esc(m.text)}</div><em>from ${esc(name())} · ${clock()}</em></div>`;
       case "riya-reply": return `<div class="card riya riya--reply"><div class="riya-h"><span class="r-av">R</span><div><b>${esc(D.child.friend)}</b><span>replied</span></div></div><div class="r-msg"><span>${esc(m.text)}</span><em>just now</em></div></div>`;
       case "reward": return `<div class="card reward"><div class="reward-n">+${m.n}</div><div><b>Challenge complete</b><span>${esc(m.text)}</span></div>${icon("coin", 30, "reward-ic")}</div>`;
       default: return "";
     }
   }
-  const skillCardHTML = d => `<div class="card skillcard ${d.filed ? "is-filed" : ""}"><span class="sc-ic">${icon(areaIcon(d.areaId), 20)}</span>
+  /* The reply label: "Study · Algebra · Confident: quick check…" shows the part before the colon in caps, the rest as plain text. */
+  const tagHTML = tag => {
+    const [head, ...rest] = tag.text.split(": ");
+    return `<div class="tag tag--${tag.tone}"><b>${esc(head)}</b>${rest.length ? `<span>${esc(rest.join(": "))}</span>` : ""}</div>`;
+  };
+  const skillCardHTML = d =>`<div class="card skillcard ${d.filed ? "is-filed" : ""}"><span class="sc-ic">${icon(areaIcon(d.areaId), 20)}</span>
     <div class="sc-t"><b>${esc(d.name)}</b><span>${esc(d.area)} · new skill</span></div><span class="lvl lvl--${d.i}">${esc(d.level)}</span>
     <span class="sc-filed">${icon("check", 14)} In My skills</span></div>`;
   function cardHTML(m) {
@@ -897,13 +1068,30 @@
     if (m.card === "skill") return skillCardHTML(d);
     if (m.card === "ride") { const r = D.ride; return `<div class="card ride"><div class="ride-ic">${icon("car", 22)}</div><div class="ride-b">
         <b>Cab booked · pickup ${esc(r.pickup)}</b><span>${esc(r.from)} → ${esc(r.to)}</span><span class="muted">${esc(r.car)} · arrives ${esc(r.arrive)}</span></div><span class="free">Free</span></div>`; }
+    /* Product cards: photo, delivery badge (late ones flagged before he picks), price, and what's left in the wallet after.
+       The line icon sits under the photo and shows if the photo can't load. */
     if (m.card === "products") return `<div class="card products">
-        <div class="prod-h">${icon("shield", 15)}<span>No sponsored options</span>${d.wallet == null ? '<em>Practice only</em>' : `<em>Wallet now ${rupee(d.wallet)}</em>`}</div>
-        ${d.items.map(p => `<div class="prod"><div class="prod-n"><b>${esc(p.name)}</b><span>${esc(p.note)}</span></div>
-          <div class="prod-p"><b>${rupee(p.price)}</b>${d.wallet == null ? "" : `<span>Wallet after ${rupee(d.wallet - p.price)}</span>`}</div>
-          <button class="btn small" data-pick="${p.id}" data-w="${m.wait}">Choose</button></div>`).join("")}</div>`;
+        <div class="prod-h">${icon("shield", 15)}<span>No sponsored options</span>${d.wallet == null ? '<em>Practice only, nothing is ordered</em>' : `<em>${icon("wallet", 14)} Wallet now <b>${rupee(d.wallet)}</b></em>`}</div>
+        <div class="prod-grid ${d.one ? "prod-grid--one" : ""}">${d.items.map(p => {
+          const after = d.wallet == null ? null : d.wallet - p.price;
+          const when = p.day ? (p.late
+            ? `<span class="pc-when is-late">${icon("info", 13)}${esc(p.day)} · after her birthday</span>`
+            : `<span class="pc-when">${icon("check", 13)}${esc(p.day)} · before her birthday</span>`)
+            : `<span class="pc-note">${esc(p.note)}</span>`;
+          return `<article class="pc ${p.late ? "is-late" : ""}">
+            <div class="pc-pic" aria-hidden="true">${icon(p.pic || "gift", 46)}${p.photo ? `<img src="${esc(p.photo)}" alt="" onerror="this.remove()">` : ""}</div>
+            <div class="pc-b">
+              <b class="pc-name">${esc(p.name)}</b>
+              ${when}
+              <div class="pc-price"><b>${rupee(p.price)}</b>${after == null ? "" : `<span class="${after < d.monthly * .25 ? "is-low" : ""}">${rupee(after)} left after</span>`}</div>
+              ${after == null ? "" : `<div class="pc-meter" title="Wallet left after this"><i style="width:${Math.max(0, Math.min(100, Math.round(after / d.monthly * 100)))}%"></i></div>`}
+            </div>
+            <button class="btn small block ${d.verb === "Order" ? "primary" : ""}" data-pick="${p.id}" data-w="${m.wait}">${d.verb || "Choose"}</button>
+          </article>`;
+        }).join("")}</div>
+        ${d.advice ? `<p class="prod-advice">${icon("wallet", 16)}<span>${esc(d.advice)}</span></p>` : ""}</div>`;
     if (m.card === "draft") return `<div class="card draft"><div class="draft-h">${icon("pen", 14)}<span>Your draft to ${esc(D.child.friend)}</span></div><p>${esc(d.text)}</p></div>`;
-    if (m.card === "order") return `<div class="card order"><div class="ride-ic">${icon("gift", 22)}</div><div class="ride-b"><b>${esc(d.name)}</b><span>Order ${esc(d.id)} · ${rupee(d.price)}</span><span class="muted">Wallet now ${rupee(d.wallet)}</span></div>${icon("check", 18, "ok")}</div>`;
+    if (m.card === "order") return `<div class="card order"><div class="ride-ic">${icon("gift", 22)}${d.photo ? `<img src="${esc(d.photo)}" alt="" onerror="this.remove()">` : ""}</div><div class="ride-b"><b>${esc(d.name)}</b><span>Order ${esc(d.id)} · ${rupee(d.price)}</span><span class="muted">Wallet now ${rupee(d.wallet)}</span></div>${icon("check", 18, "ok")}</div>`;
     return "";
   }
   function syncWaitButtons() {
@@ -915,9 +1103,12 @@
   function renderChips() {
     const box = $("#chips"); if (!box) return;
     const w = chat.waiting;
-    const html = w ? w.chips.map(chipObj).map((c, i) => `<button class="chip ${w.input ? "chip--draft" : ""} ${c.primary ? "chip--go" : ""}" data-chip="${i}">${w.input ? icon("pen", 14) : ""}${esc(c.label)}${c.primary ? icon("arrow", 15) : ""}</button>`).join("") : "";
+    /* `draft` chips are ready replies to choose from: full-width, the whole message on show */
+    const html = w ? w.chips.map(chipObj).map((c, i) => `<button class="chip ${w.input ? "chip--draft" : ""} ${c.draft ? "chip--reply" : ""} ${c.primary ? "chip--go" : ""}" data-chip="${i}">${w.input ? icon("pen", 14) : ""}${c.draft ? `<span class="reply-n">Reply ${i + 1}</span>` : ""}<span>${esc(c.label)}</span>${c.primary ? icon("arrow", 15) : ""}</button>`).join("") : "";
     box.innerHTML = html;
     box.hidden = !html;
+    /* the chips take room from the thread, so keep its last message (a skill card, say) in view */
+    requestAnimationFrame(scrollDown);
   }
 
   /* Faster response is chosen when sending a new request, next to Send, and never partway through a chat. */
@@ -941,23 +1132,18 @@
       b.title = f.why;
       b.innerHTML = `${icon(f.state === "locked" ? "lock" : "bolt", 16)}<span>Faster response</span>${f.cost ? `<em>${f.cost}</em>` : f.state === "free" ? "<em>free</em>" : ""}`;
     }
-    /* The wallet shows in the chat header only during a money task. */
+    /* The wallet shows in the chat header only during a money task (the date is already in the top bar). */
     const side = $("#chatSide");
     if (side) {
       const money = ctx && !ctx.challenge && ctx.area && ctx.area.id === "money";
-      side.className = money ? "chat-wallet" : "chat-date";
-      side.innerHTML = money ? `${icon("wallet", 15)}Wallet <b>${rupee(S.wallet)}</b>` : D.today.long;
+      side.className = "chat-wallet";
+      side.hidden = !money;
+      side.innerHTML = money ? `${icon("wallet", 15)}Wallet <b>${rupee(S.wallet)}</b>` : "";
     }
     input.placeholder = w && w.input ? "Write it in your own words…" : w ? "Pick an option, or type your answer…" : ctx ? "…" : "Type to see what I can help with…";
   }
 
-  /* The pre-fed prompts drop down from the composer while typing, grouped by how much the agent does. */
-  const PROMPT_GROUPS = [
-    { label: "Always got your back", tone: "instant", match: t => t.area === "chore" },
-    { label: "Done together", tone: "together", match: t => t.skill },
-    { label: "Just talk", tone: "care", match: t => t.area === "feelings" }
-  ];
-  const promptMeta = t => t.area === "chore" ? "Instant · free" : t.area === "feelings" ? "With care" : area(t.area).tag + (t.area === "study" ? " · " + skillDef(t.skill).name : "");
+  /* The pre-fed prompts drop down from the composer while typing: a plain list, filtered by what's typed. */
   let promptHL = -1;
   function renderPrompts() {
     const box = $("#prompts"), input = $("#input");
@@ -966,14 +1152,9 @@
     let list = all.filter(t => words.every(w => norm(t.prompt + " " + t.chip).includes(w)));
     const none = !list.length;
     if (none) list = all;
-    let n = 0;
     box.innerHTML = `<div class="prompts-h">${icon("info", 14)}<span>For now, you can only use these pre-fed prompts.</span></div>
       ${none ? `<p class="prompts-none">Nothing matches “${esc(input.value.trim())}”. Pick one of these:</p>` : ""}
-      ${PROMPT_GROUPS.map(g => {
-        const items = list.filter(g.match);
-        return items.length ? `<div class="pgroup"><span class="pgroup-l pgroup-l--${g.tone}">${g.label}</span>
-          ${items.map(t => `<button type="button" class="prompt ${n++ === promptHL ? "is-hl" : ""}" data-prompt="${t.id}" role="option"><span>${esc(t.prompt)}</span><em>${esc(promptMeta(t))}</em></button>`).join("")}</div>` : "";
-      }).join("")}`;
+      <div class="pgroup">${list.map((t, n) => `<button type="button" class="prompt ${n === promptHL ? "is-hl" : ""}" data-prompt="${t.id}" role="option"><span>${esc(t.prompt)}</span></button>`).join("")}</div>`;
   }
   function openPrompts() {
     const box = $("#prompts");
@@ -987,14 +1168,14 @@
     input.value = taskDef(id).prompt;
     closePrompts(); renderComposer(); input.focus();
   }
-  const greeting = () => { const h = new Date().getHours(); return h < 12 ? "Morning" : h < 17 ? "Afternoon" : "Evening"; };
+  const greeting = () => { const h = storyNow().getHours(); return h < 12 ? "Morning" : h < 17 ? "Afternoon" : "Evening"; };
 
   function viewChat(main) {
     const home = !S.thread.length;
     main.innerHTML = `<section class="chat ${home ? "chat--home" : ""}">
       <div class="chat-h"><div class="agent-id"><span class="agent-av">${mark(30, true)}</span><div><b>My agent</b><span>${esc(S.setup.child.provider)} · through Bud-e</span></div></div>
-        <span class="chat-date" id="chatSide">${D.today.long}</span></div>
-      <div class="scroll" id="scroll"><div class="thread" id="thread"></div></div>
+        <div class="chat-h-r"><span class="chat-wallet" id="chatSide" hidden></span><button class="btn ghost small" data-newchat aria-label="New chat">${icon("plus", 15)}<span>New chat</span></button></div></div>
+      <div class="scroll" id="scroll"><div class="thread" id="thread" role="log" aria-live="polite" aria-label="Chat"></div></div>
       <div class="dock">
         <div class="chips" id="chips" hidden></div>
         <div class="ring"><div class="prompts" id="prompts" role="listbox" aria-label="Pre-fed prompts" hidden></div>
@@ -1008,13 +1189,13 @@
             </div>
           </div>
         </form></div>
-        <div class="home-foot"><span><b>${S.didIt.length}</b> solo ${S.didIt.length === 1 ? "win" : "wins"} this week</span><span>Chores are always free</span><span>${icon("lock", 13)} Your chats stay private</span></div>
+        ${S.didIt.length ? `<div class="home-foot"><span><b>${S.didIt.length}</b> solo ${S.didIt.length === 1 ? "win" : "wins"} this week</span></div>` : ""}
       </div>
     </section>`;
     const t = $("#thread");
     if (home) {
       t.innerHTML = `<div class="thread-empty">
-        <div class="hero-mark hero-mark--home">${mark(150, true)}</div>
+        <p class="eyebrow eyebrow--accent">New chat</p>
         <h1><span>${greeting()}, ${esc(name())}.</span><br>What are we doing today?</h1>
         <p class="home-hint">Start typing to pick a prompt. Then press <b>Send</b>, or <b>Faster response</b> if you're in a hurry.</p>
       </div>`;
@@ -1087,7 +1268,7 @@
           <span class="ch-area">${icon(areaIcon(c.area), 15)}${esc(area(c.area).name)}</span>
           <h3>${esc(c.title)}</h3>
           <div class="ch-f"><span class="ch-r">${icon("coin", 16)}+${c.reward}</span>
-          ${done ? `<span class="ch-done">${icon("check", 16)} Done</span>` : `<button class="btn ${c.off ? "ghost" : "primary"} small" ${c.off ? "data-off" : `data-challenge="${c.id}"`}>Start</button>`}</div>
+          ${done ? `<span class="ch-done">${icon("check", 16)} Done</span>` : c.off ? `<span class="ch-soon">${icon("lock", 14)} Unlocks ${D.today.reset}</span>` : `<button class="btn primary small" data-challenge="${c.id}">Start</button>`}</div>
         </article>`;
       }).join("")}</div>
       <section class="panel"><div class="panel-h"><b>This week</b></div>
@@ -1123,7 +1304,7 @@
             <div class="ladder">${D.levels.bands.map((b, i) => `<span class="${i < l.i ? "is-past" : i === l.i ? "is-now" : ""}">${i === l.i ? `<i style="width:${l.pct}%"></i>` : ""}</span>`).join("")}</div>
             <p class="muted">${l.next ? `${esc(s.name)}: ${n} more on your own to reach ${l.next.name}` : "Top level for your age group"}</p></div>`;
         }).join("");
-      return `<section class="panel parea"><div class="panel-h"><span class="pa-ic">${icon(areaIcon(a.id), 18)}</span><b>${esc(a.name)}</b></div>${body}</section>`;
+      return `<section class="panel parea" data-area="${a.id}"><div class="panel-h"><span class="pa-ic">${icon(areaIcon(a.id), 18)}</span><b>${esc(a.name)}</b></div>${body}</section>`;
     }).join("");
     main.innerHTML = `<div class="page">
       <header class="page-h"><div><h1>My skills</h1><p class="sub">Levels compare you with ${levelFor(0, age).group}, so they grow with you.</p></div>
@@ -1132,7 +1313,9 @@
       <div class="pgrid">${areas}</div>
     </div>`;
     $("#parentsee").addEventListener("click", () => {
-      modal({ cls: "preview", html: `<p class="eyebrow">${icon("eye", 14)} Read-only preview</p><h2>What ${esc(S.setup.parent.name.split(" ")[0])} sees</h2>${reportHTML()}`,
+      /* The child sees only the privacy note: the report itself is for the parent. */
+      modal({ cls: "preview", html: `<p class="eyebrow">${icon("eye", 14)} Read-only preview</p><h2>What ${esc(S.setup.parent.name.split(" ")[0])} sees</h2>
+        <div class="never">${icon("lock", 16)}<span><b>Your privacy is protected.</b> Your parents never see your chats, only how you're growing overall: your levels, what you did on your own, and where you're improving.</span></div>`,
         actions: [{ label: "Close", value: null, primary: true }] });
     });
   }
@@ -1176,22 +1359,25 @@
 
   function reportHTML() {
     const n = esc(name()), age = S.setup.child.age;
+    /* Each area against what's expected at his level: on track, a little below (within 15 points), or needs a nudge. */
     let selfSum = 0, totalSum = 0;
     const rel = D.report.reliance.map(r => {
       const s = S.reliance[r.area] || { self: 0, total: 0 };
       selfSum += r.self + s.self; totalSum += r.total + s.total;
-      const pct = Math.round(((r.self + s.self) / (r.total + s.total)) * 100);
-      return { name: area(r.area).name, short: area(r.area).tag, pct, expected: r.expected };
+      const pct = Math.round(((r.self + s.self) / (r.total + s.total)) * 100), gap = pct - r.expected;
+      const status = gap >= 0 ? { k: "ok", label: "On track" } : gap >= -15 ? { k: "near", label: "A little below" } : { k: "low", label: "Needs a nudge" };
+      return { id: r.area, name: area(r.area).name, short: area(r.area).tag, pct, expected: r.expected, gap, status };
     });
+    const behind = rel.filter(r => r.gap < 0).sort((a, b) => a.gap - b.gap);
+    const relSummary = `On track in ${rel.length - behind.length} of ${rel.length} areas.` + (behind.length
+      ? ` Most room to grow: ${behind.slice(0, 2).map(r => r.short).join(" and ")}.` : "");
     const weekShare = Math.round((selfSum / totalSum) * 100);
     const labels = D.report.weeks.concat("This week");
     const skills = [];
     D.areas.forEach(a => a.skills.forEach(sk => skills.push(sk)));
-    const closest = skills.filter(sk => S.skills[sk.id].rating != null && levelFor(S.skills[sk.id].rating, age).next)
-      .sort((p, q) => movesToNext(S.skills[p.id].rating) - movesToNext(S.skills[q.id].rating))[0];
     skills.sort((p, q) => (S.skills[p.id].rating == null) - (S.skills[q.id].rating == null));
     const cards = skills.map(sk => {
-      const now = S.skills[sk.id].rating, past = D.report.history[sk.id];
+      const now = S.skills[sk.id].rating, past = sk.rating != null && D.report.history[sk.id] ? D.report.history[sk.id].map(d => Math.max(0, sk.rating + d)) : null;
       if (now == null) return `<div class="gcard gcard--empty"><div class="g-h"><b>${esc(sk.name)}</b><span class="lvl lvl--new">Not unlocked</span></div>
         <p class="g-d">Unlocks the first time ${n} asks about ${esc(sk.name.toLowerCase())}.</p></div>`;
       const l = levelFor(now, age), wasRating = sk.rating;
@@ -1208,19 +1394,20 @@
       : "Ask him which subject feels hardest right now.";
     return `<div class="report">
       <div class="never">${icon("lock", 16)}<span><b>Chats are never shown.</b> This report is built from levels, ratings and counts only.</span></div>
-      <div class="kpis">
+      <div class="kpis kpis--3">
         <div class="kpi"><span>Faster response tokens used</span><b>${S.spent} of ${D.child.tokensWeekly}</b><em>Earned ${S.earned} from challenges</em></div>
         <div class="kpi"><span>Did it himself</span><b>${Math.round(selfSum)} of ${totalSum} tasks</b><em>${weekShare}% this week</em></div>
-        <div class="kpi"><span>Closest to the next level</span>${closest ? `<b>${esc(closest.name)} → ${levelFor(S.skills[closest.id].rating, age).next.name}</b><em>${movesToNext(S.skills[closest.id].rating)} more on his own</em>` : `<b>Top level</b><em>in every skill</em>`}</div>
+        <div class="kpi kpi--safe"><span>Safety alerts</span><b>None</b><em>this week</em></div>
       </div>
-      <section class="rsec"><h3>AI reliance by area vs expected</h3>
+      <section class="rsec rsec--main"><h3>AI reliance by area vs expected</h3>
         <p class="muted">How much ${n} did himself, against what's expected at his level.</p>
-        <div class="rel">${rel.map(r => `<div class="rel-row" title="${esc(r.name)}: ${r.pct}% himself, ${r.expected}% expected">
-            <span class="rel-n">${esc(r.short)}</span>
-            <div class="rel-track"><i style="width:${r.pct}%"></i><b style="left:${r.expected}%" aria-hidden="true"></b></div>
-            <span class="rel-v">${r.pct}%</span></div>`).join("")}</div>
-        <div class="rel-key"><span><i class="k-bar"></i>Did it himself</span><span><i class="k-tick"></i>Expected for his level</span></div>
-        <ul class="rel-text">${rel.map(r => `<li><b>${esc(r.short)}:</b> ${n} did ${r.pct}% himself. Expected for his level: ${r.expected}%.</li>`).join("")}</ul>
+        <p class="rel-sum">${icon("chart", 16)}<span>${esc(relSummary)}</span></p>
+        <div class="rel">${rel.map(r => `<div class="rel-row rel--${r.status.k}">
+            <span class="rel-n">${icon(areaIcon(r.id), 16)}${esc(r.short)}</span>
+            <div class="rel-track" role="img" aria-label="${esc(r.name)}: ${r.pct}% himself, ${r.expected}% expected"><i style="width:${r.pct}%"></i><b style="left:${r.expected}%"></b></div>
+            <span class="rel-chip">${r.status.label}<em>${signed(r.gap) || "±0"}</em></span>
+            <p class="rel-cap">${n} did <b>${r.pct}%</b> himself. Expected for his level: ${r.expected}%.</p></div>`).join("")}</div>
+        <div class="rel-key"><span><i class="k-dot k-ok"></i>On track</span><span><i class="k-dot k-near"></i>A little below</span><span><i class="k-dot k-low"></i>Needs a nudge</span><span><i class="k-tick"></i>Expected for his level</span></div>
       </section>
       <section class="rsec growth"><h3>Growth</h3>
         <p class="muted">The last six weeks. Ratings run 0–1000 within ${levelFor(0, age).group}; each chart uses its own scale, and the dashed line is the next level.</p>
@@ -1256,7 +1443,7 @@
       <section class="rsec agents"><h3>Agents</h3>
         <p class="muted">Block an agent to stop it opening on ${n}'s device and in his browser. He sees a short note that you've blocked it.</p>
         <ul class="ag-list">${list.map(a => { const b = !!S.blocked[a.id]; return `<li class="${b ? "is-blocked" : ""}">
-          <span class="ag-ic">${icon(b ? "block" : "plug", 17)}</span>
+          <span class="ag-ic">${!b && D.providerLogos[a.name] ? `<img src="${D.providerLogos[a.name]}" alt="" width="22" height="22">` : icon(b ? "block" : "plug", 17)}</span>
           <div class="ag-n"><b>${esc(a.name)}</b><em>${esc(a.kind)}</em></div>
           <div class="ag-u"><b>${a.uses} ${a.uses === 1 ? "time" : "times"}</b><em>${b ? (a.since ? "Blocked since " + esc(a.since) : "Blocked today") : a.last ? "Last used " + esc(a.last) : "Not used this week"}</em></div>
           <button class="btn small${b ? "" : " danger"}" data-block="${a.id}">${b ? "Unblock" : "Block"}</button></li>`; }).join("")}</ul>
@@ -1286,9 +1473,8 @@
           <p class="form-err" hidden></p>
           <button class="btn primary lg block" type="submit">Log in</button>
         </form>
-        <p class="fine">${code ? `Prototype: the code from setup is <b>${esc(showCode(code))}</b>.` : `No device is set up yet. <button class="link" data-go="child">Set up ${n}'s device</button> to get a code.`}</p>
+        <p class="fine">${code ? `Prototype: the code from setup is <b>${esc(showCode(code))}</b>.` : `No device is set up in this browser yet. Set up ${n}'s device in Bud-e first: the code appears when setup finishes.`}</p>
       </div>
-      <button class="link" data-go="start">${icon("back", 14)} Back to start</button>
     </div>`;
   }
   AFTER.plogin = () => {
@@ -1300,6 +1486,8 @@
     });
     f.addEventListener("submit", async e => {
       e.preventDefault();
+      /* Bud-e may have been set up in another tab since this page opened: check against the code saved now. */
+      S = load();
       const d = input.value.replace(/\D/g, "");
       const msg = !S.setup.done ? "Set up " + name() + "'s device first. The code appears when setup finishes."
         : d.length !== 8 ? "The code has 8 digits." : d !== S.setup.code ? "That code doesn't match. Check the code on " + name() + "'s device." : "";
@@ -1307,7 +1495,7 @@
       if (msg) { input.classList.add("shake"); setTimeout(() => input.classList.remove("shake"), 500); return; }
       const b = $("button[type=submit]", f); b.disabled = true; b.innerHTML = '<span class="spin"></span> Linking ' + esc(name()) + "'s device…";
       await sleep(700);
-      S.parentIn = true; save();
+      setParentIn(true);
       go("parent");
     });
     input.focus();
@@ -1330,22 +1518,26 @@
 
   /* ---------- Global events ---------- */
   document.addEventListener("click", e => {
-    const el = e.target.closest("[data-chip],[data-pick],[data-menu],[data-switch],[data-logout],[data-go],[data-reset],[data-off],[data-jump],[data-challenge],[data-drawer]");
+    const el = e.target.closest("[data-chip],[data-pick],[data-menu],[data-logout],[data-newchat],[data-chat],[data-go],[data-reset],[data-off],[data-jump],[data-challenge],[data-drawer],[data-chatbar]");
     $$(".menu").forEach(m => { if (!el || !el.hasAttribute("data-menu") || !m.parentElement.contains(el)) m.hidden = true; });
     if (!el) return;
     const d = el.dataset;
     if (d.chip != null && chat.waiting) {
       const c = chipObj(chat.waiting.chips[+d.chip]);
       answer({ label: c.label, go: c.go });
+    } else if (d.newchat != null) {
+      closeDrawers();
+      newChat(); go("chat");
+    } else if (d.chat) {
+      closeDrawers();
+      openChat(d.chat);
     } else if (d.logout != null) {
-      S.parentIn = false; save(); toast("Logged out of Bud-e Parent.", "ok"); go("plogin");
+      setParentIn(false); toast("Logged out of Bud-e Parent.", "ok"); go("plogin");
     } else if (d.pick && chat.waiting && chat.waiting.products) {
       const p = chat.waiting.ctx.products.find(x => x.id === d.pick);
       answer({ product: p, label: p.name });
     } else if (d.menu != null) {
       const m = el.parentElement.querySelector(".menu"); m.hidden = !m.hidden;
-    } else if (d.switch) {
-      go(d.switch);
     } else if (d.go) {
       go(d.go);
     } else if (d.reset != null) {
@@ -1353,7 +1545,7 @@
         actions: [{ label: "Cancel", value: false, cancel: true }, { label: "Reset", value: true, primary: true }] }).then(ok => {
         if (!ok) return;
         cancelFlow(); S = fresh(); save(); toast("Prototype reset.", "ok");
-        if (route() === "start") render(); else go("start");
+        if (route() === HOME) render(); else go(HOME);
       });
     } else if (d.off != null) {
       e.preventDefault(); offPath();
@@ -1364,11 +1556,18 @@
       if (chat.ctx) cancelFlow();
       go("chat");
       setTimeout(() => startFlow(ch.id, "Start challenge: " + ch.title.replace(/\s*\(.*\)$/, ""), { challenge: true }), 50);
+    } else if (d.chatbar != null) {
+      document.body.classList.remove("drawer-open");
+      document.body.classList.toggle("chats-open");
     } else if (d.drawer != null) {
-      document.body.classList.toggle("drawer-open");
+      /* the scrim closes whichever drawer is open; the My areas button toggles its own */
+      if (document.body.classList.contains("chats-open")) closeDrawers();
+      else document.body.classList.toggle("drawer-open");
     }
   });
-  window.addEventListener("hashchange", () => { document.body.classList.remove("drawer-open"); render(); });
+  /* On narrower screens Chats slides in from the left and My areas from the right */
+  function closeDrawers() { document.body.classList.remove("drawer-open", "chats-open"); }
+  window.addEventListener("hashchange", () => { closeDrawers(); render(); });
 
   /* ---------- The live Bud-e mark: eyes follow the mouse; a click makes it giggle ---------- */
   let lookAt = null, lookFrame = 0;
@@ -1403,6 +1602,31 @@
     setTimeout(() => b.remove(), 1300);
   });
 
-  if (!location.hash) location.replace("#/start");
+  /* ---------- Bud-e and Bud-e Parent open side by side ----------
+     Each page picks up the other's saved changes. Bud-e Parent takes the whole state, since Bud-e writes most of it, and
+     re-draws only when something it shows has changed. Bud-e takes only what the parent controls, so a chat carries on. */
+  const parentView = s => JSON.stringify([s.setup, s.skills, s.reliance, s.didIt, s.spent, s.earned, s.tokens, s.wallet, s.blocked, s.fasterOn]);
+  window.addEventListener("storage", e => {
+    if (APP === "parent") {
+      if (e.key !== KEY && e.key !== PKEY) return;
+      const before = parentView(S);
+      S = load();
+      const typing = $("#plf") && $("#plf").code.value;
+      if ((e.key === PKEY || parentView(S) !== before) && !typing) {
+        const main = $("#main"), top = main ? main.scrollTop : 0;
+        render();
+        if ($("#main")) $("#main").scrollTop = top;
+      }
+      return;
+    }
+    if (e.key !== KEY) return;
+    const next = load(), walletWas = S.setup.perms.wallet;
+    S.setup.perms = next.setup.perms; S.setup.walletMonthly = next.setup.walletMonthly;
+    S.wallet = next.wallet; S.blocked = next.blocked;
+    /* turning the wallet on or off changes the nav, so re-draw the screen unless a chat is under way */
+    if (S.setup.perms.wallet !== walletWas && CHILD.includes(route()) && !chat.ctx) render(); else refreshLive();
+  });
+
+  if (!location.hash) location.replace("#/" + HOME);
   render();
 })();

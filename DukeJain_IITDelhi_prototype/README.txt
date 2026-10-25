@@ -1,10 +1,13 @@
-Bud-e: your AI companion which protects you from AI (prototype)
+Bud-e: grow with AI, not by AI (prototype)
 
-Open index.html in any browser. No internet needed.
+Open index.html for Bud-e (the child's device) and parent.html for Bud-e Parent. No internet needed.
 
 HOW TO OPEN
 Double-click index.html. It works in current Chrome, Edge, Safari and Firefox.
 No server, installation or internet. Laptop-first; it also works at phone width.
+Bud-e Parent is a separate page: open parent.html in a second tab. The two pages share what is
+saved in this browser, so set up the device in Bud-e first; its Bud-e Parent code is saved then.
+Opened straight from the folder, use Chrome or Edge for the two pages to share it.
 
 WHAT IT IS
 Bud-e sits between a child and their personal AI agent. Chores happen instantly.
@@ -14,10 +17,13 @@ task's weight, and the gap decides how much the agent does:
   0..+200 Practising (hints) | > +200 Learner (step by step).
 Ratings update after each task (Elo, K = 40). The child sees level names, never numbers.
 
-TWO APPS
- Bud-e         the child's device. The parent sets it up once, on that device.
- Bud-e Parent  the parent's phone. Log in with the code shown at the end of setup.
+TWO APPS, TWO PAGES
+ Bud-e         index.html, the child's device. The parent sets it up once, on that device.
+               It has no way into Bud-e Parent.
+ Bud-e Parent  parent.html, the parent's phone. Log in with the code shown at the end of setup.
                Permissions can only be changed here, never on the child's device.
+ With both open, a change in Bud-e Parent (a permission, blocking other AI agents) reaches Bud-e straight
+ away, and the report keeps up with what the child does.
 
 THE DEMO PATH (2-3 minutes)
 Start: "Set up Aarav's device". The "Jump to a screen" list on the start screen goes to any screen.
@@ -36,12 +42,23 @@ Start: "Set up Aarav's device". The "Jump to a screen" list on the start screen 
  S11    Tokens (nav)                      balance, challenges to earn (e.g. headphones -> +40), history
  S12    Wallet (nav)                      pocket money left, orders
  S13    My skills                         levels, next steps, "What my parents see"
- S14    Bud-e Parent: code login          the code from S3 (the login screen shows it in this prototype)
- S15    Weekly report                     faster-response tokens, did it himself (x of y), AI reliance
+
+LAKSH (laksh.html): the same prompts at higher levels
+ A second child with his own page and saved data, already set up (Laksh, 15, Class 10; agent: Gemini).
+ Algebra Pro, Writing / Spending / Messages Master. Chats sit in the left sidebar, as on Aarav's page.
+ solve 2x + 7 = 10        no new-skill pop-up: the answer straight away
+ gift for Riya            one pick (sketchbook and pencil set, Rs 450) with Order; "See other options" shows the rest
+ reply to Riya            one question on tone, then two ready replies to choose from; it's sent, Riya replies
+ Compare with Aarav: his gift options end with a wallet note (he has spent Rs 900 of Rs 2,000 this month),
+ and he writes his own apology.
+
+BUD-E PARENT (parent.html)
+ P1     Code login                        the code from S3 (the login screen shows it in this prototype)
+ P2     Weekly report                     faster-response tokens, did it himself (x of y), AI reliance
                                           vs expected, six-week growth charts, one suggestion. Never chats.
- S16    Extension report (nav)            other AI agents the extension noticed, with uses; block or
+ P3     Extension report                  other AI agents the extension noticed, with uses; block or
                                           unblock each one
- S17    Permissions                       turn permissions on or off for Aarav's device
+ P4     Permissions                       turn permissions on or off for Aarav's device
 
 RIGHT AND WRONG ANSWERS
  Algebra   Wrong first move (divide by 2 / add 7) -> hint, try again; wrong twice -> the step
@@ -57,7 +74,9 @@ RIGHT AND WRONG ANSWERS
 
 NOTES
 - Every agent reply is scripted. No AI calls, no network requests.
-- Everything is saved in this browser. Reset from the start screen or the child's profile menu.
+- Everything is saved in this browser. Reset from Bud-e's profile menu or start screen; a reset or a
+  new setup makes a new code, which logs Bud-e Parent out.
 - Anything off the demo path shows "Not part of this prototype."
 - The Bud-e mark is alive: its eyes follow the mouse, and it giggles when clicked.
+- Product photos are bundled in assets/img (freely licensed, from Openverse); credits in assets/img/CREDITS.txt.
 - Persona: Aarav, 14, Class 9, Pune. Friend: Riya.

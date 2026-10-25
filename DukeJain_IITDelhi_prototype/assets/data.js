@@ -1,7 +1,10 @@
 /* Bud-e prototype content: persona, skills, level bands, tasks, scripted flows, products and the parent report.
    Logic (ratings, tokens, the chat engine, screens) lives in app.js. */
 window.DATA = {
-  product: { name: "Bud-e", tagline: "Your AI companion which protects you from AI" },
+  product: {
+    name: "Bud-e", tagline: "Grow with AI, not by AI",
+    pitch: "A layer between a child and every AI agent they use. It checks the child's skill and tells the agent to do it, show how, let the child decide, or coach."
+  },
 
   /* The world is set in 2040. Tokens reset every Monday. */
   today: { long: "Wednesday, 17 October 2040", week: "15 – 21 Oct 2040", reset: "Monday" },
@@ -11,7 +14,8 @@ window.DATA = {
 
   child: {
     name: "Aarav", age: 14, classNo: 9, city: "Pune", friend: "Riya", sibling: "Didi",
-    tokens: 500, tokensWeekly: 500, wallet: 1500, walletMonthly: 2000, usedBefore: true,
+    /* Halfway through the month he has already spent ₹900 of ₹2,000, so the gift options come with a nudge about his wallet. */
+    tokens: 500, tokensWeekly: 500, wallet: 1100, walletMonthly: 2000, usedBefore: true,
     provider: "Claude", uses: ["study", "writing", "messages", "shopping", "feelings"]
   },
 
@@ -26,30 +30,32 @@ window.DATA = {
     { id: "fun", label: "Entertainment" },
     { id: "other", label: "Other" }
   ],
-  /* Plain text only, never logos. */
+  /* Names in setup. Each agent's own logo (assets/img/agents) shows only in the "connected" step after setup. */
   providers: ["Claude", "Gemini", "ChatGPT", "Copilot", "Other agent"],
+  providerLogos: { Claude: "assets/img/agents/claude.svg", Gemini: "assets/img/agents/gemini.svg",
+    ChatGPT: "assets/img/agents/chatgpt.svg", Copilot: "assets/img/agents/copilot.svg" },
 
   permissions: [
     { id: "consent", title: "Parental consent", required: true, on: false,
       why: "Required to process a child's data. You can withdraw it at any time, and everything is deleted." },
     { id: "agent", title: "Agent integration", required: true, on: true,
-      why: "Connects Aarav's personal agent to Bud-e, so every request passes through it first." },
-    { id: "past", title: "Use past AI data to set starting levels", optional: true, on: true,
-      why: "Only used to estimate where Aarav starts in each skill. Chats are never imported." },
+      why: "Connects your child's personal agent to Bud-e, so every request passes through Bud-e first." },
+    { id: "past", title: "Use past AI data to set starting levels", on: true,
+      why: "Only used to estimate where your child starts in each skill." },
     { id: "restrict", title: "Restrict other AI apps on this device", on: true,
       why: "Stops the easiest bypass: opening another AI directly." },
     { id: "extension", title: "Browser extension", on: true,
-      why: "Notices other AI agents used in a browser. You see which ones and how often, and can block them. No sites, no content." },
+      why: "If your child uses any other AI agent in a browser, you'll be told about it and can block it from your Bud-e Parent dashboard." },
     { id: "data", title: "Data and retention", on: true,
       why: "Stores levels, ratings, token use and simple signals for 12 months. Deleted on request.",
-      detail: ["Stored: skill ratings, task weights, token use, other-AI counts", "Never stored: chat text, messages, photos", "Kept 12 months, then deleted; delete any time from Settings"] },
-    { id: "wallet", title: "Pocket-money wallet", optional: true, on: true,
-      why: "A monthly amount Aarav can spend through his agent. He sees what each option does to his balance." },
+      detail: ["Stored: skill ratings, task weights, token use, other-AI counts", "Never stored: chat text, messages, photos"] },
+    { id: "wallet", title: "Pocket-money wallet", on: true,
+      why: "A monthly amount your child can spend through their agent, seeing what each option does to their balance first." },
     { id: "notify", title: "Notifications", on: true,
-      why: "A weekly report to you every Sunday; gentle nudges to Aarav." }
+      why: "A weekly report to you every Sunday." }
   ],
 
-  willSee: ["Progress in each area", "How much he relies on AI versus what's expected for his age", "Token use", "Which other AI agents were used and how often (from the extension), with the option to block them"],
+  willSee: ["Progress in each area", "How much your child relies on AI versus what's expected for their age", "Token use", "Other AI agents they used (from the extension), which you can block"],
   wontSee: ["Any chats or messages"],
 
   /* Ratings are 0–1000 within the child's age group, so the same band names mean different things at 9 and at 14. */
@@ -72,7 +78,8 @@ window.DATA = {
     { id: "learner", name: "Learner", max: Infinity, line: "let's work through it together", instruction: "Teach step by step; he does it with guidance" }
   ],
   modeLines: {
-    money: { pro: "I'll handle it", confident: "I'll suggest, you confirm", practising: "you pick, I'll handle the rest", learner: "let's compare together, you decide" }
+    money: { pro: "I'll handle it", confident: "I'll suggest, you confirm", practising: "you pick, I'll handle the rest", learner: "let's compare together, you decide" },
+    relationships: { pro: "two drafts in your tone, you choose" }
   },
 
   rating: { K: 40, results: { 1: "did it himself", 0.5: "did it with hints", 0: "needed it done for him" } },
@@ -100,19 +107,46 @@ window.DATA = {
   /* Each scripted request: area, skill, weight, the full prompt and its short label. */
   tasks: [
     { id: "feelings", area: "feelings", prompt: "i feel really low today, like no one gets me", chip: "I feel low today",
-      tag: "Feelings · I'm here, and real people matter too" },
+      tag: "Feelings: I'm here, and real people matter too" },
     { id: "cab", area: "chore", prompt: "book a cab to Riya's at 5", chip: "book a cab to Riya's at 5",
-      tag: "Chore · no tokens, no waiting" },
+      tag: "Chore: no tokens, no waiting" },
     { id: "algebra", area: "study", skill: "algebra", weight: 250, prompt: "solve 2x + 7 = 10", chip: "solve 2x + 7 = 10" },
     { id: "gift", area: "money", skill: "spending", weight: 450, prompt: "order a birthday gift for Riya under ₹800", chip: "gift for Riya under ₹800" },
     { id: "apology", area: "relationships", skill: "messages", weight: 700, carriesFeelings: true,
       prompt: "reply to Riya, say sorry but make it sound chill", chip: "reply to Riya",
-      tag: "Relationships · Messages that carry feelings are written by you" }
+      tag: "Relationships: messages that carry feelings are written by you" }
   ],
 
   /* The five pre-fed prompts in the home drop-down, in order. For now these are the only requests the prototype takes,
      and each one runs end to end. */
   prompts: ["cab", "algebra", "apology", "gift", "feelings"],
+
+  /* Earlier chats this week, listed under Chats like a chat app's history. Opening the app as the child always starts
+     a new chat; these stay one click away. Messages use the same shapes as live ones. */
+  history: [
+    { title: "write a leave mail to my class teacher", when: "Mon", thread: [
+      { t: "child", text: "write a leave mail to my class teacher for friday" },
+      { t: "agent", tag: { text: "Writing · Emails & applications · Achiever: quick check, then it's yours", tone: "confident" },
+        text: "Sure. Start it in your own words: who's it to, and why are you away? I'll check it." },
+      { t: "child", text: "Dear Ma'am, I won't be able to come to school on Friday as I have my cousin's wedding. Kindly grant me leave. Aarav, 9B" },
+      { t: "agent", tag: { text: "Writing · Emails & applications · Achiever: quick check, then it's yours", tone: "confident" },
+        text: "That's clear and polite. Add the date, Friday 20 October, and it's ready to send." },
+      { t: "score", text: "That's all you", sub: "Emails & applications: Achiever" }
+    ] },
+    { title: "help me revise for friday's geometry test", when: "Tue", thread: [
+      { t: "child", text: "help me revise for friday's geometry test" },
+      { t: "agent", tag: { text: "Study · Geometry · Achiever: quick check, then it's yours", tone: "confident" },
+        text: "Let's plan it. Which topics are on the test?" },
+      { t: "child", text: "triangles, circles and area" },
+      { t: "agent", tag: { text: "Study · Geometry · Achiever: quick check, then it's yours", tone: "confident" },
+        text: "One a night, then: triangles Tuesday, circles Wednesday, area Thursday, five practice problems each. You pick the times." },
+      { t: "score", text: "Planned it yourself", sub: "Geometry: Achiever" }
+    ] },
+    { title: "book a cab home from tuition at 7", when: "Tue", thread: [
+      { t: "child", text: "book a cab home from tuition at 7" },
+      { t: "agent", tag: { text: "Chore: no tokens, no waiting", tone: "chore" }, text: "Done. Cab booked for 7:00 pm from tuition to home. 🚗" }
+    ] }
+  ],
 
   ride: { pickup: "4:42 pm", from: "Home, Kothrud", to: "Riya's place, Baner", arrive: "5:00 pm", car: "White hatchback · MH12 KX 2040", fare: "Paid from family ride credit" },
 
@@ -123,26 +157,28 @@ window.DATA = {
   riyaReply: "ok fine. saturday then? 🙂",
 
   products: {
-    /* Her birthday is Saturday. `late` options arrive after it: picking one is the "wrong" branch. */
+    /* Her birthday is Saturday. `late` options arrive after it: picking one is the "wrong" branch.
+       `photo` is a product photo bundled in assets/img (so it works offline); `pic` names the line icon shown if it can't load;
+       `say` is how a sentence names it. */
     music: [
-      { id: "earphones", name: "Wired earphones, mint", price: 499, note: "Arrives Thu", day: "Thursday" },
-      { id: "speaker", name: "Mini Bluetooth speaker", price: 780, note: "Arrives Sun", day: "Sunday", late: true },
-      { id: "posters", name: "Gig poster set (3)", price: 350, note: "Arrives Thu", day: "Thursday" }
+      { id: "earphones", say: "wired earphones", name: "Wired earphones, mint", photo: "assets/img/earphones.jpg", pic: "headphones", price: 499, note: "Arrives Thu", day: "Thursday" },
+      { id: "speaker", say: "mini Bluetooth speaker", name: "Mini Bluetooth speaker", photo: "assets/img/speaker.jpg", pic: "speaker", price: 780, note: "Arrives Sun", day: "Sunday", late: true },
+      { id: "posters", say: "gig poster set", name: "Gig poster set (3)", photo: "assets/img/posters.jpg", pic: "music", price: 350, note: "Arrives Thu", day: "Thursday" }
     ],
     art: [
-      { id: "sketch", name: "Sketchbook + pencil set", price: 450, note: "Arrives Thu", day: "Thursday" },
-      { id: "watercolour", name: "Watercolour kit", price: 720, note: "Arrives Fri", day: "Friday" },
-      { id: "print", name: "Art print, framed", price: 600, note: "Arrives Sun", day: "Sunday", late: true }
+      { id: "sketch", say: "sketchbook and pencil set", name: "Sketchbook + pencil set", photo: "assets/img/sketch.jpg", pic: "pen", price: 450, note: "Arrives Thu", day: "Thursday" },
+      { id: "watercolour", say: "watercolour kit", name: "Watercolour kit", photo: "assets/img/watercolour.jpg", pic: "palette", price: 720, note: "Arrives Fri", day: "Friday" },
+      { id: "print", say: "framed art print", name: "Art print, framed", photo: "assets/img/print.jpg", pic: "frame", price: 600, note: "Arrives Sun", day: "Sunday", late: true }
     ],
     books: [
-      { id: "graphic", name: "Graphic novel, hardback", price: 399, note: "Arrives Thu", day: "Thursday" },
-      { id: "poetry", name: "Poetry collection + bookmark", price: 299, note: "Arrives Thu", day: "Thursday" },
-      { id: "mystery", name: "Three-book mystery box", price: 749, note: "Arrives Sun", day: "Sunday", late: true }
+      { id: "graphic", say: "hardback graphic novel", name: "Graphic novel, hardback", photo: "assets/img/graphic.jpg", pic: "book", price: 399, note: "Arrives Thu", day: "Thursday" },
+      { id: "poetry", say: "poetry collection", name: "Poetry collection + bookmark", photo: "assets/img/poetry.jpg", pic: "pen", price: 299, note: "Arrives Thu", day: "Thursday" },
+      { id: "mystery", say: "mystery book box", name: "Three-book mystery box", photo: "assets/img/mystery.jpg", pic: "search", price: 749, note: "Arrives Sun", day: "Sunday", late: true }
     ],
     headphones: [
-      { id: "over", name: "Over-ear, 30 h battery", price: 1399, note: "Big sound, a bit heavy" },
-      { id: "anc", name: "In-ear, noise cancelling", price: 1249, note: "Small case, 8 h battery" },
-      { id: "fold", name: "On-ear, foldable", price: 899, note: "Light, no noise cancelling" }
+      { id: "over", say: "over-ear headphones", name: "Over-ear, 30 h battery", photo: "assets/img/over.jpg", pic: "headphones", price: 1399, note: "Big sound, a bit heavy" },
+      { id: "anc", say: "noise-cancelling earbuds", name: "In-ear, noise cancelling", photo: "assets/img/anc.jpg", pic: "mute", price: 1249, note: "Small case, 8 h battery" },
+      { id: "fold", say: "foldable headphones", name: "On-ear, foldable", photo: "assets/img/fold.jpg", pic: "bag", price: 899, note: "Light, no noise cancelling" }
     ]
   },
 
@@ -163,13 +199,14 @@ window.DATA = {
       { area: "money", self: 2, total: 6, expected: 50 },
       { area: "relationships", self: 4, total: 8, expected: 65 }
     ],
-    /* The five weeks before this one. This week's point is his live rating. Algebra has no history: it unlocks this week. */
+    /* The five weeks before this one, as points below or above this week's starting rating (Aarav: geometry 528 → 610).
+       This week's point is the live rating. Algebra has no history: it unlocks this week. */
     weeks: ["10 Sep", "17 Sep", "24 Sep", "1 Oct", "8 Oct"],
     history: {
-      geometry: [528, 549, 566, 583, 597],
-      emails: [455, 472, 490, 508, 526],
-      spending: [262, 270, 284, 279, 292],
-      messages: [352, 360, 366, 371, 377]
+      geometry: [-82, -61, -44, -27, -13],
+      emails: [-85, -68, -50, -32, -14],
+      spending: [-38, -30, -16, -21, -8],
+      messages: [-28, -20, -14, -9, -3]
     },
     /* Share of tasks he did himself in each of those weeks. This week's is worked out from `reliance`. */
     selfShare: [34, 38, 41, 43, 46],
@@ -181,6 +218,35 @@ window.DATA = {
       { id: "writer", name: "Essay writer add-on", kind: "Browser add-on that writes text for you", uses: 0, last: null, since: "2 Oct", blocked: true }
     ],
     tokensEarlier: { used: 0, earned: 0 }
+  },
+
+  /* A second child on his own page (laksh.html), to show the same prompts answered differently at higher levels.
+     His page keeps its own saved state and starts already set up. Anything not listed here is the same as Aarav's. */
+  personas: {
+    laksh: {
+      parent: { name: "Rohit Verma", first: "Rohit", relation: "Dad" },
+      child: { name: "Laksh", age: 15, classNo: 10, provider: "Gemini", wallet: 1700, walletMonthly: 2000 },
+      /* Pro in algebra, Master in writing, spending and messages */
+      ratings: { algebra: 720, geometry: 560, emails: 880, spending: 890, messages: 920 },
+      /* for his gift: Riya's into art, and the sketchbook set is his agent's pick */
+      giftTopic: "art", giftPick: "sketch",
+      history: [
+        { title: "email the science teacher about the project deadline", when: "Mon", thread: [
+          { t: "child", text: "email the science teacher about the project deadline" },
+          { t: "agent", tag: { text: "Writing · Emails & applications · Master: I'll just do it", tone: "pro" },
+            text: "Done: \"Dear Sir, could our group submit the solar-oven project on Monday 22 October instead of Friday? Our oven test was rained out. Thank you, Laksh, 10A.\" Sent from your school email." }
+        ] },
+        { title: "split the pizza bill with 4 friends", when: "Tue", thread: [
+          { t: "child", text: "split the pizza bill with 4 friends, it was ₹1,160" },
+          { t: "agent", tag: { text: "Money · Spending · Master: I'll handle it", tone: "pro" },
+            text: "₹290 each. I've sent payment requests to the other four." }
+        ] },
+        { title: "book a cab home from football at 6", when: "Tue", thread: [
+          { t: "child", text: "book a cab home from football at 6" },
+          { t: "agent", tag: { text: "Chore: no tokens, no waiting", tone: "chore" }, text: "Done. Cab booked for 6:00 pm from the ground to home. 🚗" }
+        ] }
+      ]
+    }
   }
 };
 
@@ -263,6 +329,8 @@ DATA.flows = {
      draft, or asking the agent to write it. Each gets pushed back, and he rewrites. */
   apology: [
     { action: "riya" },
+    /* A Master in messages gets one question on tone, then two ready replies to choose from. Below that, he writes it himself. */
+    { action: "byMode", routes: { pro: "tone", confident: "sorry", practising: "sorry", learner: "sorry" } },
     { id: "sorry", from: "agent",
       text: "I'll help you say it, but it should come from you. What are you actually sorry about?",
       chips: [{ label: "I didn't show up on Saturday", also: "saturday show bail bailed came come", go: "write" },
@@ -292,13 +360,23 @@ DATA.flows = {
       text: "I won't write this one for you, but I'll make it sound right. Try a first line, even a rough one.",
       chips: ctx => ctx.draftChips().slice(0, 1), go: "draftIn" },
     { id: "leave", from: "agent", text: "Okay, your call. If you change your mind, just say \"reply to Riya\" and we'll write it together." },
-    { action: "note", undone: true, text: "Nothing was sent, and your rating doesn't change.", end: true }
+    { action: "note", undone: true, text: "Nothing was sent, and your rating doesn't change.", end: true },
+
+    /* Master: one question on how it should land, then two replies in that tone */
+    { id: "tone", from: "agent", text: "Quick one, so it sounds like you: how do you want this to land?",
+      chips: [{ label: "Light and chill", also: "light chill casual easy relaxed" }, { label: "Honest and serious", also: "honest serious real proper sincere" }] },
+    { from: "agent", text: "Here are two in that tone. Pick the one that sounds like you, and I'll send it.", chips: ctx => ctx.toneDrafts() },
+    { action: "chooseDraft" },
+    { action: "send" },
+    { action: "score", say: "Your tone, your call", did: "Chose how to apologise to a friend", end: true }
   ],
 
   /* Gift for Riya (money, weight 450, Practising: he picks). Wrong turns: asking the agent to choose, or picking an
      option that arrives after her birthday. The products card shows what each option does to his wallet. */
   gift: [
-    { id: "into", from: "agent", text: "Nice. What's she into right now?",
+    /* A Master in spending gets one pick straight away, with the other options a tap away. Everyone else chooses. */
+    { action: "byMode", routes: { pro: "one", confident: "into", practising: "into", learner: "into" } },
+    { id: "into", from: "agent", text: "Happy to help you choose. What's Riya into right now?",
       chips: [{ label: "music", also: "songs music", go: "options" }, { label: "art", also: "drawing paint art", go: "options" },
               { label: "books", also: "reading books", go: "options" }, { label: "No idea, you pick", also: "idk dunno you pick anything whatever", go: "nudge" }] },
     { id: "nudge", action: "hint" },
@@ -309,7 +387,7 @@ DATA.flows = {
       text: ctx => "Three " + ctx.topic + " picks under ₹800. Her birthday is Saturday, so check when each arrives, and what it does to your wallet. Then pick." },
     { action: "checkPick" },
     { id: "late", from: "agent",
-      text: ctx => "Heads up: the " + ctx.product.name.toLowerCase() + " arrives Sunday, a day after her birthday. Pick another, or order it anyway?",
+      text: ctx => "Heads up: the " + ctx.product.say + " arrives Sunday, a day after her birthday. Pick another, or order it anyway?",
       chips: [{ label: "Pick another", also: "another different other back", go: "repick" }, { label: "Order it anyway", also: "anyway yes order", go: "confirm" }] },
     { id: "repick", action: "hint", go: "pick" },
     { id: "confirm", from: "agent", text: ctx => ctx.product.name + " for " + ctx.rupee(ctx.product.price) + ". Your wallet goes " + ctx.rupee(ctx.wallet) + " → " + ctx.rupee(ctx.wallet - ctx.product.price) + ". Place the order?",
@@ -317,6 +395,22 @@ DATA.flows = {
     { id: "order", action: "order" },
     { from: "agent", card: "order", text: ctx => "Ordered. It reaches Riya's on " + ctx.product.day + ", gift-wrapped." + (ctx.product.late ? " Maybe let her know it's on the way." : "") },
     { action: "score", say: "Your pick, your call", did: "Chose his own gift within budget", end: true },
+
+    /* Master: the agent's pick, ordered on one tap; "See other options" shows the rest. */
+    { id: "one", action: "pickForMe" },
+    { from: "agent", card: "products",
+      text: ctx => "Riya's been sketching a lot lately, so here's my pick: a " + ctx.product.say + ", " + ctx.rupee(ctx.product.price) +
+        ". It arrives " + ctx.product.day + ", before her birthday on Saturday. Tap Order and it's done.",
+      chips: [{ label: "See other options", also: "other options more different another else show", go: "others" }] },
+    { id: "chosen", action: "checkMasterPick" },
+    { id: "others", action: "showOthers" },
+    { from: "agent", card: "products", text: ctx => "Here are the other " + ctx.products.length + ". Same budget, different vibe.", go: "chosen" },
+    { id: "lateOne", from: "agent",
+      text: ctx => "The " + ctx.product.say + " arrives " + ctx.product.day + ", a day after her birthday. Order it anyway, or look again?",
+      chips: [{ label: "Order it anyway", also: "anyway yes order", go: "orderNow" }, { label: "See the options again", also: "again other options back", go: "others" }] },
+    { id: "orderNow", action: "order" },
+    { from: "agent", card: "order", text: ctx => "Ordered. It reaches Riya's on " + ctx.product.day + ", gift-wrapped." + (ctx.product.late ? " Maybe let her know it's on the way." : "") },
+    { action: "score", say: "Your call, done in one go", did: "Picked and ordered a gift within budget", end: true },
 
     { id: "fast", action: "faster" },
     { action: "autoOrder" },

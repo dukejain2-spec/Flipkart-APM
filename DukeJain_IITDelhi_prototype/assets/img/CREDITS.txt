@@ -1,0 +1,21 @@
+Product photos, from Openverse (openverse.org). Each is under the licence shown; cropped and resized.
+
+earphones.jpg  "Black Wired Earphones on Red Background" by gavinwhitner, CC BY 2.0, https://www.flickr.com/photos/156466858@N02/49720201512
+speaker.jpg  "A portable Bluetooth speaker with great bass? Yep! The ARCHEER A320. My review on my site (link in profile)." by HighTechDad, CC BY 2.0, https://www.flickr.com/photos/22473198@N00/33573968431
+posters.jpg  "Concert Posters" by Sam Howzit, CC BY 2.0, https://www.flickr.com/photos/12508217@N08/8438154668
+sketch.jpg  "draw your camera : Kyocera SL400R" by striatic, CC BY 2.0, https://www.flickr.com/photos/34427466731@N01/131995938
+watercolour.jpg  "Reeves watercolor set, location unknown" by unknown, Public domain, https://www.rawpixel.com/image/6113054/photo-image-watercolor-public-domain-art
+print.jpg  "n90_w1150" by BioDivLibrary, Public domain, https://www.flickr.com/photos/61021753@N02/9900465935
+graphic.jpg  "Comic Books" by Sam Howzit, CC BY 2.0, https://www.flickr.com/photos/12508217@N08/8015843393
+poetry.jpg  "Free open notebook bookmark strap" by unknown, Public domain, https://www.rawpixel.com/image/5903150/photo-image-paper-book-public-domain
+mystery.jpg  "stack of books, Ballard, Seattle, Washington" by Wonderlane, CC BY 2.0, https://www.flickr.com/photos/71401718@N00/3089163372
+over.jpg  "Close-up image of a pair of over-ear headphones with red accents and a red cable placed on a metal surface. The background is blurred, showing parts of an office interior." by Nilo Velez, Public domain, https://wordpress.org/photos/photo/18766603c1/
+anc.jpg  "A flat lay of everyday items on a wooden surface, including a smartwatch, a pair of black eyeglasses, a black wireless earbud case, a smartphone displaying a hand reflection on its screen, and a black wallet." by Nur Nobi, Public domain, https://wordpress.org/photos/photo/14568e4010/
+fold.jpg  "Headphones" by blacklerphotos, CC BY 2.0, https://www.flickr.com/photos/110255976@N07/11140908364
+
+Agent logos (assets/img/agents), from Wikimedia Commons. They are trademarks of their owners and are shown only to name
+the AI agent a child uses, in the "connected" step after setup.
+agents/chatgpt.svg  "ChatGPT logo" (OpenAI), Public domain, https://commons.wikimedia.org/wiki/File:ChatGPT_logo.svg
+agents/claude.svg   "Claude AI symbol" (Anthropic), CC0, https://commons.wikimedia.org/wiki/File:Claude_AI_symbol.svg
+agents/gemini.svg   "Google Gemini icon 2025" (Google), Public domain, https://commons.wikimedia.org/wiki/File:Google_Gemini_icon_2025.svg
+agents/copilot.svg  "Microsoft 365 Copilot Icon one-color" (Microsoft), Public domain, https://commons.wikimedia.org/wiki/File:Microsoft_365_Copilot_Icon_one-color.svg
