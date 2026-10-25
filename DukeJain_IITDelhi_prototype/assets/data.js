@@ -39,23 +39,23 @@ window.DATA = {
     { id: "consent", title: "Parental consent", required: true, on: false,
       why: "Required to process a child's data. You can withdraw it at any time, and everything is deleted." },
     { id: "agent", title: "Agent integration", required: true, on: true,
-      why: "Connects Aarav's personal agent to Bud-e, so every request passes through it first." },
+      why: "Connects your child's personal agent to Bud-e, so every request passes through Bud-e first." },
     { id: "past", title: "Use past AI data to set starting levels", on: true,
-      why: "Only used to estimate where Aarav starts in each skill." },
+      why: "Only used to estimate where your child starts in each skill." },
     { id: "restrict", title: "Restrict other AI apps on this device", on: true,
       why: "Stops the easiest bypass: opening another AI directly." },
     { id: "extension", title: "Browser extension", on: true,
-      why: "If Aarav uses any other AI agent in a browser, you'll be told about it and can block it from your Bud-e Parent dashboard." },
+      why: "If your child uses any other AI agent in a browser, you'll be told about it and can block it from your Bud-e Parent dashboard." },
     { id: "data", title: "Data and retention", on: true,
       why: "Stores levels, ratings, token use and simple signals for 12 months. Deleted on request.",
       detail: ["Stored: skill ratings, task weights, token use, other-AI counts", "Never stored: chat text, messages, photos"] },
     { id: "wallet", title: "Pocket-money wallet", on: true,
-      why: "A monthly amount Aarav can spend through his agent. He sees what each option does to his balance." },
+      why: "A monthly amount your child can spend through their agent, seeing what each option does to their balance first." },
     { id: "notify", title: "Notifications", on: true,
       why: "A weekly report to you every Sunday." }
   ],
 
-  willSee: ["Progress in each area", "How much he relies on AI versus what's expected for his age", "Token use", "Other AI agents he used (from the extension), which you can block"],
+  willSee: ["Progress in each area", "How much your child relies on AI versus what's expected for their age", "Token use", "Other AI agents they used (from the extension), which you can block"],
   wontSee: ["Any chats or messages"],
 
   /* Ratings are 0–1000 within the child's age group, so the same band names mean different things at 9 and at 14. */
@@ -360,7 +360,7 @@ DATA.flows = {
   gift: [
     /* A Master in spending gets one pick straight away, with the other options a tap away. Everyone else chooses. */
     { action: "byMode", routes: { pro: "one", confident: "into", practising: "into", learner: "into" } },
-    { id: "into", from: "agent", text: "Nice. What's she into right now?",
+    { id: "into", from: "agent", text: "Happy to help you choose. What's Riya into right now?",
       chips: [{ label: "music", also: "songs music", go: "options" }, { label: "art", also: "drawing paint art", go: "options" },
               { label: "books", also: "reading books", go: "options" }, { label: "No idea, you pick", also: "idk dunno you pick anything whatever", go: "nudge" }] },
     { id: "nudge", action: "hint" },

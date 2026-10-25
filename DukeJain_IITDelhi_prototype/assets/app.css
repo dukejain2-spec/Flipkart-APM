@@ -401,11 +401,13 @@ input:focus-visible + .switch { outline: 2px solid var(--accent); outline-offset
 .thread { max-width: 828px; margin: 0 auto; }
 .chat-h { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 28px 12px; flex: none; }
 .agent-id { display: flex; align-items: center; gap: 11px; }
-.agent-av { width: 42px; height: 42px; border-radius: 10px; background: var(--card); border: 1px solid var(--line); display: grid; place-items: center; }
+.agent-av { position: relative; width: 42px; height: 42px; border-radius: 10px; background: var(--card); border: 1px solid var(--line); display: grid; place-items: center; }
+.agent-av img { width: 26px; height: 26px; object-fit: contain; }
+.agent-via { position: absolute; right: -6px; bottom: -6px; width: 20px; height: 20px; border-radius: 50%; background: var(--card); border: 1px solid var(--line); display: grid; place-items: center; }
+.pill-logo { width: 16px; height: 16px; object-fit: contain; margin-right: 7px; }
 .agent-id div { display: grid; line-height: 1.3; }
 .agent-id b { font: 600 17px var(--display); }
 .agent-id span { font-size: 12px; color: var(--ink-3); }
-.chat-date { font-size: 12px; color: var(--ink-3); }
 .chat-h-r { display: flex; align-items: center; gap: 10px; }
 
 /* Chats: a sidebar beside the nav rail, like a chat app's: New chat, then recent chats, newest first */
@@ -630,6 +632,7 @@ button.chat-item:hover { background: var(--paper-2); color: var(--ink); }
 .ch-f { display: flex; justify-content: space-between; align-items: center; }
 .ch-r { display: inline-flex; align-items: center; gap: 6px; font: 600 18px var(--mono); color: var(--ink); }
 .ch-r .ic { color: var(--coin); }
+.ch-soon { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; color: var(--ink-3); background: var(--paper-2); border: 1px solid var(--line); border-radius: var(--r1); padding: 4px 8px; }
 .ch-done { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 600; color: var(--ok); }
 .ch.is-done { background: var(--paper); }
 .ch.is-done h3 { color: var(--ink-3); }
@@ -739,7 +742,6 @@ button.chat-item:hover { background: var(--paper-2); color: var(--ink); }
   .side { bottom: 64px; }
   .chat { padding: 0; }
   .chat-h { padding: 6px 14px 10px; }
-  .chat-date { display: none; }
   /* Keep the header on one line: no avatar (the top bar shows the mark), no subtitle, and New chat shrinks to its + icon */
   .agent-av, .agent-id div span { display: none; }
   .agent-id b { white-space: nowrap; }

@@ -241,6 +241,8 @@
       : { start: viewStart, child: viewChildProfile, permissions: viewPermissions, handover: viewHandover, splash: viewSplash,
           chat: viewChat, earn: viewEarn, wallet: viewWallet, progress: viewProgress };
   const HOME = APP === "parent" ? "plogin" : PERSONA ? "splash" : "start";
+  const TITLES = { child: "Set up", permissions: "Permissions", handover: "Your Bud-e Parent code", chat: "Home", earn: "Tokens",
+    wallet: "Wallet", progress: "My skills", plogin: "Log in", parent: "Weekly report", pperms: "Permissions" };
   const CHILD = ["chat", "earn", "wallet", "progress"];
   const PARENT = ["parent", "pperms"];
   const route = () => (location.hash.replace(/^#\/?/, "").split("?")[0] || HOME);
@@ -254,6 +256,9 @@
     if (r === "plogin" && parentIn()) { location.replace("#/parent"); return; }
     const app = $("#app");
     document.body.dataset.route = r;
+    /* the browser tab names the screen and the app */
+    const title = TITLES[r], appName = APP === "parent" ? "Bud-e Parent" : PERSONA ? "Bud-e · " + name() : "Bud-e";
+    document.title = title ? title + " · " + appName : appName;
     if (CHILD.includes(r)) {
       if (!S.setup.done) quickSetup();
       S.role = "child";
@@ -445,7 +450,7 @@
           <div class="pills">${D.aiUses.map(u => `<label class="pill"><input type="checkbox" name="uses" value="${u.id}" ${c.uses.includes(u.id) ? "checked" : ""}><span>${esc(u.label)}</span></label>`).join("")}</div>
         </fieldset>
         <fieldset class="field"><legend>Which AI agent does ${esc(c.name)} use?</legend>
-          <div class="pills">${D.providers.map(p => `<label class="pill"><input type="radio" name="provider" value="${esc(p)}" ${p === c.provider ? "checked" : ""}><span>${esc(p)}</span></label>`).join("")}</div>
+          <div class="pills">${D.providers.map(p => `<label class="pill"><input type="radio" name="provider" value="${esc(p)}" ${p === c.provider ? "checked" : ""}><span>${D.providerLogos[p] ? `<img class="pill-logo" src="${esc(D.providerLogos[p])}" alt="">` : ""}${esc(p)}</span></label>`).join("")}</div>
         </fieldset>
         <fieldset class="field"><legend>Has ${esc(c.name)} used this agent before?</legend>
           <div class="seg"><label><input type="radio" name="usedBefore" value="yes" ${c.usedBefore ? "checked" : ""}><span>Yes</span></label><label><input type="radio" name="usedBefore" value="no" ${!c.usedBefore ? "checked" : ""}><span>No, first time</span></label></div>
@@ -480,12 +485,12 @@
       const off = p.id === "past" && !c.usedBefore;
       const on = off ? false : s.perms[p.id];
       const locked = inParent && p.required;
-      const why = p.why.replace(/Aarav/g, esc(c.name));
+      /* Written for any child ("your child"), whatever name setup was given */
       return `<div class="perm ${on ? "is-on" : ""} ${off ? "is-off" : ""}" data-perm="${p.id}">
         <span class="perm-ic">${icon(permIcon[p.id], 20)}</span>
         <div class="perm-txt"><b>${esc(p.title)}${p.required ? '<em class="req">Required</em>' : ""}${p.optional ? '<em class="opt">Optional</em>' : ""}</b>
-          <p>${off ? "Not needed: " + esc(c.name) + " hasn't used an agent before." : why}</p>
-          ${locked ? `<p class="perm-lock">${icon("lock", 13)} Stays on while Bud-e is active. To withdraw it, remove ${esc(c.name)}'s device in Settings.</p>` : ""}
+          <p>${off ? "Not needed: your child hasn't used an AI agent before." : esc(p.why)}</p>
+          ${locked ? `<p class="perm-lock">${icon("lock", 13)} Stays on while Bud-e is active. To withdraw it, remove your child's device in Settings.</p>` : ""}
           ${p.detail ? `<details><summary>What exactly is stored</summary><ul>${p.detail.map(d => `<li>${esc(d)}</li>`).join("")}</ul></details>` : ""}
           ${p.id === "wallet" ? `<label class="amount">Monthly amount <span>₹</span><input type="number" min="0" step="100" id="walletAmt" value="${s.walletMonthly}"></label>` : ""}
         </div>
@@ -508,7 +513,7 @@
   }
   function viewPermissions() {
     return setupFrame(2, "Permissions", "Each one is explained. Only the first two are required.", `
-      <div class="lock-note">${icon("lock", 18)}<p><b>These permissions can't be changed on this device.</b> After setup, only you can change them, from Bud-e Parent on your phone. This makes sure ${esc(name())} isn't exposed to unrestricted AI agents that do everything for them and hold back their growth and learning.</p></div>
+      <div class="lock-note">${icon("lock", 18)}<p><b>These permissions can't be changed on this device.</b> After setup, only you can change them, from Bud-e Parent on your phone. This makes sure your child isn't exposed to unrestricted AI agents that do everything for them and hold back their growth and learning.</p></div>
       <div class="perms">${permCards(false)}</div>
       <div class="seebox card">
         <div><h3>${icon("eye", 18)} You will see</h3><ul>${D.willSee.map(x => `<li>${icon("check", 15)}${esc(x)}</li>`).join("")}</ul></div>
@@ -1122,12 +1127,13 @@
       b.title = f.why;
       b.innerHTML = `${icon(f.state === "locked" ? "lock" : "bolt", 16)}<span>Faster response</span>${f.cost ? `<em>${f.cost}</em>` : f.state === "free" ? "<em>free</em>" : ""}`;
     }
-    /* The wallet shows in the chat header only during a money task. */
+    /* The wallet shows in the chat header only during a money task (the date is already in the top bar). */
     const side = $("#chatSide");
     if (side) {
       const money = ctx && !ctx.challenge && ctx.area && ctx.area.id === "money";
-      side.className = money ? "chat-wallet" : "chat-date";
-      side.innerHTML = money ? `${icon("wallet", 15)}Wallet <b>${rupee(S.wallet)}</b>` : D.today.long;
+      side.className = "chat-wallet";
+      side.hidden = !money;
+      side.innerHTML = money ? `${icon("wallet", 15)}Wallet <b>${rupee(S.wallet)}</b>` : "";
     }
     input.placeholder = w && w.input ? "Write it in your own words…" : w ? "Pick an option, or type your answer…" : ctx ? "…" : "Type to see what I can help with…";
   }
@@ -1157,14 +1163,19 @@
     input.value = taskDef(id).prompt;
     closePrompts(); renderComposer(); input.focus();
   }
+  /* The chat header shows the child's own agent (its logo), with a small Bud-e badge: every reply comes through Bud-e */
+  const agentAvatar = () => {
+    const logo = D.providerLogos[S.setup.child.provider];
+    return logo ? `<img src="${esc(logo)}" alt=""><i class="agent-via">${mark(14)}</i>` : mark(30, true);
+  };
   const greeting = () => { const h = storyNow().getHours(); return h < 12 ? "Morning" : h < 17 ? "Afternoon" : "Evening"; };
 
   function viewChat(main) {
     const home = !S.thread.length;
     main.innerHTML = `<section class="chat ${home ? "chat--home" : ""}">
-      <div class="chat-h"><div class="agent-id"><span class="agent-av">${mark(30, true)}</span><div><b>My agent</b><span>${esc(S.setup.child.provider)} · through Bud-e</span></div></div>
-        <div class="chat-h-r"><span class="chat-date" id="chatSide">${D.today.long}</span><button class="btn ghost small" data-newchat aria-label="New chat">${icon("plus", 15)}<span>New chat</span></button></div></div>
-      <div class="scroll" id="scroll"><div class="thread" id="thread"></div></div>
+      <div class="chat-h"><div class="agent-id"><span class="agent-av">${agentAvatar()}</span><div><b>My agent</b><span>${esc(S.setup.child.provider)} · through Bud-e</span></div></div>
+        <div class="chat-h-r"><span class="chat-wallet" id="chatSide" hidden></span><button class="btn ghost small" data-newchat aria-label="New chat">${icon("plus", 15)}<span>New chat</span></button></div></div>
+      <div class="scroll" id="scroll"><div class="thread" id="thread" role="log" aria-live="polite" aria-label="Chat"></div></div>
       <div class="dock">
         <div class="chips" id="chips" hidden></div>
         <div class="ring"><div class="prompts" id="prompts" role="listbox" aria-label="Pre-fed prompts" hidden></div>
@@ -1257,7 +1268,7 @@
           <span class="ch-area">${icon(areaIcon(c.area), 15)}${esc(area(c.area).name)}</span>
           <h3>${esc(c.title)}</h3>
           <div class="ch-f"><span class="ch-r">${icon("coin", 16)}+${c.reward}</span>
-          ${done ? `<span class="ch-done">${icon("check", 16)} Done</span>` : `<button class="btn ${c.off ? "ghost" : "primary"} small" ${c.off ? "data-off" : `data-challenge="${c.id}"`}>Start</button>`}</div>
+          ${done ? `<span class="ch-done">${icon("check", 16)} Done</span>` : c.off ? `<span class="ch-soon">${icon("lock", 14)} Unlocks ${D.today.reset}</span>` : `<button class="btn primary small" data-challenge="${c.id}">Start</button>`}</div>
         </article>`;
       }).join("")}</div>
       <section class="panel"><div class="panel-h"><b>This week</b></div>
