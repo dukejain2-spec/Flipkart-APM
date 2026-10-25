@@ -694,6 +694,9 @@
     cancelFlow();
     const run = chat.run;
     const task = taskDef(id);
+    /* A pre-fed prompt for a skill that starts out new (algebra) always starts it fresh, so the unlock and, when he
+       solves it on his own, the level up show every time, whatever an earlier run left saved. */
+    if (!opts.challenge && D.prompts.includes(id) && task.skill && skillDef(task.skill).rating == null) { S.skills[task.skill] = { rating: null }; changed(); }
     const ctx = {
       run, id, task, hints: 0, misses: 0, shown: false, answers: {}, answer: null, rupee, challenge: !!opts.challenge,
       get wallet() { return S.wallet; },
