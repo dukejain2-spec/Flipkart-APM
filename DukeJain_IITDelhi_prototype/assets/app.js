@@ -84,15 +84,17 @@
      visor face with two open eyes, and two sparks. Live marks follow the mouse with their eyes and giggle when clicked
      (see the bottom of this file). The square viewBox includes the sparks, so nothing is clipped. */
   let markId = 0;
+  /* The logo's gradient stops read the theme's colours (--lg-l1, --lg-u2 …), falling back to the brand colours */
+  const stops = (layer, at, colours) => at.map((o, i) => `<stop offset="${o}" style="stop-color:var(--lg-${layer}${i + 1},${colours[i]})"/>`).join("");
   const mark = (s = 28, live = false) => {
     const id = "bd" + (++markId), small = s < 24;
     return `<svg class="mark${live ? " mark--live" : ""}" width="${s}" height="${s}" viewBox="${small ? "40 40 1040 1090" : "50 -8 1180 1180"}" ${live ? 'role="img" aria-label="Bud-e"' : 'aria-hidden="true"'}><defs>
-      <linearGradient id="${id}l" x1=".2" y1="0" x2=".5" y2="1"><stop offset="0" stop-color="#EE8572"/><stop offset=".38" stop-color="#F2A65E"/><stop offset=".72" stop-color="#EA8F96"/><stop offset="1" stop-color="#CF68D2"/></linearGradient>
-      <linearGradient id="${id}u" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#B566CE"/><stop offset=".5" stop-color="#E0779C"/><stop offset="1" stop-color="#F28C6E"/></linearGradient>
-      <linearGradient id="${id}v" x1="0" y1=".2" x2="1" y2="1"><stop offset="0" stop-color="#5450F2"/><stop offset=".55" stop-color="#7A57EE"/><stop offset="1" stop-color="#C963D8"/></linearGradient>
-      <linearGradient id="${id}s" x1=".15" y1="0" x2=".35" y2="1"><stop offset="0" stop-color="#7FA8F8"/><stop offset=".3" stop-color="#4E88F5"/><stop offset=".48" stop-color="#4B6CF1"/><stop offset=".64" stop-color="#4A2FE2"/><stop offset="1" stop-color="#4C55F0"/></linearGradient></defs>
+      <linearGradient id="${id}l" x1=".2" y1="0" x2=".5" y2="1">${stops("l", [0, .38, .72, 1], ["#EE8572", "#F2A65E", "#EA8F96", "#CF68D2"])}</linearGradient>
+      <linearGradient id="${id}u" x1="0" y1="1" x2="1" y2="0">${stops("u", [0, .5, 1], ["#B566CE", "#E0779C", "#F28C6E"])}</linearGradient>
+      <linearGradient id="${id}v" x1="0" y1=".2" x2="1" y2="1">${stops("v", [0, .55, 1], ["#5450F2", "#7A57EE", "#C963D8"])}</linearGradient>
+      <linearGradient id="${id}s" x1=".15" y1="0" x2=".35" y2="1">${stops("s", [0, .3, .48, .64, 1], ["#7FA8F8", "#4E88F5", "#4B6CF1", "#4A2FE2", "#4C55F0"])}</linearGradient></defs>
       <g class="m-body">
-        <path d="M560 470H790C940 520 1035 640 1035 785C1035 960 895 1097 720 1097H560Z" fill="url(#${id}l)"/>
+        <path d="M560 456H790C940 506 1035 640 1035 785C1035 960 895 1097 720 1097H560Z" fill="url(#${id}l)"/>
         <path d="M400 68H615C760 68 880 185 880 335C880 392 866 430 845 464H600Z" fill="url(#${id}u)"/>
         <path d="M598 428C625 442 655 452 685 458C795 525 866 645 866 780C866 905 800 1020 690 1097H255C150 1097 68 1013 68 910V428Z" fill="url(#${id}v)"/>
         <path d="M255 68H410C530 160 598 290 598 430C598 600 520 760 380 840C300 880 180 890 68 880V255C68 150 150 68 255 68Z" fill="url(#${id}s)"/>
@@ -100,7 +102,7 @@
         <g class="m-eyes"><g class="m-open"><ellipse class="m-eye" cx="374" cy="719" rx="46" ry="50" fill="#1B1640"/><ellipse class="m-eye" cx="608" cy="719" rx="46" ry="50" fill="#1B1640"/></g>
           ${live ? '<path class="m-happy" d="M330 742Q374 676 418 742M564 742Q608 676 652 742" fill="none" stroke="#1B1640" stroke-width="36" stroke-linecap="round" stroke-linejoin="round"/>' : ""}</g>
       </g>
-      ${small ? "" : '<g class="m-sparks" stroke-width="58" stroke-linecap="round"><path class="m-sp1" d="M1037 483 1153 370" stroke="#EE846C"/><path class="m-sp2" d="M1085 585H1183" stroke="#C955C9"/></g>'}
+      ${small ? "" : '<g class="m-sparks" stroke-width="58" stroke-linecap="round"><path class="m-sp1" d="M1037 483 1153 370" style="stroke:var(--lg-p1,#EE846C)"/><path class="m-sp2" d="M1085 585H1183" style="stroke:var(--lg-p2,#C955C9)"/></g>'}
     </svg>`;
   };
   const wordmark = () => '<span class="wordmark">Bud<i></i><b>e</b></span>';
@@ -126,7 +128,7 @@
         extInstalled: false,
         perms, walletMonthly: c.walletMonthly
       },
-      newSkill: false,
+      newSkill: false, theme: "sky",
       tokens: c.tokens, spent: 0, earned: 0, tokenLog: [],
       wallet: c.wallet, orders: [],
       skills, ratingLog: [],
@@ -272,6 +274,7 @@
     if (r === "plogin" && parentIn()) { location.replace("#/parent"); return; }
     const app = $("#app");
     document.body.dataset.route = r;
+    applyTheme();
     /* the browser tab names the screen and the app */
     const title = TITLES[r], appName = APP === "parent" ? "Bud-e Parent" : PERSONA ? "Bud-e · " + name() : "Bud-e";
     document.title = title ? title + " · " + appName : appName;
@@ -324,6 +327,7 @@
       `${tab("chat", "Home", "home", r === "chat")}${tab("progress", "My skills", "trophy", r === "progress", S.newSkill ? '<i class="tab-dot" aria-label="New skill"></i>' : "")}
        ${tab("earn", "Tokens", "coin", r === "earn", `<em class="tab-val token-count">${S.tokens}</em>`)}
        ${S.setup.perms.wallet ? tab("wallet", "Wallet", "wallet", r === "wallet", `<em class="tab-val wallet-count">${rupee(S.wallet)}</em>`) : ""}
+       ${themeButton()}
        <span class="nav-fill"></span><button class="tab tab--settings" data-off>${icon("cog", 20)}<span>Settings</span></button>${profileButton(name()[0], "child")}`,
       `<button class="pill-stat chats-pill" data-chatbar aria-label="Chats">${icon("chat", 16)}<span>Chats</span></button>
        <button class="pill-stat areas-pill" data-drawer aria-label="My areas">${icon("chart", 16)}<span>My areas</span></button>`,
@@ -345,6 +349,17 @@
        <span class="nav-fill"></span><button class="tab tab--settings" data-off>${icon("cog", 20)}<span>Settings</span></button>${profileButton(S.setup.parent.name[0] || "N", "parent")}`,
       `<span class="pill-stat"><i class="role-dot"></i>Bud-e Parent · ${esc(name())}'s device linked</span>`,
       `<div class="cols"><main id="main" class="main main--wide"></main></div>`);
+  }
+  /* Theme, under Wallet: a menu of colour themes, each with its swatch. The choice is saved with the device. */
+  const themeId = () => (D.themes.some(t => t.id === S.theme) ? S.theme : D.themes[0].id);
+  const applyTheme = () => { document.documentElement.dataset.theme = themeId(); };
+  function themeButton() {
+    return `<div class="theme-pick"><button class="tab" data-menu aria-haspopup="true" aria-label="Theme">${icon("palette", 20)}<span>Theme</span></button>
+      <div class="menu theme-menu" hidden>
+        <div class="menu-h">Theme</div>
+        ${D.themes.map(t => `<button class="theme-opt ${t.id === themeId() ? "is-on" : ""}" data-settheme="${t.id}" aria-pressed="${t.id === themeId()}">
+          <span class="theme-sw">${t.swatch.map(c => `<i style="background:${c}"></i>`).join("")}</span>${esc(t.name)}${icon("check", 16, "theme-ok")}</button>`).join("")}
+      </div></div>`;
   }
   function profileButton(initial, role) {
     return `<div class="profile"><button class="avatar avatar--${role}" data-menu aria-label="Profile menu">${esc(initial)}</button>
@@ -711,7 +726,7 @@
   function tagFor(ctx, st) {
     const t = ctx.task;
     if (st && st.tag === "check") return { text: `${ctx.area.tag} · ${ctx.skill.name} · New skill check`, tone: "check" };
-    if (ctx.fast) return { text: `${ctx.area.tag} · ${ctx.skill.name} · Faster response: done for you`, tone: "fast" };
+    if (ctx.fast) return { text: `${ctx.area.tag} · ${ctx.skill.name} · Faster response: ${t.fastLine || "done for you"}`, tone: "fast" };
     if (ctx.challenge) return { text: `Challenge · ${ctx.area.name} · +${t.reward} tokens`, tone: "challenge" };
     /* Messages that carry feelings keep their fixed label, except for a Master, whose agent drafts two for him to choose from */
     if (t.tag && !(t.carriesFeelings && ctx.mode.id === "pro")) return { text: t.tag, tone: t.area === "chore" ? "chore" : t.area === "feelings" ? "care" : "care" };
@@ -943,26 +958,32 @@
     showProducts(st, ctx) { ctx.topic = st.topic; ctx.products = D.products[ctx.topic]; },
     /* An option with a warning (not allowed in the exam, or arriving after it) gets a heads-up before it's ordered */
     checkPick(st, ctx) { return ctx.product.bad ? "late" : "confirm"; },
-    /* A Master's pick: the cheapest option without a warning, with the rest kept for "See other options" */
+    /* A Master's pick: the cheapest option without a warning, marked Best pick. "See other options" then shows all of
+       them, the pick first, so it can still be chosen. */
     pickForMe(st, ctx) {
       ctx.topic = st.topic;
       const all = D.products[ctx.topic];
       ctx.product = all.filter(p => !p.bad).sort((a, b) => a.price - b.price)[0];
+      ctx.bestId = ctx.product.id;
       ctx.products = [ctx.product];
-      ctx.others = all.filter(p => p !== ctx.product);
+      ctx.others = [ctx.product].concat(all.filter(p => p !== ctx.product));
     },
     showOthers(st, ctx) { ctx.products = ctx.others; },
     checkMasterPick(st, ctx) { return ctx.product.bad ? "lateOne" : "orderNow"; },
+    /* Faster response, shopping: the agent compares every option and marks its Best pick; he still taps the one to order */
+    compareAll(st, ctx) {
+      ctx.topic = st.topic;
+      const all = D.products[ctx.topic], best = all.filter(p => !p.bad).sort((a, b) => a.price - b.price)[0];
+      ctx.bestId = best.id;
+      ctx.best = best;
+      ctx.products = [best].concat(all.filter(p => p !== best));
+    },
+    checkFastPick(st, ctx) { return ctx.product.bad ? "fastWarn" : "fastOrder"; },
     order(st, ctx) {
       S.wallet -= ctx.product.price;
       ctx.orderId = "BDE-40-" + rand(10000, 99999);
       S.orders.unshift({ id: ctx.orderId, name: ctx.product.name, price: ctx.product.price, at: clock() });
       changed();
-    },
-    autoOrder(st, ctx) {
-      if (!ctx.products) ctx.products = D.products[st.topic];
-      ctx.product = ctx.products.filter(p => !p.bad).sort((a, b) => a.price - b.price)[0];
-      ACTIONS.order(st, ctx);
     },
 
     reward(st, ctx) {
@@ -1071,10 +1092,19 @@
       return { name: ctx.skill.name, area: ctx.area.name, areaId: ctx.area.id, level: l.name, i: l.i };
     }
     if (card === "products") {
-      const wallet = ctx.challenge ? null : S.wallet, monthly = S.setup.walletMonthly, master = !ctx.challenge && ctx.mode.id === "pro";
-      return { items: ctx.products.map(p => Object.assign({}, p)), wallet, monthly, one: ctx.products.length === 1,
-        /* a Master's pick orders on one tap; below that he chooses, with a nudge about his wallet */
-        verb: master ? "Order" : "Choose", advice: wallet == null || master ? null : walletAdvice(ctx.products, wallet, monthly) };
+      const wallet = ctx.challenge ? null : S.wallet, monthly = S.setup.walletMonthly, oneTap = !ctx.challenge && (ctx.mode.id === "pro" || ctx.fast);
+      return { items: ctx.products.map(p => Object.assign({ best: p.id === ctx.bestId }, p)), wallet, monthly, one: ctx.products.length === 1,
+        /* a Master's pick and a Faster response order on one tap; otherwise he chooses, with a nudge about his wallet */
+        verb: oneTap ? "Order" : "Choose", advice: wallet == null || oneTap ? null : walletAdvice(ctx.products, wallet, monthly) };
+    }
+    /* Faster response, mail: two versions side by side, each with what sets it apart */
+    if (card === "mails") {
+      const fill = t => t.replace(/\{name\}/g, name()).replace(/\{class\}/g, S.setup.child.classNo);
+      const words = t => t.split(/\s+/).filter(Boolean).length;
+      const full = fill(D.mail.body), short = fill(D.mail.short);
+      return { to: D.mail.to, subject: D.mail.subject, options: [
+        { label: "Full", body: full, note: words(full) + " words · gives the date and mentions the doctor's note" },
+        { label: "Short", body: short, note: words(short) + " words · the same ask, quicker to read" }] };
     }
     if (card === "mail") {
       const fill = t => t.replace(/\{name\}/g, name()).replace(/\{class\}/g, S.setup.child.classNo);
@@ -1100,7 +1130,7 @@
       case "child": return `<div class="msg msg--me">${m.fast ? `<span class="me-fast">${icon("bolt", 13)} Faster response</span>` : ""}<div class="bubble">${esc(m.text)}</div></div>`;
       case "agent": {
         const showTag = !(prev && prev.t === "agent" && prev.tag && prev.tag.text === m.tag.text);
-        return `<div class="msg msg--agent ${showTag ? "" : "is-cont"} ${m.card === "products" ? "msg--wide" : ""}">
+        return `<div class="msg msg--agent ${showTag ? "" : "is-cont"} ${m.card === "products" || m.card === "mails" ? "msg--wide" : ""}">
           ${showTag ? tagHTML(m.tag) : ""}
           <div class="bubble">${esc(m.text).replace(/\n/g, "<br>")}</div>
           ${m.card ? cardHTML(m) : ""}
@@ -1142,7 +1172,8 @@
           const after = d.wallet == null ? null : d.wallet - p.price;
           const when = p.badge ? `<span class="pc-when ${p.bad ? "is-late" : ""}">${icon(p.bad ? "info" : "check", 13)}${esc(p.badge)}</span>`
             : `<span class="pc-note">${esc(p.note)}</span>`;
-          return `<article class="pc ${p.bad ? "is-late" : ""}">
+          return `<article class="pc ${p.bad ? "is-late" : ""} ${p.best ? "is-best" : ""}">
+            ${p.best ? `<span class="pc-best">${icon("check", 12)} Best pick</span>` : ""}
             <div class="pc-pic" aria-hidden="true">${icon(p.pic || "gift", 46)}${p.photo ? `<img src="${esc(p.photo)}" alt="" onerror="this.remove()">` : ""}</div>
             <div class="pc-b">
               <b class="pc-name">${esc(p.name)}</b>
@@ -1156,6 +1187,11 @@
         ${d.advice ? `<p class="prod-advice">${icon("wallet", 16)}<span>${esc(d.advice)}</span></p>` : ""}</div>`;
     if (m.card === "mail") return `<div class="card letter"><div class="letter-h">${icon("mail", 15)}<span><b>To:</b> ${esc(d.to)}</span></div>
         <div class="letter-s">${esc(d.subject)}</div><p>${esc(d.body).replace(/\n/g, "<br>")}</p></div>`;
+    /* Two drafts to choose from: each card's button answers the same question as the chips under the chat */
+    if (m.card === "mails") return `<div class="mail-opts">${d.options.map((o, i) => `<div class="card letter letter--opt">
+        <div class="letter-h">${icon("mail", 15)}<span><b>${esc(o.label)}</b> · ${esc(o.note)}</span></div>
+        <div class="letter-s">${esc(d.subject)}</div><p>${esc(o.body).replace(/\n/g, "<br>")}</p>
+        <button class="btn small primary" data-chip="${i}" data-w="${m.wait}">${icon("send", 14)} Send this one</button></div>`).join("")}</div>`;
     if (m.card === "order") return `<div class="card order"><div class="ride-ic">${icon(d.pic || "gift", 22)}${d.photo ? `<img src="${esc(d.photo)}" alt="" onerror="this.remove()">` : ""}</div><div class="ride-b"><b>${esc(d.name)}</b><span>Order ${esc(d.id)} · ${rupee(d.price)}</span><span class="muted">Wallet now ${rupee(d.wallet)}</span></div>${icon("check", 18, "ok")}</div>`;
     return "";
   }
@@ -1589,7 +1625,7 @@
 
   /* ---------- Global events ---------- */
   document.addEventListener("click", e => {
-    const el = e.target.closest("[data-chip],[data-pick],[data-menu],[data-logout],[data-newchat],[data-chat],[data-go],[data-reset],[data-off],[data-jump],[data-challenge],[data-drawer],[data-chatbar]");
+    const el = e.target.closest("[data-chip],[data-pick],[data-menu],[data-settheme],[data-logout],[data-newchat],[data-chat],[data-go],[data-reset],[data-off],[data-jump],[data-challenge],[data-drawer],[data-chatbar]");
     $$(".menu").forEach(m => { if (!el || !el.hasAttribute("data-menu") || !m.parentElement.contains(el)) m.hidden = true; });
     if (!el) return;
     const d = el.dataset;
@@ -1609,6 +1645,10 @@
       answer({ product: p, label: p.name });
     } else if (d.menu != null) {
       const m = el.parentElement.querySelector(".menu"); m.hidden = !m.hidden;
+    } else if (d.settheme) {
+      S.theme = d.settheme; save(); applyTheme();
+      $$(".theme-opt").forEach(b => { const on = b.dataset.settheme === S.theme; b.classList.toggle("is-on", on); b.setAttribute("aria-pressed", on); });
+      toast(D.themes.find(t => t.id === S.theme).name + " theme on.", "ok");
     } else if (d.go) {
       go(d.go);
     } else if (d.reset != null) {
@@ -1682,6 +1722,7 @@
       if (e.key !== KEY && e.key !== PKEY) return;
       const before = parentView(S);
       S = load();
+      applyTheme();
       const typing = $("#plf") && $("#plf").code.value;
       if ((e.key === PKEY || parentView(S) !== before) && !typing) {
         const main = $("#main"), top = main ? main.scrollTop : 0;

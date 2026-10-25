@@ -6,6 +6,15 @@ window.DATA = {
     pitch: "A layer between a child and every AI agent they use. It checks the child's skill and tells the agent to do it, show how, let the child decide, or coach."
   },
 
+  /* Colour themes, picked in the nav under Wallet. Each id matches a [data-theme] block in app.css; the swatch is what
+     the picker shows. The logo takes the theme's colours too. */
+  themes: [
+    { id: "sky", name: "Sky", swatch: ["#061646", "#2563FF", "#CFE0FF"] },
+    { id: "electric", name: "Electric", swatch: ["#000C28", "#1746EA", "#4576FF"] },
+    { id: "blush", name: "Blush", swatch: ["#8D2659", "#E64F86", "#EFE6DC"] },
+    { id: "spring", name: "Spring", swatch: ["#001F3F", "#00804C", "#DBE64C"] }
+  ],
+
   /* The world is set in 2040. Tokens reset every Monday. */
   today: { long: "Wednesday, 17 October 2040", week: "15 – 21 Oct 2040", reset: "Monday" },
 
@@ -119,10 +128,10 @@ window.DATA = {
     { id: "science", area: "study", skill: "physics", weight: 560,
       prompt: "a stone is dropped from a 20 m high building. how long does it take to hit the ground? take g = 10 m/s²",
       chip: "a stone dropped from 20 m: how long to fall?" },
-    { id: "mail", area: "writing", skill: "emails", weight: 300,
+    { id: "mail", area: "writing", skill: "emails", weight: 300, fastLine: "two drafts compared, you choose",
       prompt: "write a mail to my class teacher asking for a retest, i was sick for tuesday's maths test",
       chip: "mail my class teacher about a retest" },
-    { id: "calc", area: "money", skill: "spending", weight: 450,
+    { id: "calc", area: "money", skill: "spending", weight: 450, fastLine: "I compare, you choose",
       prompt: "buy a calculator for my maths exam on monday, under ₹900", chip: "buy a calculator for my exam" }
   ],
 
@@ -389,9 +398,15 @@ DATA.flows = {
     { id: "sendOwn", action: "sendMail" },
     { action: "score", say: "Written by you", did: "Wrote his own mail to his class teacher", end: true },
 
+    /* Faster response: two versions, compared, and he picks the one to send */
     { id: "fast", action: "faster" },
-    { from: "agent", card: "mail", text: "Done, and sent." },
-    { action: "sendMail" },
+    { from: "agent", card: "mails",
+      text: "I wrote two versions and compared them. The full one gives the date and mentions your doctor's note; the short one asks the same in fewer words. Which one should I send?",
+      chips: [{ label: "Send the full one", also: "full first long detailed formal 1 one", go: "fastSend" },
+              { label: "Send the short one", also: "short second brief quick 2 two", go: "fastShort" }] },
+    { id: "fastShort", action: "shorten" },
+    { id: "fastSend", action: "sendMail" },
+    { from: "agent", card: "mail", text: "Sent. Here's the one that went." },
     { action: "note", text: "Faster responses don't raise your rating.", end: true }
   ],
 
@@ -424,16 +439,23 @@ DATA.flows = {
       chips: [{ label: "See other options", also: "other options more different another else show", go: "others" }] },
     { id: "chosen", action: "checkMasterPick" },
     { id: "others", action: "showOthers" },
-    { from: "agent", card: "products", text: ctx => "Here are the other " + ctx.products.length + ". Check the notes on each.", go: "chosen" },
+    { from: "agent", card: "products", text: "Here they all are, my pick first. Check the notes on the others.", go: "chosen" },
     { id: "lateOne", from: "agent", text: ctx => "Heads up: " + ctx.product.warn + " Order it anyway, or look again?",
       chips: [{ label: "Order it anyway", also: "anyway yes order", go: "orderNow" }, { label: "See the options again", also: "again other options back", go: "others" }] },
     { id: "orderNow", action: "order" },
     { from: "agent", card: "order", text: ctx => "Ordered. It arrives " + ctx.product.day + (ctx.product.bad ? "." : ", in time for Monday's exam.") },
     { action: "score", say: "Your call, done in one go", did: "Picked and ordered his exam calculator", end: true },
 
+    /* Faster response: the agent compares all three and marks its Best pick; he taps Order on the one he wants */
     { id: "fast", action: "faster" },
-    { action: "autoOrder", topic: "calc" },
-    { from: "agent", card: "order", text: ctx => "Done: " + ctx.product.name + " (" + ctx.rupee(ctx.product.price) + "), the cheapest one that's allowed in exams and arrives before Monday." },
+    { id: "fastAll", action: "compareAll", topic: "calc" },
+    { from: "agent", card: "products",
+      text: ctx => "I compared all three for you. Only the " + ctx.best.say + " is allowed in exams and arrives before Monday, so it's my best pick. Tap Order on the one you want." },
+    { action: "checkFastPick" },
+    { id: "fastWarn", from: "agent", text: ctx => "Heads up: " + ctx.product.warn + " Order it anyway, or pick again?",
+      chips: [{ label: "Order it anyway", also: "anyway yes order", go: "fastOrder" }, { label: "Pick again", also: "again other back different", go: "fastAll" }] },
+    { id: "fastOrder", action: "order" },
+    { from: "agent", card: "order", text: ctx => "Ordered. It arrives " + ctx.product.day + (ctx.product.bad ? "." : ", in time for Monday's exam.") },
     { action: "note", text: "Faster responses don't raise your rating.", end: true }
   ],
 
